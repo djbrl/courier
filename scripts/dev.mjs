@@ -1,9 +1,16 @@
-// Starts Courier and the demo store together with prefixed logs.
+// Builds the shop desk, then starts Courier and the demo store together with prefixed logs.
 // Usage: npm run dev            (watch mode)
 //        npm start              (no watch)
 import { spawn } from "node:child_process";
+import { buildDesk } from "./build-desk.mjs";
 
 const watch = !process.argv.includes("--no-watch");
+
+// The shop desk is the one page drawn in the browser; build it before the store serves it.
+const desk = await buildDesk({ watch }).catch((error) => {
+  console.error(`[desk] build failed, /merchant falls back to the ledger link: ${error.message}`);
+  return null;
+});
 const apps = [
   { name: "courier ", color: "\x1b[33m", entry: "apps/courier/src/server.ts" },
   { name: "store   ", color: "\x1b[32m", entry: "apps/store/src/server.ts" },
@@ -34,6 +41,7 @@ const children = apps.map(({ name, color, entry }) => {
 
 const stop = () => {
   for (const c of children) c.kill("SIGTERM");
+  desk?.dispose();
   process.exit(0);
 };
 process.on("SIGINT", stop);

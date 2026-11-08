@@ -16,3 +16,6 @@ data/
 
 .DS_Store
 *.tsbuildinfo
+
+# Built by scripts/build-desk.mjs
+packages/shared/assets/desk/

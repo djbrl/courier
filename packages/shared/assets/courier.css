@@ -8872,3 +8872,194 @@ html:has(body.app-page) {
     padding: 20px 16px 28px;
   }
 }
+
+/* ---------- shop desk (/merchant): an AG Studio dashboard in Courier's colours ---------- */
+.dk {
+  padding: 18px 24px 32px;
+}
+.dk-h {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.dk-h h1 {
+  font:
+    italic 900 clamp(30px, 5vw, 44px) / 1 "Archivo",
+    sans-serif;
+  letter-spacing: -0.03em;
+  margin: 0 0 6px;
+}
+.dk-h p {
+  margin: 0;
+  max-width: 62ch;
+  font-size: 16px;
+  color: var(--mute);
+}
+.dk-sum {
+  margin: 12px 0;
+  font:
+    500 13px / 1.4 "JetBrains Mono",
+    monospace;
+  color: var(--soft);
+}
+.dk-note {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 14px;
+}
+.dk-root {
+  height: max(640px, calc(100dvh - 190px));
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--paper);
+}
+.dk-root .dk-studio {
+  height: 100%;
+}
+.dk-wait {
+  padding: 24px;
+  font-size: 15px;
+  color: var(--mute);
+}
+@media (max-width: 700px) {
+  .dk {
+    padding: 12px 12px 24px;
+  }
+  .dk-h .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .dk-root {
+    height: calc(100dvh - 120px);
+    min-height: 520px;
+    border-radius: 12px;
+  }
+}
+
+/* The desk's own widgets, drawn inside Studio. */
+.dkw-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px;
+  height: 100%;
+  overflow: auto;
+  align-content: start;
+}
+.dkw-card {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+.dkw-card header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--band);
+  color: var(--bink);
+  font:
+    italic 900 12px / 1.2 "Archivo",
+    sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  box-shadow: inset -26px 0 0 -20px var(--slash);
+}
+.dkw-card header code {
+  font:
+    500 10px "JetBrains Mono",
+    monospace;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.85;
+}
+.dkw-body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+}
+.dkw-body img {
+  border-radius: 50%;
+  background: var(--paper);
+  flex: none;
+}
+.dkw-body div {
+  min-width: 0;
+}
+.dkw-name {
+  display: block;
+  font:
+    800 16px / 1.15 "Archivo",
+    sans-serif;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dkw-body small {
+  font-size: 12px;
+  color: var(--mute);
+}
+.dkw-proof {
+  height: 100%;
+  overflow: auto;
+  font-size: 13px;
+}
+.dkw-seal {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 20px;
+}
+.dkw-seal span:last-child {
+  font:
+    700 12px "Instrument Sans",
+    sans-serif;
+  color: var(--green);
+}
+.dkw-seal.sim span:last-child {
+  color: var(--mute);
+}
+.dkw-amt {
+  margin: 0 0 8px;
+}
+.dkw-amt b {
+  font:
+    italic 900 26px "Archivo",
+    sans-serif;
+}
+.dkw-amt span {
+  font-size: 12px;
+  color: var(--mute);
+}
+.dkw-proof dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  margin: 0;
+}
+.dkw-proof dt {
+  color: var(--mute);
+}
+.dkw-proof dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.dkw-proof code,
+.dkw-card code {
+  font-family: "JetBrains Mono", monospace;
+}
+.dkw-fine {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--mute);
+}

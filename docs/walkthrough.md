@@ -30,7 +30,10 @@ apps/
     auth.ts              Verifies every token
     mcp.ts               The tools agents can call
     catalog.ts           What each shop sells
-    views.ts             Logo grid, shop pages and merchant view
+    views.ts             Logo grid, shop pages, the shop desk's frame and the ledger
+    desk.ts              The shop desk's data: orders, the door, couriers
+    desk-agent.ts        Runs the desk's clerk on Claude
+  store/desk/            The shop desk: the one page drawn in the browser (React, AG Studio)
 packages/shared/
   src/                   Config, PayPal gateway, intent check, visa model, store
   assets/                CSS and browser JavaScript
@@ -142,6 +145,21 @@ for errands that ran out. `disconnect` removes the Claude itself, and its next c
 
 `apps/courier/src/routes/bots.ts` fires eight attacks at the real endpoint. Each one is short and exercises a defence
 you've just read about, so it's a good recap. Open <http://localhost:4000/bots> to run them.
+
+## 12. The shop desk
+
+`/merchant` is what a shop sees: one AG Studio dashboard, the only page drawn in the browser. `deskSnapshot` in
+`apps/store/src/desk.ts` serves it as JSON at `/merchant/api/desk`, in three tables: orders, the door and couriers. A
+courier appears by name and pseudonym only. `doorLog` keeps the requests a shop cares about: every refusal with a
+reason a shopkeeper would use ("Over budget", "Forged ID"), and the tool calls that matter. It drops MCP housekeeping and
+folds repeated status checks into one row. Shipments and refunds join as tables of their own once the store keeps them.
+
+`apps/store/desk/` is the React side. `report.ts` is the first report, which groups couriers into the top eight and
+"Everyone else" so one busy courier can't flatten a chart. `widgets.tsx` adds two widgets of its own: courier ID cards
+in each courier's colour, and the PayPal proof behind an order. With `ANTHROPIC_API_KEY` set, the desk has a clerk to
+ask: it runs Studio's agents, and `desk-agent.ts` runs each turn on Claude. `scripts/dev.mjs` builds the bundle before
+starting the servers. Open <http://localhost:4100/merchant>; the old list, with "Report this courier", is at
+`/merchant/ledger`.
 
 ## Where to go next
 
