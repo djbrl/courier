@@ -136,6 +136,16 @@ export function demoPayPalPage(): string {
 
 const COLORS = Object.keys(COURIER_COLORS) as CourierColor[];
 
+// Everyone starting with "Juno" made group runs read as Juno talking to Juno. A name picked from the person's id
+// keeps it steady across reloads and makes friends' couriers look like different agents.
+const FIRST_NAMES = ["Juno", "Otto", "Mika", "Pip", "Lou", "Ivy", "Kit", "Nell", "Ari", "Zed", "Bo", "Remy"];
+
+function firstCourierName(humanId: string): string {
+  let n = 0;
+  for (const ch of humanId) n = (n * 31 + ch.charCodeAt(0)) >>> 0;
+  return FIRST_NAMES[n % FIRST_NAMES.length]!;
+}
+
 /** Name, colour and your name. Also used to edit a courier or add another one. */
 export function courierSetupPage(
   human: Human,
@@ -144,14 +154,17 @@ export function courierSetupPage(
 ): string {
   const firstRun = !courier && !opts.adding;
   const used = new Set(listCouriers(human.id).map((c) => c.color));
+  const suggested = firstCourierName(human.id);
   const look = courier
     ? courierLook(human, courier)
     : {
         ...courierLook(human),
-        name: opts.adding ? "" : "Juno",
-        // A second courier gets a face from its name, not Juno's.
-        avatar: opts.adding ? undefined : ("shades" as const),
-        color: (opts.adding ? COLORS.find((c) => !used.has(c)) : undefined) ?? "cobalt",
+        name: opts.adding ? "" : suggested,
+        // Juno keeps the shades from the landing; any other name gets a face from its name.
+        avatar: opts.adding ? undefined : suggested === "Juno" ? ("shades" as const) : avatarFor(suggested),
+        color:
+          (opts.adding ? COLORS.find((c) => !used.has(c)) : COLORS[FIRST_NAMES.indexOf(suggested) % COLORS.length]) ??
+          "cobalt",
       };
   if (opts.name !== undefined) look.name = opts.name;
   const you = firstName(human);

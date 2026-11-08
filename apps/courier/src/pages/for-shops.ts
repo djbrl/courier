@@ -55,7 +55,7 @@ export function forShopsPage(human: Human | null): string {
 <section class="s-sec" id="fx-open" data-track style="--h:170vh"><div class="s-stick">
   <div class="fx-opentx">
     <h1 class="s-h">Sell to agents you can&nbsp;trust.</h1>
-    <p>Courier tells you a real person sent each agent, and what it may spend. Nothing&nbsp;else.</p>
+    <p>PayPal vouches for the real person behind each agent, and Courier tells you what it may spend. Nothing&nbsp;else.</p>
     <div><span class="ppl">Powered by ${PP}</span></div>
   </div>
   <div class="fx-rise">

@@ -1498,3 +1498,41 @@ footer .ppl {
     padding-top: 0;
   }
 }
+
+/* Under the hood: who does what. Bigger than the other windows' rows, since this list is the whole point of the screen. */
+.s-who-does {
+  display: grid;
+  padding: 8px 26px 18px;
+}
+.s-who-does .s-row {
+  align-items: center;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 18px;
+}
+.s-who-does .s-row:last-child {
+  border-bottom: 0;
+}
+.s-who-does .s-row small {
+  margin-top: 3px;
+  font-size: 14.5px;
+}
+.s-who-does .s-row > span:last-child {
+  flex: none;
+  font-weight: 700;
+}
+.s-who-does .pp {
+  font-size: 19px;
+}
+@media (max-width: 760px) {
+  .s-who-does {
+    padding: 4px 14px 8px;
+  }
+  .s-who-does .s-row {
+    padding: 9px 0;
+    font-size: 15px;
+  }
+  .s-who-does .s-row small {
+    font-size: 12.5px;
+  }
+}

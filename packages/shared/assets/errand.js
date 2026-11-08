@@ -345,7 +345,7 @@
       <ol class="run-t" aria-live="polite">${
         alone
           ? `<li class="sys">Nobody has joined yet. Once someone does, the couriers talk here.</li>`
-          : r.lines.map(runLine).join("") || `<li class="sys">The couriers talk here.</li>`
+          : `<li class="sys agent2agent">Agent to agent: the couriers work it out here. Each one answers only to its own person.</li>${r.lines.map(runLine).join("")}`
       }</ol>`;
     const t = $(".run-t", runBox);
     t.scrollTop = t.scrollHeight;

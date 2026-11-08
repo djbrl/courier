@@ -11,7 +11,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license"></a>
 </p>
 
-Courier gives your AI agents an ID. PayPal verifies you, you add one connector to Claude, and then each thing you ask for
+Courier makes PayPal the trust layer for AI agents. It gives your agents an ID. PayPal verifies you, you add one connector to Claude, and then each thing you ask for
 is an errand with its own budget ("flowers on Floor Dash, about $20"), at any shop that accepts Courier. Limits are
 enforced in code. Shops see a verified agent and its limits, not your name.
 
