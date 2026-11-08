@@ -1275,6 +1275,11 @@ await step(
     const shopsPage = await forShops.text();
     assert.match(shopsPage, /id="install"/);
     assert.ok(shopsPage.includes(`${flow.courier}/jwks.json`));
+    assert.match(
+      shopsPage,
+      /src="\/assets\/story\.js\?v=[0-9a-f]{8}"/,
+      "the shops' story scrolls like the landing page",
+    );
     const install = await fetch(`${flow.courier}/install`);
     assert.equal(install.status, 200);
     assert.match(await install.text(), /Install Courier in your/);

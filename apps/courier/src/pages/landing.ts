@@ -30,7 +30,7 @@ let landingTemplate = "";
 const assetUrls = new Map<string, string>();
 
 /** Assets are cached for an hour, so the URL carries a content hash: new HTML must never get an old script. */
-function assetUrl(file: string): string {
+export function assetUrl(file: string): string {
   let url = assetUrls.get(file);
   if (!url) {
     const content = fs.readFileSync(path.join(ROOT_DIR, "packages/shared/assets", file));

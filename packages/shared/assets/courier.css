@@ -56,6 +56,8 @@ html {
 body {
   font-family: var(--body), system-ui, sans-serif;
   font-stretch: var(--bstretch);
+  /* The landing page's body weight, so body text reads the same on every page. */
+  font-weight: 500;
   font-size: 19px;
   line-height: 1.4;
   color: var(--ink);
@@ -1340,7 +1342,7 @@ a {
 }
 .money-row b {
   color: var(--ink);
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--body), sans-serif;
   font-weight: 700;
 }
 
@@ -1691,8 +1693,8 @@ a {
   border-radius: 999px;
   background: var(--paper);
   font:
-    500 12px / 1 "JetBrains Mono",
-    monospace;
+    500 12px / 1 var(--body),
+    sans-serif;
   color: var(--soft);
 }
 .trace span i {
@@ -1764,8 +1766,8 @@ a {
 }
 .paycard .tot b {
   font:
-    700 26px / 1 "JetBrains Mono",
-    monospace;
+    700 26px / 1 var(--body),
+    sans-serif;
   letter-spacing: -0.04em;
 }
 .paycard .btn-pp {
@@ -2135,8 +2137,8 @@ a {
 }
 .sim-tot b {
   font:
-    700 30px / 1 "JetBrains Mono",
-    monospace;
+    700 30px / 1 var(--body),
+    sans-serif;
   letter-spacing: -0.04em;
 }
 .sim-acts {
@@ -2333,8 +2335,8 @@ a {
   background: var(--ink);
   color: #fff;
   font:
-    700 15px / 1 "JetBrains Mono",
-    monospace;
+    700 15px / 1 var(--body),
+    sans-serif;
 }
 .steps b {
   font-size: 17.5px;
@@ -2538,8 +2540,8 @@ html:has(body.app-page) {
   background: var(--ink);
   color: #fff;
   font:
-    700 12px / 22px "JetBrains Mono",
-    monospace;
+    700 12px / 22px var(--body),
+    sans-serif;
   text-align: center;
 }
 .rail nav .n.hot {
@@ -2599,8 +2601,8 @@ html:has(body.app-page) {
 }
 .sec-t span {
   font:
-    700 13px / 1 "JetBrains Mono",
-    monospace;
+    700 13px / 1 var(--body),
+    sans-serif;
   font-style: normal;
   padding: 4px 8px;
   border-radius: 99px;
@@ -2705,7 +2707,7 @@ html:has(body.app-page) {
   white-space: nowrap;
 }
 .erow .em b {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--body), sans-serif;
   color: var(--ink);
 }
 .erow.off .pt {
@@ -2868,8 +2870,8 @@ html:has(body.app-page) {
 }
 .seg-tabs a span {
   font:
-    700 12px / 1 "JetBrains Mono",
-    monospace;
+    700 12px / 1 var(--body),
+    sans-serif;
   color: var(--mute);
 }
 .seg-tabs a[aria-current] {
@@ -3411,8 +3413,8 @@ html:has(body.app-page) {
 }
 .md-stats b {
   font:
-    700 26px / 1 "JetBrains Mono",
-    monospace;
+    700 26px / 1 var(--body),
+    sans-serif;
   letter-spacing: -0.04em;
 }
 .md-stats small {
@@ -3474,8 +3476,8 @@ html:has(body.app-page) {
 }
 .mo .pr {
   font:
-    700 17px / 1 "JetBrains Mono",
-    monospace;
+    700 17px / 1 var(--body),
+    sans-serif;
   letter-spacing: -0.03em;
 }
 .st.pending_bond i {
@@ -3722,8 +3724,8 @@ html:has(body.app-page) {
 }
 .fs-kv dt {
   font:
-    600 11.5px "JetBrains Mono",
-    monospace;
+    600 11.5px var(--body),
+    sans-serif;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--mute);
@@ -3821,8 +3823,8 @@ html:has(body.app-page) {
   gap: 10px;
   width: 84%;
   font:
-    700 13px "JetBrains Mono",
-    monospace;
+    700 13px var(--body),
+    sans-serif;
 }
 .fs-meter i {
   position: relative;
@@ -4022,8 +4024,8 @@ html:has(body.app-page) {
 }
 .bot small {
   font:
-    500 12px / 1.4 "JetBrains Mono",
-    monospace;
+    500 12px / 1.4 var(--body),
+    sans-serif;
   color: var(--mute);
   overflow-wrap: anywhere;
 }
@@ -4031,8 +4033,8 @@ html:has(body.app-page) {
   margin-top: auto;
   padding-top: 6px;
   font:
-    600 12px "JetBrains Mono",
-    monospace;
+    600 12px var(--body),
+    sans-serif;
   color: var(--mute);
 }
 @media (max-width: 1100px) {
@@ -5517,7 +5519,7 @@ html:has(body.app-page) {
   white-space: nowrap;
 }
 .tick-r b {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--body), sans-serif;
   font-size: 14px;
 }
 .tick-r small {
@@ -5665,8 +5667,8 @@ html:has(body.app-page) {
 .shelf-i .pr {
   margin: 10px 6px 0;
   font:
-    700 15px / 1 "JetBrains Mono",
-    monospace;
+    700 15px / 1 var(--body),
+    sans-serif;
 }
 @media (max-width: 560px) {
   .shelf-g {
@@ -5680,8 +5682,8 @@ html:has(body.app-page) {
   border: 1.5px dashed currentColor;
   border-radius: 99px;
   font:
-    700 10.5px / 1.2 "JetBrains Mono",
-    monospace;
+    700 10.5px / 1.2 var(--body),
+    sans-serif;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   vertical-align: 1px;
@@ -6529,8 +6531,8 @@ html:has(body.app-page) {
 .pg-st .n {
   margin-right: auto;
   font:
-    700 13px / 1 "JetBrains Mono",
-    monospace;
+    700 13px / 1 var(--body),
+    sans-serif;
   color: var(--mute);
 }
 .pg-st .fine {
@@ -7621,8 +7623,8 @@ html:has(.jr-page) {
 }
 .sp-n {
   font:
-    700 14px / 1.6 "JetBrains Mono",
-    monospace;
+    700 14px / 1.6 var(--body),
+    sans-serif;
   color: var(--mute);
 }
 .sp-why h3 {
@@ -7702,18 +7704,22 @@ html:has(.jr-page) {
 .in {
   max-width: 820px;
   margin: 0 auto;
-  padding: clamp(40px, 6vw, 80px) var(--gut) 80px;
+  padding: clamp(32px, 4vw, 56px) var(--gut) 80px;
 }
+/* A title the size of a section heading, so the steps start above the fold. */
 .in .big {
-  font-size: clamp(40px, 5.4vw, 72px);
+  font-size: clamp(30px, 3vw, 42px);
+  line-height: 1;
 }
 .in .lead {
-  margin-top: 16px;
+  margin-top: 12px;
+  font-size: clamp(16px, 1.2vw, 18px);
+  color: var(--mute);
 }
 .in-pick {
   display: inline-flex;
   gap: 4px;
-  margin: 34px 0 30px;
+  margin: 26px 0 26px;
   padding: 4px;
   border: 1px solid var(--line);
   border-radius: 99px;
