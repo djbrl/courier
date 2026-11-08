@@ -28,10 +28,12 @@ import {
   requireVisa,
 } from "./auth.ts";
 import { CATALOG, shelfOf } from "./catalog.ts";
+import { confirmAction, type OwnerMessage, ownerClerk } from "./clerk.ts";
 import { db, type Order } from "./db.ts";
 import { deskSnapshot } from "./desk.ts";
 import { deskAgentNote, deskAgentOn, deskTurn } from "./desk-agent.ts";
 import { cancelOrder, createMcpServer, settleOrder } from "./mcp.ts";
+import { startDeliveries } from "./shipping.ts";
 import {
   type DeskBoot,
   deskPage,
@@ -255,6 +257,51 @@ app.post("/merchant/report/:visaId", express.urlencoded({ extended: false }), as
   res.redirect(303, "/merchant/ledger");
 });
 
+/**
+ * The owner's clerk, for the merchant dashboard: it reads orders, parcels, returns and PayPal transactions, and can only
+ * propose a refund. The owner confirms it with the second route, where the limits are checked again. `shop` scopes it to
+ * one shop's orders.
+ */
+app.post("/merchant/api/clerk", express.json({ limit: "64kb" }), async (req, res) => {
+  const raw = (req.body as { messages?: unknown })?.messages;
+  const shop = typeof req.body?.shop === "string" && findShop(req.body.shop) ? (req.body.shop as string) : undefined;
+  const messages = Array.isArray(raw)
+    ? raw
+        .slice(-30)
+        .filter(
+          (m): m is OwnerMessage =>
+            Boolean(m) &&
+            (m.role === "user" || m.role === "assistant") &&
+            typeof m.content === "string" &&
+            m.content.trim(),
+        )
+        .map((m) => ({ role: m.role, content: m.content.slice(0, 4000) }))
+    : [];
+  if (messages.at(-1)?.role !== "user") {
+    res.status(400).json({ error: "Send messages: [{role, content}], ending with the owner's." });
+    return;
+  }
+  try {
+    res.json(await ownerClerk(messages, shop));
+  } catch (error) {
+    console.error("[clerk] owner chat failed", error);
+    res.status(500).json({ error: "The clerk couldn't answer that." });
+  }
+});
+
+app.post("/merchant/api/clerk/confirm", express.json({ limit: "8kb" }), async (req, res) => {
+  const shop = typeof req.body?.shop === "string" && findShop(req.body.shop) ? (req.body.shop as string) : undefined;
+  const out = await confirmAction(String(req.body?.actionId ?? ""), shop).catch((error) => {
+    console.error("[clerk] confirm failed", error);
+    return { ok: false as const, status: 500, error: "The refund didn't go through." };
+  });
+  if (!out.ok) {
+    res.status(out.status).json({ error: out.error });
+    return;
+  }
+  res.json(out);
+});
+
 /** A receipt the person can open from their chat. The key is the only credential, and it shows no personal data. */
 app.get("/receipts/:key", async (req, res) => {
   const found = db.list<Order>("orders", (o) => o.receiptKey === req.params.key, 1)[0];
@@ -339,3 +386,4 @@ app.get("/:slug", (req, res, next) => {
 app.listen(config.store.port, config.bindHost, () => {
   console.log(`${SHOPS.length} shops → ${config.store.url}`);
 });
+startDeliveries();

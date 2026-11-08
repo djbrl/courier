@@ -144,7 +144,9 @@ export type StampKind =
   | "blocked"
   | "revoked"
   | "report"
-  | "bond";
+  | "bond"
+  | "shipping"
+  | "refund";
 
 export interface Stamp {
   id: string;
@@ -154,6 +156,37 @@ export interface Stamp {
   title: string;
   detail: string;
   merchantName: string;
+  at: string;
+}
+
+/** A parcel a shop sent for an errand, as the shop reports it. Keyed by the shop's order id. */
+export interface Delivery {
+  id: string;
+  visaId: string;
+  humanId: string;
+  merchantName: string;
+  carrierName: string;
+  trackingNumber: string;
+  /** Which of the labels it's at; the last is delivered. */
+  stage: number;
+  labels: string[];
+  expectedAt: string;
+  /** Which PayPal the tracking was added to, or null when the shop delivers itself. */
+  paypal: string | null;
+  updatedAt: string;
+}
+
+/** What a shop decided on a return, once per order. A refund is recorded, never added back to the budget. */
+export interface Refund {
+  id: string;
+  visaId: string;
+  humanId: string;
+  merchantName: string;
+  decision: "full" | "partial" | "decline";
+  amountCents: number;
+  note: string;
+  by: "clerk" | "owner";
+  paypal: string;
   at: string;
 }
 

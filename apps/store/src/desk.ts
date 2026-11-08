@@ -152,11 +152,13 @@ const ACTIONS: Record<string, string> = {
   order_status: "Order status",
   cancel_order: "Cancel",
   whoami: "Check-in",
+  track_order: "Tracking",
+  request_return: "Return",
   set_budget: "Budget",
   wait_for_budget: "Budget check",
 };
 /** Asked over and over by a courier waiting on something, so one row stands for a run of them. */
-const POLLS = new Set(["Order status", "Check-in", "Browse", "Budget check"]);
+const POLLS = new Set(["Order status", "Check-in", "Browse", "Budget check", "Tracking"]);
 const FOLD_WINDOW_MS = 15 * 60 * 1000;
 
 const label = (tool: string) => ACTIONS[tool] ?? (tool.charAt(0).toUpperCase() + tool.slice(1)).replace(/_/g, " ");
@@ -301,7 +303,11 @@ const SAFE_KEYS = new Set([
   "shop",
   "status",
   "carrier",
-  "reason",
+  "carrierName",
+  "decision",
+  "decidedBy",
+  "by",
+  "at",
   "createdAt",
   "updatedAt",
   "shippedAt",
@@ -345,8 +351,12 @@ export function deskSnapshot(): Desk {
   const top = new Map(couriers.map((c) => [c.pseudonym, c.topCourier]));
   for (const o of orders) o.topCourier = top.get(o.pseudonym) ?? OTHERS;
   const sources: Desk["sources"] = { orders, door, couriers };
-  for (const name of ["shipments", "refunds"] as const) {
-    const rows = optionalSource(name);
+  // The clerk keeps parcels as "shipments" and decided returns (refunds and declines) as "returns".
+  for (const [name, collection] of [
+    ["shipments", "shipments"],
+    ["refunds", "returns"],
+  ] as const) {
+    const rows = optionalSource(collection);
     if (rows.length) sources[name] = rows;
   }
   return { generatedAt: new Date().toISOString(), sources };

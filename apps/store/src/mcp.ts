@@ -4,6 +4,7 @@ import {
   findShop,
   internalFetch,
   JUNIPER,
+  MONEY,
   mcpIcons,
   money,
   newId,
@@ -32,8 +33,11 @@ import {
   type TicketClaims,
   withFreshTicket,
 } from "./auth.ts";
-import { findItem, type Item, searchCatalog, shelfOf } from "./catalog.ts";
+import { afterSaleOf, findItem, type Item, searchCatalog, shelfOf } from "./catalog.ts";
+import { deliveryView, requestReturn } from "./clerk.ts";
 import { db, type Group, type Order, type Reservation } from "./db.ts";
+import { ownsOrder } from "./limits.ts";
+import { ship } from "./shipping.ts";
 import { receiptUrl } from "./views.ts";
 
 /* ---------------- helpers ---------------- */
@@ -480,7 +484,8 @@ export function createMcpServer(shop: Shop): McpServer {
         `receipt_url so they can see it. Keep it quick: when the user wants something, call request_purchase straight away; ` +
         `don't hold it first, and don't ask the user to confirm before calling (their budget and Courier already did). Use ` +
         `hold_item only when the user asks to put something aside. If Courier gives you an approval link, share it in one ` +
-        `line and stop; retry with the approval_id when the user says they answered.`,
+        `line and stop; retry with the approval_id when the user says they answered. Once paid, orders ship: track_order ` +
+        `says where one is. request_return asks the shop's clerk to take one back, under the shop's return policy.`,
     },
   );
 
@@ -943,6 +948,104 @@ export function createMcpServer(shop: Shop): McpServer {
     },
   );
 
+  server.registerTool(
+    "track_order",
+    {
+      title: "Track an order",
+      description:
+        "Where a paid order is: shipped, in transit, out for delivery or delivered, with the carrier and tracking number. " +
+        "Use it when the user asks where something is.",
+      inputSchema: { order_id: z.string().max(60) },
+      annotations: { readOnlyHint: true },
+    },
+    async ({ order_id }, extra) => {
+      const claims = auth(extra);
+      const order = db.get<Order>("orders", order_id);
+      if (!ownsOrder(order, claims.sub, shop.slug))
+        return text(`No order ${order_id} for this courier.`, undefined, true);
+      const what = order.items.map((i) => i.title).join(", ");
+      const base = {
+        order_id: order.id,
+        shop: shop.name,
+        items: order.items.map((i) => i.title),
+        paypal: paypalFor(order).mode,
+      };
+      if (order.status !== "paid")
+        return text(`${what} isn't paid yet, so it hasn't shipped.`, { ...base, status: order.status });
+      const delivery = deliveryView(order);
+      if (!delivery) {
+        const policy = afterSaleOf(order.shop);
+        return text(
+          policy.delivery === "none"
+            ? `${what} doesn't ship: it was delivered when it was paid for.`
+            : order.group
+              ? `${what} ships once every share is paid.`
+              : `${what} hasn't shipped yet.`,
+          { ...base, status: policy.delivery === "none" ? "delivered" : "not_shipped" },
+        );
+      }
+      const when = new Date(delivery.delivered_at ?? delivery.expected_at).toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      return text(
+        `${what} from ${shop.name}: ${delivery.status}, ${delivery.carrier} tracking ${delivery.tracking_number}. ` +
+          (delivery.delivered_at ? `Delivered at ${when}.` : `Expected by ${when}.`) +
+          (delivery.paypal_tracker && delivery.paypal_tracker !== "not added"
+            ? ` The tracking is on the ${MONEY[paypalFor(order).mode].name.toLowerCase()} PayPal payment.`
+            : ""),
+        { ...base, ...delivery, refunded: ((order.refundedCents ?? 0) / 100).toFixed(2) },
+      );
+    },
+  );
+
+  server.registerTool(
+    "request_return",
+    {
+      title: "Ask to return an order",
+      description:
+        "Ask the shop to take back a paid order and refund it, when the user wants to return it or something is wrong " +
+        "with it. The shop's clerk reads its return policy and your reason and decides: a full refund, a partial one, or " +
+        "no. One decision per order. Refunds go back to the user's PayPal.",
+      inputSchema: {
+        order_id: z.string().max(60),
+        reason: z.string().min(2).max(500).describe("What's wrong or why, in the user's words."),
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+    },
+    async ({ order_id, reason }, extra) => {
+      const claims = auth(extra);
+      const limited = await rateLimited(claims);
+      if (limited) return limited;
+      const order = db.get<Order>("orders", order_id);
+      // The order has to be this person's, at this shop: their pseudonym here is the one it was bought under.
+      if (!ownsOrder(order, claims.sub, shop.slug))
+        return text(`No order ${order_id} for this courier.`, undefined, true);
+      const out = await requestReturn(order, reason);
+      if (!out.ok) return text(out.problem, { error: out.code }, true);
+      const r = out.record;
+      const amount = (r.amountCents / 100).toFixed(2);
+      const mode = MONEY[r.paypalMode as keyof typeof MONEY]?.note ?? "";
+      return text(
+        (out.already ? `${shop.name} already decided on this return. ` : "") +
+          (r.decision === "decline"
+            ? `${shop.name} declined the return. Their note: "${r.note}"`
+            : `${shop.name} refunded $${amount}${r.decision === "partial" ? ` of $${(order.totalCents / 100).toFixed(2)}` : " in full"} to the user's PayPal. Their note: "${r.note}" ${mode}`) +
+          " Tell the user in a sentence or two.",
+        {
+          order_id: order.id,
+          shop: shop.name,
+          decision: r.decision,
+          refunded: amount,
+          note: r.note,
+          already_decided: out.already,
+          decided_by: r.decidedBy === "rules" ? "rules" : "clerk",
+          paypal: r.paypalMode,
+        },
+      );
+    },
+  );
+
   return server;
 }
 
@@ -1043,9 +1146,18 @@ function shipsNow(order: Order): boolean {
   return true;
 }
 
+/** Ships a paid order, or every share of a group once it's complete: one parcel, tracked on each share's payment. */
+async function shipOut(order: Order): Promise<void> {
+  const group = order.group ? db.get<Group>("groups", order.group) : undefined;
+  const paid = group ? liveShares(group).filter((o) => o.status === "paid") : [order];
+  const first = await ship(paid[0]!);
+  for (const share of paid.slice(1)) await ship(share, first?.trackingNumber);
+}
+
 /** A paid order: take the stock and commit the spend to the visa (idempotent on Courier side, one per hold). */
 async function fulfil(order: Order): Promise<void> {
-  for (const line of shipsNow(order) ? order.items : []) {
+  const ships = shipsNow(order);
+  for (const line of ships ? order.items : []) {
     const item = findItem(line.id);
     if (item) item.stock = Math.max(0, item.stock - line.quantity);
   }
@@ -1061,4 +1173,6 @@ async function fulfil(order: Order): Promise<void> {
       merchantName: (findShop(order.shop) ?? JUNIPER).name,
     },
   }).catch((e) => console.warn("[store] commit failed", e.message));
+  // After the commit, so the errand shows the purchase before the parcel. The buyer doesn't wait for PayPal's tracker.
+  if (ships) void shipOut(order).catch((e) => console.warn("[store] shipping failed", (e as Error).message));
 }

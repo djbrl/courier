@@ -28,6 +28,7 @@ flowchart LR
 | **Saved PayPal** | A PayPal Vault token that lets an errand pay without a PayPal page. Courier keeps it, never the shop                 |
 | **Contact**      | Someone a person can chip in with. They have their own courier, PayPal and a limit only that courier knows           |
 | **Group**        | One item split between people at a shop. Each pays their own order; the item ships when the shares add up            |
+| **Clerk**        | A shop's after-sale agent: ships paid orders and decides returns, through PayPal's Agent Toolkit                     |
 
 ## The packages
 
@@ -144,8 +145,22 @@ point, because a person approves each PayPal payment. Purchases paid with saved 
 **One yes covers the errand.** An approval is keyed to its items, so a hold and the later purchase of the same record
 don't ask twice.
 
+**After the sale, the shop's clerk.** Each paid order ships (food and groceries with the shop's own rider; digital goods,
+stays and tickets don't ship). For posted orders the clerk adds tracking to the PayPal capture with PayPal's Agent Toolkit
+(`create_shipment_tracking`, then `update_shipment_tracking` once delivered); the steps between are the carrier's, on a
+clock set by `SHIPPING_STEP_SECONDS`. A courier can ask `track_order` and `request_return`. For a return, Claude reads
+the shop's written policy and the courier's reason, which is untrusted, and calls the toolkit's `create_refund` or
+declines. The model never holds a limit: code allows a refund only on a paid order bought under the same person's pseudonym
+at that shop, only to that order's own capture, never above what was captured less earlier refunds, and once per order. It
+checks the model's arguments before the toolkit sends them, and without a model key, written rules decide within the same
+checks. A refund is recorded on the errand (a step, and the money bar) but doesn't raise what it may still spend: the budget
+was what the person allowed, and money coming back to their PayPal doesn't change that. The owner has a clerk too
+(`POST /merchant/api/clerk`), which reads orders, parcels, returns and the toolkit's `list_transactions`, with payer details
+removed, and can only propose a refund the owner confirms. Live PayPal gets no clerk refunds.
+
 **The simulator has the same shape as PayPal.** `SandboxPayPal` and `SimulatedPayPal` implement one `PayPalGateway`. The
-rest of the code can't tell which it's using, and the e2e runs without credentials. The "Try the demo instead" link makes a throwaway person (`simulated` on the person and on their tokens) whose payments only reach the simulator, even on a server with sandbox credentials; `paypalFor` picks the gateway, and shops are told the person is not verified.
+rest of the code can't tell which it's using, and the e2e runs without credentials. The clerk's Agent Toolkit runs unchanged against the simulator too: only its base
+URL and headers point at `/sim-paypal/rest`, which answers PayPal's refund, tracker and reporting paths. The "Try the demo instead" link makes a throwaway person (`simulated` on the person and on their tokens) whose payments only reach the simulator, even on a server with sandbox credentials; `paypalFor` picks the gateway, and shops are told the person is not verified.
 
 **The shop desk is the one page drawn in the browser.** Every other page is a server-rendered `html` template. The
 shop's dashboard at `/merchant` is AG Studio, a commercial React library, bundled by esbuild into

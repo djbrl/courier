@@ -92,6 +92,20 @@ export interface ToolResult {
 
 export type CallTool = (name: string, args: Record<string, unknown>) => Promise<ToolResult>;
 
+/** A paid order, as the courier is told about it. */
+export interface PaidOrder {
+  order_id: string;
+  shop: string;
+  items: string;
+  total: string;
+  /** Where its parcel is, if it ships. */
+  delivery?: string;
+  returned?: string;
+}
+
+const orderLine = (o: PaidOrder) =>
+  `${o.order_id} at ${o.shop}: ${o.items}, $${o.total}${o.delivery ? `, ${o.delivery.toLowerCase()}` : ""}${o.returned ? `, ${o.returned}` : ""}`;
+
 export interface AgentRun {
   memory: AgentMemory;
   callTool: CallTool;
@@ -99,6 +113,8 @@ export interface AgentRun {
   humanName: string;
   /** Open errands, in one line each. Rewritten for every message. */
   errands: string;
+  /** What this chat bought and paid for, newest last: to track or return. */
+  orders?: PaidOrder[];
   /** The people they can chip in with. */
   contacts: string;
   /** The run this chat is part of, with other people and their couriers, in one line. */
@@ -246,6 +262,33 @@ const TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: "track_order",
+    description:
+      "Where a paid order is: shipped, in transit, out for delivery or delivered, with the carrier and tracking number. " +
+      "Use it when they ask where something is or when it arrives.",
+    input_schema: {
+      type: "object",
+      properties: { shop: { type: "string" }, order_id: { type: "string" } },
+      required: ["shop", "order_id"],
+    },
+  },
+  {
+    name: "request_return",
+    description:
+      "Ask the shop to take back a paid order and refund it, when they want to return it or say something is wrong with " +
+      "it. The shop's clerk decides by its return policy: a full refund, a partial one, or no. Tell them what it decided " +
+      "and its note in a sentence or two. Only when they ask.",
+    input_schema: {
+      type: "object",
+      properties: {
+        shop: { type: "string" },
+        order_id: { type: "string" },
+        reason: { type: "string", description: "What's wrong or why, in their words." },
+      },
+      required: ["shop", "order_id", "reason"],
+    },
+  },
+  {
     name: "call_back",
     description:
       "Call back purchases the person hasn't paid for, when they change their mind. Nothing is charged and the budget is freed. Without order_id it calls back everything unpaid in this chat.",
@@ -318,6 +361,36 @@ export async function runScriptedAgent(
 
   if (/\b(call|calling) (that|it|this) (off|back)\b|\bcancel (that|it|this)\b/.test(lower))
     return done((await call("call_back", {})).text);
+
+  // "Where's my record?" and "it came scratched, send it back": about what this chat has already paid for.
+  const paid = run.orders ?? [];
+  if (paid.length) {
+    const named = (o: PaidOrder) =>
+      o.items
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .some((w) => w.length > 3 && lower.includes(w));
+    const order = paid.findLast(named) ?? paid.at(-1)!;
+    if (/\b(return|refund|send (it|this|them) back|take (it|this|them) back)\b/.test(lower)) {
+      const out = await call("request_return", { shop: order.shop, order_id: order.order_id, reason: message });
+      if (!out.ok) return done(out.text);
+      const d = out.data;
+      return done(
+        d.decision === "decline" ? `${d.shop} said no: ${d.note}` : `${d.shop} refunded you $${d.refunded}. ${d.note}`,
+      );
+    }
+    if (
+      /\bwhere('?s| is| are)\b.*\b(my|it|the|order|parcel|package)\b|\btrack(ing)?\b|\barriv|\bdeliver(ed|y)\b|\bshipped\b/.test(
+        lower,
+      )
+    ) {
+      const out = await call("track_order", { shop: order.shop, order_id: order.order_id });
+      if (!out.ok || !out.data.tracking_number) return done(out.text);
+      return done(
+        `${order.items}: ${String(out.data.status).toLowerCase()}, with ${out.data.carrier} (tracking ${out.data.tracking_number}).`,
+      );
+    }
+  }
 
   // "Chip in with Leo on the jazz box set", and a yes to the split it offers.
   const chip = /\bchip in with (.+?) on (.+)$/i.exec(message.trim());
@@ -502,6 +575,7 @@ export async function runClaudeAgent(
           ? `(Budget set by the person. Errand ${run.resume.errandId} is open for "${run.resume.what}". Find it and buy it now.)`
           : message
       }\n\n[Courier, not the person: open errands and unpaid orders right now: ${run.errands || "none"}. ` +
+      `Paid orders in this chat: ${run.orders?.length ? run.orders.map(orderLine).join("; ") : "none"}. ` +
       `People they can chip in with: ${run.contacts || "none"}. ` +
       `Their people on Courier, to invite by name: ${run.friends || "none"}.${run.run ? ` This chat is ${run.run}` : ""}]`,
   });
@@ -528,7 +602,9 @@ export async function runClaudeAgent(
         "for it, and a plain yes sets it. Never ask them to type or repeat a number, and never explain how budgets are checked. " +
         "If a tool says a budget isn't allowed, tell them what it says, keeping any link. Each new request is a new " +
         "errand; 'add socks too' stays on the same one. Just browsing needs no errand. If they change their mind about a purchase, " +
-        "call call_back. When they're done with this chat, or want to end, close or leave it, call end_errand.\n" +
+        "call call_back. When they're done with this chat, or want to end, close or leave it, call end_errand. Paid " +
+        "orders ship: when they ask where something is, call track_order and say where it is in a sentence. When they " +
+        "want to send something back, call request_return with their reason; the shop decides, not you.\n" +
         "They can split one item with people from their contacts, each paying their own share: use chip_in when they want to " +
         "chip in, split or go in on something with someone. If they haven't picked the item, search, suggest one with its price, " +
         "and let chip_in ask them. Their contacts' limits are private: say only what each courier offers.\n" +

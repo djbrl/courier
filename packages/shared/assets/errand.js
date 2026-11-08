@@ -142,6 +142,35 @@
       </div>`;
   }
 
+  const hhmm = (iso) => {
+    const at = new Date(iso);
+    return Number.isNaN(at.getTime()) ? "" : at.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
+
+  /** A paid order on its way: the shop reports each step, and the card moves along. */
+  function ship(e) {
+    const last = e.labels.length - 1;
+    const done = e.stage >= last;
+    const steps = e.labels
+      .map((l, i) => `<li class="${i <= e.stage ? "on" : ""} ${i === e.stage ? "now" : ""}">${esc(l)}</li>`)
+      .join("");
+    return `<div class="shipc ${done ? "done" : ""}" role="group" aria-label="${esc(e.shop)} parcel: ${esc(e.labels[e.stage])}">
+        <div class="shipc-h"><b>${done ? "Delivered" : "Shipped"} · ${esc(e.shop)}</b><span>${esc(e.carrier)} <code>${esc(e.tracking)}</code></span></div>
+        <ol class="shipc-steps" style="--at:${e.stage / last}">${steps}</ol>
+        <small>${done ? "Arrived." : `Expected by ${esc(hhmm(e.expected_at))}.`}${e.paypal ? ` Tracking is on the ${esc(e.paypal.toLowerCase())} PayPal payment.` : ""}</small>
+      </div>`;
+  }
+
+  /** What the shop decided on a return: money back to their PayPal, or a no with its reason. */
+  function refund(e) {
+    if (e.decision === "decline")
+      return `<div class="tick off refundc"><span class="tick-b"><b>${esc(e.shop)} · Return declined</b><small>${esc(e.note)}</small></span></div>`;
+    return `<div class="tick refundc" role="group" aria-label="${esc(e.shop)} refunded $${esc(e.amount)}">
+        <span class="tick-b"><b>${esc(e.shop)} · ${e.decision === "partial" ? "Part refunded" : "Refunded"}</b><small>${esc(e.note)}</small></span>
+        <span class="tick-r"><b>$${esc(e.amount)}</b><small>Back to PayPal</small></span>
+      </div>`;
+  }
+
   /** One item, several people: who paid what, each with their own PayPal. */
   function groupTicket(e) {
     const all = e.payers.every((p) => p.paid);
@@ -182,6 +211,8 @@
         .join("")}</div>`,
     pay: payCard,
     receipt,
+    ship,
+    refund,
     group: groupTicket,
     ask: (e) =>
       `<div class="notif cc" style="${C.vars}" ${e.answered ? `data-v="${esc(e.answered)}"` : ""}>
@@ -388,7 +419,7 @@
       line =
         e.open && !chat.ended
           ? `<b>${esc(e.what)}</b><span>${e.spentCents ? `${usd(e.spentCents)} of ` : "up to "}${usd(e.limitCents)}</span><button type="button" class="link fine" data-edit="${esc(e.id)}">Change budget</button><a class="link fine" href="/app/errands?e=${esc(e.id)}">Steps</a>`
-          : `<b>${esc(e.what)}</b><span>${usd(e.spentCents)} of ${usd(e.limitCents)} · done</span><a class="link fine" href="/app/errands?e=${esc(e.id)}">Steps</a>`;
+          : `<b>${esc(e.what)}</b><span>${usd(e.spentCents)} of ${usd(e.limitCents)} · done${e.refundedCents ? ` · ${usd(e.refundedCents)} refunded` : ""}</span><a class="link fine" href="/app/errands?e=${esc(e.id)}">Steps</a>`;
     } else if (chat.pendingBudgetCents) {
       line = `<b>Budget</b><span>${usd(chat.pendingBudgetCents)}</span><button type="button" class="link fine" data-edit="">Change budget</button>`;
     } else if (chat.events.length) line = `<b>${esc(chat.title || "Errand")}</b>`;

@@ -55,7 +55,7 @@ working without credentials.
 - **The e2e** in `tests/e2e.ts` acts as an MCP client and a person in a browser. New user-facing flows get a step here.
 - **The MCP client check** in `tests/mcp-client.ts` connects with the official SDK, to prove we follow the spec.
 
-`npm test` starts its own servers on ports 4300 and 4400 with data in `data/test-run`, so your demo data is safe.
+`npm test` starts its own servers on ports 4300 and 4400 with data in `data/test-run-4300`, so your demo data is safe. Set `TEST_COURIER_PORT` and `TEST_STORE_PORT` to run a second copy beside it.
 
 Testing against the real PayPal sandbox is a manual run: see [docs/live-test.md](docs/live-test.md).
 

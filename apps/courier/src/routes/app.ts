@@ -16,6 +16,7 @@ import {
   type Connection,
   type Courier,
   courierIdNo,
+  type Delivery,
   db,
   effectiveStatus,
   findCourier,
@@ -239,7 +240,8 @@ function desk(human: Human): Desk {
   const chatByVisa = new Map<string, string>();
   for (const chat of chatsOfHuman(human.id))
     for (const id of chat.errandIds) chatByVisa.set(id, `/errand?c=${chat.courierId}&chat=${chat.id}`);
-  return { human, couriers: listCouriers(human.id), visas, stamps, approvals, connections, chatByVisa };
+  const deliveries = db.list<Delivery>("deliveries", (x) => x.humanId === human.id, 200);
+  return { human, couriers: listCouriers(human.id), visas, stamps, approvals, connections, chatByVisa, deliveries };
 }
 
 /** The app needs a courier; people who signed in without one finish onboarding first. */

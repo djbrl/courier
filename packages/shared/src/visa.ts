@@ -37,6 +37,8 @@ export interface Visa {
   spendLimitCents: number;
   perPurchaseLimitCents: number;
   spentCents: number;
+  /** Given back by shops after a return. It stays spent: a refund doesn't raise what the errand may still spend. */
+  refundedCents?: number;
   currency: string;
   intent: string;
   status: VisaStatus;

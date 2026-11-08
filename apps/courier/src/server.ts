@@ -17,6 +17,7 @@ import {
 } from "@courier/shared";
 import { createOAuthMetadata, mcpAuthRouter } from "@modelcontextprotocol/sdk/server/auth/router.js";
 import express from "express";
+import { afterSaleRouter } from "./after-sale.ts";
 import { jwks } from "./auth/keys.ts";
 import { CourierOAuthProvider, clientRedirect, findAuthRequest, issueAuthorizationCode } from "./auth/oauth.ts";
 import { currentHuman, endSession, startSession } from "./auth/session.ts";
@@ -140,7 +141,7 @@ app.use("/sim-paypal", simPaypalRouter(config.courier.url));
 
 /* ---------------- internal API for merchants ---------------- */
 
-app.use("/internal", express.json(), internalRouter);
+app.use("/internal", express.json(), internalRouter, afterSaleRouter);
 
 /* ---------------- pages ---------------- */
 
