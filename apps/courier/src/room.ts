@@ -450,6 +450,16 @@ export function afterSale(
   if (at >= 0) chat.events[at] = event;
   else chat.events.push(event);
   touch(chat);
+  // A shop only ships what's paid. If the person paid from the link rather than the room's button, nothing asked the
+  // shop yet, so the card would still say "to pay" next to a parcel on its way.
+  if (event.t === "ship" && pending(chat, orderId)?.status === "open") {
+    const human = db.get<Human>("humans", chat.humanId);
+    const courier = db.get<Courier>("couriers", chat.courierId);
+    if (human && courier)
+      void checkOrder(human, courier, chat, orderId).catch((error) =>
+        console.warn("[room] couldn't settle a shipped order", (error as Error).message),
+      );
+  }
 }
 
 /** A parcel can be on its way before the receipt is written, when saved PayPal pays mid-turn. It follows the receipt. */
