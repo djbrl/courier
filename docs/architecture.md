@@ -147,6 +147,19 @@ don't ask twice.
 **The simulator has the same shape as PayPal.** `SandboxPayPal` and `SimulatedPayPal` implement one `PayPalGateway`. The
 rest of the code can't tell which it's using, and the e2e runs without credentials. The "Try the demo instead" link makes a throwaway person (`simulated` on the person and on their tokens) whose payments only reach the simulator, even on a server with sandbox credentials; `paypalFor` picks the gateway, and shops are told the person is not verified.
 
+**The shop desk is the one page drawn in the browser.** Every other page is a server-rendered `html` template. The
+shop's dashboard at `/merchant` is AG Studio, a commercial React library, bundled by esbuild into
+`packages/shared/assets/desk/desk.js` (built by `scripts/dev.mjs`, not committed). It reads `/merchant/api/desk`, which
+holds only what a shop already knows: a courier's name, its pairwise pseudonym and what it did. `AG_STUDIO_LICENSE_KEY`
+is optional and goes to the browser; without it AG Studio runs as a trial, with a watermark and a note in the console.
+
+**The clerk is Studio's agents on Claude, with the key kept on the server.** Studio runs its agents in the browser
+and calls a model adapter for each turn. The desk's adapter posts the turn to `/merchant/api/llm`, which calls Claude
+with `AGENT_MODEL` and streams Studio's events back. The server fixes the model and the token cap, adds a preamble that
+treats courier names and item titles as untrusted text, accepts only same-origin calls and limits how often they come.
+The clerk can read the data and change the dashboard, nothing else. Without an Anthropic key, or with `DESK_AGENT=off`,
+the panel isn't shown and the endpoint answers 503.
+
 ## Storage
 
 `DocStore` keeps JSON documents in SQLite, using Node's built-in `node:sqlite`: one `docs` table with `collection` and

@@ -1126,6 +1126,7 @@ await step("Bonded visa: $5 hold authorized; merchant report suspends the visa a
   assert.equal(visa.bond.status, "authorized");
   const report = await fetch(`${STORE}/merchant/report/${visa.id}`, { method: "POST", redirect: "manual" });
   assert.equal(report.status, 303);
+  assert.equal(report.headers.get("location"), "/merchant/ledger");
   const page = await (await browser.req(`${flow.courier}/app/errands?e=${visa.id}`)).text();
   assert.match(page, /bond captured/);
 });
@@ -1372,7 +1373,7 @@ await step("Each errand keeps its own budget, at any shop; what doesn't fit fail
 });
 
 await step("Shops see a different pseudonym each, and the connector's token doesn't work at a shop", async () => {
-  const seen = (await (await fetch(`${STORE}/merchant`)).text()).match(/<code>pp_[^<…]+…/g) ?? [];
+  const seen = (await (await fetch(`${STORE}/merchant/ledger`)).text()).match(/<code>pp_[^<…]+…/g) ?? [];
   assert.notEqual(seen[0], seen[1], "Floor Dash and Amazoo can't match this person up");
   const direct = await fetch(`${STORE}/amazoo/mcp`, {
     method: "POST",
@@ -1462,8 +1463,10 @@ await step(
     );
     assert.ok((await fetch(sc.receipt_url)).ok);
     assert.equal(structured(await tool("chip_in", { ...ask, confirm: code })).needs_ok, true, "a code works once");
-    const merchant = await (await fetch(`${STORE}/merchant`)).text();
+    const merchant = await (await fetch(`${STORE}/merchant/ledger`)).text();
     assert.doesNotMatch(merchant, /Malik|Noor|Maya|Leo\b/, "shops never learn who chipped in");
+    const desk = await (await fetch(`${STORE}/merchant/api/desk`)).text();
+    assert.doesNotMatch(desk, /Malik|Noor|Maya|Leo\b/, "nor does the shop desk");
   },
 );
 
@@ -1503,6 +1506,65 @@ await step("Release the bots: every attack is blocked or flagged", async () => {
     results.every((r: any) => r.outcome !== "allowed"),
     "no attack may be allowed",
   );
+});
+
+await step("The shop desk: one dashboard from pseudonymous data, with the door's noise left out", async () => {
+  const page = await (await fetch(`${STORE}/merchant`)).text();
+  assert.match(page, /<h1>Shop desk<\/h1>/);
+  assert.match(page, /id="desk"/);
+  assert.match(page, /\/assets\/desk\/desk\.js\?v=/, "the desk's bundle is built by the dev script");
+  assert.match(page, /href="\/merchant\/ledger"/, "the ledger stays one click away");
+  const attr = page.match(/data-boot="([^"]*)"/)![1]!;
+  const boot = JSON.parse(
+    attr
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&amp;/g, "&"),
+  );
+  assert.equal(boot.agent.enabled, false, "no key, no clerk");
+  assert.match(boot.agent.note, /ANTHROPIC_API_KEY/);
+  assert.ok((await fetch(`${STORE}/assets/desk/desk.js`)).ok);
+
+  const res = await fetch(`${STORE}/merchant/api/desk`);
+  assert.equal(res.headers.get("cache-control"), "no-store");
+  const body = await res.text();
+  const { sources } = JSON.parse(body);
+  assert.ok(sources.orders.length > 0 && sources.couriers.length > 0, "orders and couriers");
+  for (const o of sources.orders) {
+    assert.match(o.pseudonym, /^pp_/, "a courier is known by its pseudonym");
+    assert.equal(typeof o.amount, "number");
+    assert.ok(["Saved PayPal", "Approved link"].includes(o.paidWith));
+    assert.equal(typeof o.askedPerson, "boolean");
+  }
+  assert.ok(
+    sources.orders.some((o: any) => o.askedPerson),
+    "an order the person was asked about",
+  );
+  assert.doesNotMatch(body, /SIMPAYER|@example|"email"|"human"/, "no person's name, email or PayPal id");
+  assert.ok(!("shipments" in sources) || sources.shipments.length > 0, "an empty source is left out");
+
+  const door = sources.door;
+  assert.ok(door.length > 0);
+  assert.ok(
+    door.every((d: any) => !/initialize|notifications|tools\/list/.test(`${d.action} ${d.reason}`)),
+    "protocol housekeeping is dropped",
+  );
+  const reasons = new Set(door.filter((d: any) => !d.allowed).map((d: any) => d.reason));
+  for (const reason of ["No ID", "Forged ID", "Expired visa", "Wrong shop", "Over budget", "Flooding"])
+    assert.ok(reasons.has(reason), `bots turned away for "${reason}" (saw ${[...reasons].join(", ")})`);
+  assert.ok(
+    door.some((d: any) => d.allowed && d.action === "Browse" && d.count > 1),
+    "repeated browsing folds into one row",
+  );
+
+  const llm = await fetch(`${STORE}/merchant/api/llm`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ input: [] }),
+  });
+  assert.equal(llm.status, 503, "the clerk's endpoint is off without a key");
 });
 
 console.log(`\n${passed} steps passed.\n`);

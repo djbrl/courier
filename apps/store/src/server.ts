@@ -1,10 +1,12 @@
 import { randomUUID } from "node:crypto";
+import fs from "node:fs";
 import path from "node:path";
 import {
   config,
   findShop,
   internalFetch,
   JUNIPER,
+  money,
   paypal,
   ROOT_DIR,
   SHOPS,
@@ -27,8 +29,18 @@ import {
 } from "./auth.ts";
 import { CATALOG, shelfOf } from "./catalog.ts";
 import { db, type Order } from "./db.ts";
+import { deskSnapshot } from "./desk.ts";
+import { deskAgentNote, deskAgentOn, deskTurn } from "./desk-agent.ts";
 import { cancelOrder, createMcpServer, settleOrder } from "./mcp.ts";
-import { merchantDashboard, paymentResult, receiptPage, shopGrid, storefront } from "./views.ts";
+import {
+  type DeskBoot,
+  deskPage,
+  merchantDashboard,
+  paymentResult,
+  receiptPage,
+  shopGrid,
+  storefront,
+} from "./views.ts";
 
 const app = express();
 app.set("trust proxy", "loopback");
@@ -188,7 +200,34 @@ app.get("/catalog.json", (_req, res) => {
   });
 });
 
+const DESK_BUNDLE = path.join(ROOT_DIR, "packages/shared/assets/desk/desk.js");
+
 app.get("/merchant", (_req, res) => {
+  const { orders, door, couriers } = deskSnapshot().sources;
+  const paid = orders.filter((o) => o.paid).reduce((s, o) => s + Math.round(o.amount * 100), 0);
+  const turnedAway = door.filter((d) => !d.allowed).length;
+  const summary = [
+    `${couriers.length} ${couriers.length === 1 ? "courier" : "couriers"}`,
+    `${orders.length} ${orders.length === 1 ? "order" : "orders"}`,
+    `${money(paid)} paid`,
+    `${turnedAway} turned away`,
+  ];
+  const boot: DeskBoot = {
+    api: "/merchant/api",
+    // A browser licence key is meant to ship to the browser. Without one the desk runs as AG Studio's evaluation.
+    licenseKey: process.env.AG_STUDIO_LICENSE_KEY?.trim() || null,
+    agent: { enabled: deskAgentOn(), note: deskAgentNote() },
+  };
+  res.send(deskPage(boot, fs.existsSync(DESK_BUNDLE) ? "/assets/desk/desk.js" : null, summary));
+});
+
+app.get("/merchant/api/desk", (_req, res) => {
+  res.set("Cache-Control", "no-store").json(deskSnapshot());
+});
+
+app.post("/merchant/api/llm", express.json({ limit: "2mb" }), deskTurn);
+
+app.get("/merchant/ledger", (_req, res) => {
   const orders = db.list<Order>("orders").sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const requests = db.list<RequestLogEntry>("requests", undefined, 300).sort((a, b) => b.at.localeCompare(a.at));
   res.send(merchantDashboard(orders, requests));
@@ -213,7 +252,7 @@ app.post("/merchant/report/:visaId", express.urlencoded({ extended: false }), as
   } catch (error) {
     console.warn("[store] report failed", (error as Error).message);
   }
-  res.redirect(303, "/merchant");
+  res.redirect(303, "/merchant/ledger");
 });
 
 /** A receipt the person can open from their chat. The key is the only credential, and it shows no personal data. */
