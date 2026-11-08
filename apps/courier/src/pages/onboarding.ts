@@ -15,7 +15,7 @@ import {
   idCard,
   LOGO,
   PP,
-  paypalButton,
+  paypal,
   type RawHtml,
   raw,
 } from "@courier/shared";
@@ -75,14 +75,29 @@ export function welcomePage(): string {
   });
 }
 
+/**
+ * Three ways in. A real PayPal account can't sign in to a demo, so that button is there but off; a PayPal sandbox
+ * account goes through PayPal's own sign-in when the server has sandbox keys; and the made-up people need nothing.
+ */
 export function signInStepPage(): string {
+  const sandbox = paypal.mode === "sandbox";
   return stagePage("Get started", {
     step: 1,
     left: html`<div class="ob2-body">
         <h1 class="ob2-h">Let’s get your courier.</h1>
         <p class="ob2-lead">PayPal checks there’s a real person behind it. Shops never learn who you are.</p>
-      </div>
-      <div class="ob2-foot">${paypalButton("/start/paypal")}<p class="fine">It’s a demo: no real PayPal account needed.</p></div>`,
+        <div class="ob2-ways">
+          <span class="btn-pp ob2-off" aria-disabled="true">Continue with ${PP}</span>
+          <small class="ob2-why">This is a demo, so a real PayPal account can’t sign in.</small>
+          ${
+            sandbox
+              ? html`<a class="btn ghost ob2-way" href="/auth/paypal/start?next=%2Fstart%2Fcourier">Use a PayPal sandbox account</a>`
+              : html`<span class="btn ghost ob2-way ob2-off" aria-disabled="true">Use a PayPal sandbox account</span>
+                <small class="ob2-why">Sandbox sign-in isn’t set up on this server.</small>`
+          }
+          <a class="btn ob2-way" href="/start/paypal">Use a demo account${ARROW}</a>
+        </div>
+      </div>`,
     card: blankCard(),
   });
 }
