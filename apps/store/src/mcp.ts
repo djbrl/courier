@@ -291,7 +291,31 @@ interface SpendDecision {
   autopay?: boolean;
 }
 
-function spendCheck(
+async function spendCheck(
+  shop: Shop,
+  claims: VisaTokenClaims,
+  action: "reserve" | "checkout",
+  items: Item[],
+  approvalId?: string,
+  note?: string,
+) {
+  const decision = await askCourier(shop, claims, action, items, approvalId, note);
+  // A refused spend passed the door with a valid ID, so the request log alone would show it as let in.
+  if (decision.decision === "deny")
+    logRequest({
+      outcome: "blocked",
+      reason: decision.reason,
+      code: decision.code ?? null,
+      status: 403,
+      sub: claims.sub,
+      visaId: claims.visa.id,
+      agent: claims.visa.agent,
+      demo: isDemo(claims.human),
+    });
+  return decision;
+}
+
+function askCourier(
   shop: Shop,
   claims: VisaTokenClaims,
   action: "reserve" | "checkout",

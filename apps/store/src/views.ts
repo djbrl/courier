@@ -1,6 +1,4 @@
 import {
-  COURIER_COLORS,
-  type CourierColor,
   config,
   courierLayout,
   courierVars,
@@ -23,6 +21,7 @@ import { itemArt } from "./art.ts";
 import type { RequestLogEntry } from "./auth.ts";
 import { findItem, type Item } from "./catalog.ts";
 import type { Order } from "./db.ts";
+import { colorFor } from "./desk.ts";
 
 /* The shops' pages, in the Courier design system: the logo grid, each shop's shelf, and what shops see of couriers. */
 
@@ -33,7 +32,7 @@ function storeNav(view: "shop" | "merchant", shop?: Shop): RawHtml {
     <a class="jr" href="${shop ? `/${shop.slug}` : "/"}">${shop ? shopLogo(shop, "sm") : LOGO}<div><b>${shop?.name ?? "Courier shops"}</b><small>${shop?.sells ?? "Shops that welcome couriers"}</small></div></a>
     <nav>
       <a class="hide-sm" href="/" ${view === "shop" && !shop ? raw('aria-current="page"') : ""}>All shops</a>
-      <a class="hide-sm" href="/merchant" ${view === "merchant" ? raw('aria-current="page"') : ""}>What shops see</a>
+      <a class="hide-sm" href="/merchant" ${view === "merchant" ? raw('aria-current="page"') : ""}>Shop desk</a>
       ${shop ? html`<a class="welcome" href="${config.courier.url}">${LOGO}<span>couriers welcome</span></a>` : ""}
     </nav>
   </header>`;
@@ -43,7 +42,7 @@ function storePage(
   title: string,
   view: "shop" | "merchant",
   body: RawHtml,
-  opts: { scripts?: string[]; shop?: Shop } = {},
+  opts: { scripts?: string[]; styles?: string[]; shop?: Shop } = {},
 ): string {
   return courierLayout({
     title: `${title} · ${opts.shop?.name ?? "Courier shops"}`,
@@ -51,6 +50,7 @@ function storePage(
     body,
     bodyClass: `jr-page jr-${view}`,
     scripts: opts.scripts,
+    styles: opts.styles,
   });
 }
 
@@ -195,14 +195,6 @@ const paypalNote = (order?: Order) =>
     simulated: "Simulated PayPal: no real money moved.",
   })[paypalFor(order).mode];
 
-/** A stable colour for a courier the shop only knows by name. */
-function colorFor(name: string): CourierColor {
-  const colors = Object.keys(COURIER_COLORS) as CourierColor[];
-  let h = 0;
-  for (const ch of name) h = (h * 31 + ch.codePointAt(0)!) >>> 0;
-  return colors[h % colors.length]!;
-}
-
 const STATUS: Record<Order["status"], string> = {
   awaiting_approval: "Waiting to pay",
   paid: "Paid",
@@ -232,10 +224,11 @@ export function merchantDashboard(orders: Order[], requests: RequestLogEntry[]):
     `${blocked.length} turned away`,
   ].filter(Boolean);
   return storePage(
-    "What shops see",
+    "Shop ledger",
     "merchant",
     html`<main class="jr-main mdash" data-autorefresh="6000">
       <header class="md-h">
+        <p class="md-back"><a href="/merchant">← Shop desk</a></p>
         <h1 class="big">Who’s shopping here?</h1>
         <p class="lead">Every courier shows a signed ID and its limits. Never the person’s name.</p>
         <p class="md-sum">${summary.join(" · ")}</p>
@@ -297,4 +290,41 @@ function orderRow(order: Order): RawHtml {
       <form method="post" action="/merchant/report/${visa.id}"><button class="btn danger sm" type="submit" title="Suspends this courier's pass and claims its bond, if any">Report this courier</button></form>
     </div>
   </details>`;
+}
+
+/** What the shop desk's script needs before its first fetch. Nothing in it is about a person. */
+export interface DeskBoot {
+  api: string;
+  licenseKey: string | null;
+  agent: { enabled: boolean; note: string };
+}
+
+/**
+ * The shop desk: one dashboard, drawn in the browser from /merchant/api/desk. The server draws the frame, a summary
+ * that reads without the script, and the way to the ledger, which keeps the "Report this courier" buttons.
+ */
+export function deskPage(boot: DeskBoot, bundle: string | null, summary: string[]): string {
+  return storePage(
+    "Shop desk",
+    "merchant",
+    html`<main class="dk">
+      <header class="dk-h">
+        <div>
+          <h1>Shop desk</h1>
+          <p>Every courier that came to the door, what it bought and who got turned away. A courier shows a signed ID, never the person’s name.</p>
+        </div>
+        <a class="btn sm" href="/merchant/ledger">Ledger and reports</a>
+      </header>
+      <p class="dk-sum">${summary.join(" · ")}</p>
+      <div id="desk" class="dk-root" data-boot="${JSON.stringify(boot)}">
+        ${
+          bundle
+            ? html`<p class="dk-wait">Opening the desk…</p>`
+            : html`<p class="dk-wait">The desk’s script isn’t built yet. Run <code>npm run build:desk</code>, or open the <a href="/merchant/ledger">ledger</a>.</p>`
+        }
+      </div>
+      <noscript><p class="dk-wait">The desk needs JavaScript. The <a href="/merchant/ledger">ledger</a> works without it.</p></noscript>
+    </main>`,
+    { scripts: bundle ? [bundle] : [] },
+  );
 }

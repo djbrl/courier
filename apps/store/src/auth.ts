@@ -51,6 +51,8 @@ export interface RequestLogEntry {
   /** The ID's payments only reach the PayPal simulator (a demo person, or a server with no sandbox). Unset when no
    * valid ID was shown, and on entries logged before shops told demo from sandbox. */
   demo?: boolean;
+  /** Courier's code for a refused spend (e.g. "spend_limit"), so the desk can group refusals by kind. */
+  code?: string | null;
 }
 
 /** Whether this ID's payments go to the PayPal simulator rather than the PayPal sandbox. Read from the signed claim
