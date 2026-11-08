@@ -34,6 +34,64 @@ export interface Order {
   disputed?: boolean;
   /** A share of one item, paid alongside other people's shares. */
   group?: string;
+  /** Given back through PayPal after a return. */
+  refundedCents?: number;
+}
+
+/** The steps a parcel goes through. PayPal's tracker only knows SHIPPED and DELIVERED; the rest are the carrier's scans. */
+export const STAGES = ["label_created", "in_transit", "out_for_delivery", "delivered"] as const;
+export type Stage = (typeof STAGES)[number];
+
+/** A paid order on its way, keyed by the order id. */
+export interface Shipment {
+  id: string;
+  orderId: string;
+  shop: string;
+  visaId: string;
+  /** PayPal's name for the carrier, or "RIDER" for the shop's own delivery, which PayPal doesn't track. */
+  carrier: string;
+  carrierName: string;
+  trackingNumber: string;
+  /** The PayPal capture the tracker is added to. */
+  captureId: string | null;
+  shippedAt: string;
+  /** The last step Courier was told about. */
+  told: number;
+  deliveredAt?: string;
+  /** What PayPal said when the clerk added or closed the tracker; null when it isn't tracked there. */
+  paypal: { status: "SHIPPED" | "DELIVERED"; mode: string } | { error: string; mode: string } | null;
+  simulated?: boolean;
+}
+
+/** A return asked for by a courier, or a refund the owner confirmed. One per order, decided once. */
+export interface ReturnRecord {
+  id: string;
+  orderId: string;
+  shop: string;
+  /** What the courier said, word for word. Untrusted: kept for the owner, never followed. */
+  reason: string;
+  decision: "full" | "partial" | "decline";
+  amountCents: number;
+  /** For the customer, from the clerk or the owner. */
+  note: string;
+  refundId?: string;
+  by: "clerk" | "owner";
+  /** Which mind decided: the model's name, or "rules". */
+  decidedBy: string;
+  paypalMode: string;
+  at: string;
+}
+
+/** A refund the owner's clerk proposed. Nothing moves until the owner confirms it. */
+export interface ClerkAction {
+  id: string;
+  kind: "refund";
+  orderId: string;
+  amountCents: number;
+  note: string;
+  status: "proposed" | "done" | "refused";
+  createdAt: string;
+  expiresAt: string;
 }
 
 /** People chipping in on one item. Each pays their own order; the item ships once the shares add up to its price. */

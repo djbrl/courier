@@ -29,7 +29,11 @@ apps/
     server.ts            Shop routes and the /mcp endpoint
     auth.ts              Verifies every token
     mcp.ts               The tools agents can call
-    catalog.ts           What each shop sells
+    catalog.ts           What each shop sells, how it delivers, what it takes back
+    shipping.ts          Parcels: tracking on the PayPal payment, steps on a clock
+    clerk.ts             Returns and the owner's clerk, with Claude
+    limits.ts            What a refund may be, in plain code
+    toolkit.ts           PayPal's Agent Toolkit, sandbox or simulated
     views.ts             Logo grid, shop pages and merchant view
 packages/shared/
   src/                   Config, PayPal gateway, intent check, visa model, store
@@ -138,7 +142,22 @@ stays until `removeSavedPayPal` deletes it. The connection stays, so Claude's ne
 for errands that ran out. `disconnect` removes the Claude itself, and its next call fails `requireVisa`.
 `deleteAccount` ends every errand, then erases the person's records, stopping first if PayPal won't release something.
 
-## 11. See it attacked
+## 11. After the sale
+
+`fulfil` ends by shipping the order (`ship` in `apps/store/src/shipping.ts`). The shop's clerk adds the tracking number
+to the PayPal capture with the Agent Toolkit's `create_shipment_tracking`, and the parcel moves a step every
+`SHIPPING_STEP_SECONDS` (30 with the simulator) until `update_shipment_tracking` marks it delivered. Each step reaches
+Courier at `POST /internal/shipments` (`apps/courier/src/after-sale.ts`), which stamps the errand and moves the card in
+the chat. `track_order` tells a courier where a parcel is.
+
+`request_return` hands the order and the courier's reason to `requestReturn` in `clerk.ts`. Claude reads the shop's
+policy (`AFTER_SALE` in `catalog.ts`) and calls the toolkit's `create_refund` or declines; without a key, `rulesVerdict`
+decides. Either way the call passes `refundRoom` and `checkRefundArgs` in `limits.ts` first. `toolkit.ts` builds the
+toolkit with only the actions the clerk needs; with the simulator, the same toolkit runs against `/sim-paypal/rest`.
+
+The owner's side is `POST /merchant/api/clerk` and `/merchant/api/clerk/confirm` in the store's `server.ts`.
+
+## 12. See it attacked
 
 `apps/courier/src/routes/bots.ts` fires eight attacks at the real endpoint. Each one is short and exercises a defence
 you've just read about, so it's a good recap. Open <http://localhost:4000/bots> to run them.

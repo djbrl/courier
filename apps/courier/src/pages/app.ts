@@ -29,7 +29,7 @@ import {
   VERIFIED,
   type Visa,
 } from "@courier/shared";
-import type { Approval, Connection, Courier, Human, Stamp } from "../db.ts";
+import type { Approval, Connection, Courier, Delivery, Human, Stamp } from "../db.ts";
 import type { Friend } from "../friends.ts";
 import type { Contact } from "../people.ts";
 import { capFields } from "./consent.ts";
@@ -62,6 +62,8 @@ export interface Desk {
   connections: Connection[];
   /** Where an errand's chat is, for errands sent from the errand room. */
   chatByVisa: Map<string, string>;
+  /** Parcels shops sent for these errands. */
+  deliveries: Delivery[];
 }
 
 type View = "home" | "errands" | "shops" | "people" | "couriers" | "settings";
@@ -330,6 +332,8 @@ const STAMP_ICON: Record<Stamp["kind"], { k: string; cls: string }> = {
   revoked: { k: "×", cls: "no" },
   report: { k: "!", cls: "no" },
   bond: { k: "◎", cls: "" },
+  shipping: { k: "▸", cls: "ship" },
+  refund: { k: "↩", cls: "refund" },
 };
 
 export function errandsPage(d: Desk, opts: { tab?: string; errandId?: string }): string {
@@ -380,14 +384,16 @@ function errandDetail(d: Desk, v: VisaView): RawHtml {
         ? `Back since ${backBy(v.expiresAt)}`
         : `Ended ${timeAgo(v.revokedAt ?? v.expiresAt)}`));
   const bought = steps.filter((s) => s.kind === "purchase").length;
+  // Parcels keep moving after a paid errand is done, so the steps keep refreshing until they've all arrived.
+  const moving = d.deliveries.some((x) => x.visaId === v.id && x.stage < x.labels.length - 1);
   const body = html`<div class="ed cc" style="${courierVars(look.color)}">
     <div class="card ed-who">${portrait(look)}<span class="li-t"><b>${look.name}</b><small>${whereTo(d, v)} · ${isRoom ? "Errand room" : "Claude"} · ${bought} bought</small></span>
-      <span class="ed-money"><span><b>${money(v.spentCents)}</b> of ${money(v.spendLimitCents)}</span>${meter(v, "sm")}</span>
+      <span class="ed-money"><span><b>${money(v.spentCents)}</b> of ${money(v.spendLimitCents)}${v.refundedCents ? html` · <b class="refunded">${money(v.refundedCents)} refunded</b>` : ""}</span>${meter(v, "sm")}</span>
       <span class="st ${isOut(v) ? "active" : ""}"><i></i>${isOut(v) ? "Out now" : "Done"}</span></div>
     <section><div class="pg-st"><h2>What happened</h2></div>
       <div class="card pad">${
         steps.length
-          ? html`<ol class="tl" ${isOut(v) ? raw('data-autorefresh="8000"') : ""}>${steps.map(
+          ? html`<ol class="tl" ${isOut(v) || moving ? raw('data-autorefresh="8000"') : ""}>${steps.map(
               (s) =>
                 html`<li class="${STAMP_ICON[s.kind].cls}"><b>${s.title}</b>${s.detail ? html`<span>${s.detail}</span>` : ""}<time>${timeAgo(s.at)}</time></li>`,
             )}</ol>`

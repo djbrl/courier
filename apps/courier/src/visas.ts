@@ -219,6 +219,8 @@ export async function deleteAccount(human: Human): Promise<boolean> {
     "errand_sessions",
     "room_sessions",
     "room_chats",
+    "deliveries",
+    "refunds",
   ])
     db.deleteWhere(collection, theirs);
   for (const collection of ["holds", "reports", "visa_requests"]) db.deleteWhere(collection, ofTheirVisa);

@@ -468,5 +468,187 @@ export function simPaypalRouter(courierUrl: string): Router {
   });
 
   router.use("/api", api);
+  router.use("/rest", restRouter());
   return router;
+}
+
+/* ---------- PayPal's own REST shapes, for the Agent Toolkit ---------- */
+
+interface SimRefund {
+  id: string;
+  captureId: string;
+  amountCents: number;
+  currency: string;
+  note: string | null;
+  createdAt: string;
+}
+
+interface SimTracker {
+  id: string;
+  transactionId: string;
+  trackingNumber: string;
+  status: string;
+  carrier: string;
+  updatedAt: string;
+}
+
+const TRACKER_STATUSES = new Set(["SHIPPED", "ON_HOLD", "DELIVERED", "CANCELLED", "LOCAL_PICKUP"]);
+
+/**
+ * The shops' clerk runs PayPal's Agent Toolkit unchanged and only points it here, so these answer at PayPal's own
+ * paths with PayPal's shapes: refunds on captures, shipment trackers, and the transaction report. Refunds can never add
+ * up to more than was captured, as at PayPal.
+ */
+function restRouter(): Router {
+  const rest = Router();
+  rest.use(requireInternal);
+  const value = (cents: number) => (cents / 100).toFixed(2);
+  const problem = (res: express.Response, status: number, name: string, description: string) =>
+    res.status(status).json({ name, message: description, details: [{ issue: name, description }] });
+  const captured = (captureId: string) =>
+    db.list<SimOrder>("sim_orders", (o) => o.status === "COMPLETED" && o.captureId === captureId, 1)[0];
+  const refundsOf = (captureId: string) =>
+    db.list<SimRefund>("sim_refunds", (r) => r.captureId === captureId, Number.POSITIVE_INFINITY);
+  const refundView = (r: SimRefund) => ({
+    id: r.id,
+    status: "COMPLETED",
+    amount: { currency_code: r.currency, value: value(r.amountCents) },
+    ...(r.note ? { note_to_payer: r.note } : {}),
+    create_time: r.createdAt,
+    links: [],
+  });
+
+  rest.post("/v2/payments/captures/:id/refund", (req, res) => {
+    const order = captured(req.params.id);
+    if (!order) return void problem(res, 404, "RESOURCE_NOT_FOUND", "The specified capture ID does not exist.");
+    const left = order.amountCents - refundsOf(req.params.id).reduce((s, r) => s + r.amountCents, 0);
+    const asked = req.body?.amount;
+    if (asked && asked.currency_code !== order.currency)
+      return void problem(res, 422, "CURRENCY_MISMATCH", "Refund must be in the same currency as the capture.");
+    const cents = asked ? Math.round(Number(asked.value) * 100) : left;
+    if (!(cents > 0) || cents > left)
+      return void problem(
+        res,
+        422,
+        "REFUND_AMOUNT_EXCEEDED",
+        "The refund amount must be less than or equal to the capture amount that has not yet been refunded.",
+      );
+    const refund: SimRefund = {
+      id: newId("REF").replace("_", "-"),
+      captureId: req.params.id,
+      amountCents: cents,
+      currency: order.currency,
+      note: typeof req.body?.note_to_payer === "string" ? req.body.note_to_payer.slice(0, 255) : null,
+      createdAt: new Date().toISOString(),
+    };
+    db.put("sim_refunds", refund.id, refund);
+    res.status(201).json(refundView(refund));
+  });
+
+  rest.get("/v2/payments/refunds/:id", (req, res) => {
+    const refund = db.get<SimRefund>("sim_refunds", req.params.id);
+    if (!refund) return void problem(res, 404, "RESOURCE_NOT_FOUND", "The specified refund ID does not exist.");
+    res.json(refundView(refund));
+  });
+
+  rest.post("/v1/shipping/trackers-batch", (req, res) => {
+    const trackers = Array.isArray(req.body?.trackers) ? req.body.trackers : [];
+    const added: { transaction_id: string; tracking_number: string; links: [] }[] = [];
+    const errors: { name: string; message: string }[] = [];
+    for (const t of trackers) {
+      const status = String(t?.status ?? "SHIPPED");
+      if (!captured(String(t?.transaction_id ?? "")) || !t?.tracking_number || !TRACKER_STATUSES.has(status)) {
+        errors.push({ name: "INVALID_REQUEST", message: `Can't add a tracker to ${String(t?.transaction_id)}.` });
+        continue;
+      }
+      const tracker: SimTracker = {
+        id: `${t.transaction_id}-${t.tracking_number}`,
+        transactionId: t.transaction_id,
+        trackingNumber: t.tracking_number,
+        status,
+        carrier: String(t.carrier ?? "OTHER"),
+        updatedAt: new Date().toISOString(),
+      };
+      db.put("sim_trackers", tracker.id, tracker);
+      added.push({ transaction_id: tracker.transactionId, tracking_number: tracker.trackingNumber, links: [] });
+    }
+    res.json({ tracker_identifiers: added, errors, links: [] });
+  });
+
+  rest.get("/v1/shipping/trackers", (req, res) => {
+    const id = String(req.query.transaction_id ?? "");
+    const trackers = db.list<SimTracker>("sim_trackers", (t) => t.transactionId === id);
+    res.json({
+      trackers: trackers.map((t) => ({
+        transaction_id: t.transactionId,
+        tracking_number: t.trackingNumber,
+        status: t.status,
+        carrier: t.carrier,
+        last_updated_time: t.updatedAt,
+      })),
+    });
+  });
+
+  rest.put("/v1/shipping/trackers/:id", (req, res) => {
+    const tracker = db.get<SimTracker>("sim_trackers", req.params.id);
+    if (!tracker) return void problem(res, 404, "RESOURCE_NOT_FOUND", "The specified tracker does not exist.");
+    const status = String(req.body?.status ?? "");
+    if (!TRACKER_STATUSES.has(status))
+      return void problem(res, 400, "INVALID_PARAMETER_VALUE", "Unknown tracker status.");
+    db.put<SimTracker>("sim_trackers", tracker.id, {
+      ...tracker,
+      status,
+      ...(req.body?.carrier ? { carrier: String(req.body.carrier) } : {}),
+      updatedAt: new Date().toISOString(),
+    });
+    res.status(204).end();
+  });
+
+  rest.get("/v1/reporting/transactions", (req, res) => {
+    const from = Date.parse(String(req.query.start_date ?? "")) || Date.now() - 31 * 86_400_000;
+    const to = Date.parse(String(req.query.end_date ?? "")) || Date.now();
+    const only = req.query.transaction_id ? String(req.query.transaction_id) : null;
+    const within = (at: string) => Date.parse(at) >= from && Date.parse(at) <= to;
+    const sales = db
+      .list<SimOrder>("sim_orders", (o) => o.status === "COMPLETED" && Boolean(o.captureId) && within(o.createdAt), 500)
+      .map((o) => ({
+        transaction_info: {
+          transaction_id: o.captureId,
+          transaction_event_code: "T0006",
+          transaction_initiation_date: o.createdAt,
+          transaction_amount: { currency_code: o.currency, value: value(o.amountCents) },
+          transaction_status: "S",
+          custom_field: o.customId,
+        },
+      }));
+    const refunds = db
+      .list<SimRefund>("sim_refunds", (r) => within(r.createdAt), 500)
+      .map((r) => ({
+        transaction_info: {
+          transaction_id: r.id,
+          paypal_reference_id: r.captureId,
+          transaction_event_code: "T1107",
+          transaction_initiation_date: r.createdAt,
+          transaction_amount: { currency_code: r.currency, value: `-${value(r.amountCents)}` },
+          transaction_status: "S",
+        },
+      }));
+    const details = [...sales, ...refunds]
+      .filter((t) => !only || t.transaction_info.transaction_id === only)
+      .sort((a, b) =>
+        b.transaction_info.transaction_initiation_date.localeCompare(a.transaction_info.transaction_initiation_date),
+      );
+    res.json({
+      transaction_details: details,
+      account_number: "SIMULATED",
+      start_date: new Date(from).toISOString(),
+      end_date: new Date(to).toISOString(),
+      page: 1,
+      total_items: details.length,
+      total_pages: 1,
+      links: [],
+    });
+  });
+
+  return rest;
 }

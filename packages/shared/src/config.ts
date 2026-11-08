@@ -82,6 +82,13 @@ export const config = {
   agent: {
     model: env("AGENT_MODEL", "claude-sonnet-5-5"),
   },
+  shipping: {
+    /**
+     * How long a parcel spends at each step (label, in transit, out for delivery, delivered). Quick with the simulator so a
+     * demo sees it arrive in a minute or two; set SHIPPING_STEP_SECONDS to change it.
+     */
+    stepMs: Number(env("SHIPPING_STEP_SECONDS", paypalMode === "simulated" ? "30" : "300")) * 1000,
+  },
   anthropicConfigured: Boolean(env("ANTHROPIC_API_KEY") || env("ANTHROPIC_AUTH_TOKEN")),
 };
 

@@ -18,6 +18,7 @@ import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import {
   type AgentMemory,
   type CallTool,
+  type PaidOrder,
   type PickedItem,
   quoteItems,
   runAgent,
@@ -42,10 +43,12 @@ import {
   anyShop,
   type Connection,
   type Courier,
+  type Delivery,
   db,
   effectiveStatus,
   findCourier,
   type Human,
+  type Refund,
   remainingBudget,
 } from "./db.ts";
 import { type Friend, friendLine, friendsOf } from "./friends.ts";
@@ -130,7 +133,29 @@ export type ChatEvent =
   /** An amount the courier worked out, for the person to set as the budget with a tap or a yes. */
   | { t: "offer"; dollars: number; cents: number; what: string; change?: boolean; answered?: "ok" | "no" }
   /** The chat is over: it stays to read, and anything new is a new errand. */
-  | { t: "ended"; text: string };
+  | { t: "ended"; text: string }
+  /** A paid order on its way. Updated in place as the shop reports each step. */
+  | {
+      t: "ship";
+      order_id: string;
+      shop: string;
+      carrier: string;
+      tracking: string;
+      stage: number;
+      labels: string[];
+      expected_at: string;
+      paypal: string | null;
+    }
+  /** What the shop decided on a return. */
+  | {
+      t: "refund";
+      order_id: string;
+      shop: string;
+      decision: "full" | "partial" | "decline";
+      amount: string;
+      note: string;
+      paypal: string;
+    };
 
 /** A budget the courier proposed. Only the person's own yes, in their next message or on its card, sets it. */
 interface BudgetOffer {
@@ -267,6 +292,7 @@ function errandView(chat: RoomChat) {
         id: v.id,
         what: v.intent,
         spentCents: v.spentCents,
+        refundedCents: v.refundedCents ?? 0,
         limitCents: v.spendLimitCents,
         remainingCents: remainingBudget(v),
         open: effectiveStatus(v) === "active",
@@ -395,6 +421,67 @@ async function askShop(
 
 /* ---------------- after a purchase ---------------- */
 
+export const deliveryEvent = (d: Delivery): Extract<ChatEvent, { t: "ship" }> => ({
+  t: "ship",
+  order_id: d.id,
+  shop: d.merchantName,
+  carrier: d.carrierName,
+  tracking: d.trackingNumber,
+  stage: d.stage,
+  labels: d.labels,
+  expected_at: d.expectedAt,
+  paypal: d.paypal,
+});
+
+const boughtHere = (chat: RoomChat, orderId: string) =>
+  chat.events.some((e) => (e.t === "receipt" || e.t === "pay") && e.order_id === orderId);
+
+/** A shop's news about something a chat bought: its parcel moved, or a return was decided. The card updates in place. */
+export function afterSale(
+  humanId: string,
+  orderId: string,
+  event: Extract<ChatEvent, { t: "ship" }> | Extract<ChatEvent, { t: "refund" }>,
+): void {
+  const chat = chatsOfHuman(humanId)
+    .map((c) => running.get(c.id) ?? c)
+    .find((c) => boughtHere(c, orderId));
+  if (!chat) return;
+  const at = chat.events.findIndex((e) => e.t === event.t && e.order_id === orderId);
+  if (at >= 0) chat.events[at] = event;
+  else chat.events.push(event);
+  touch(chat);
+}
+
+/** A parcel can be on its way before the receipt is written, when saved PayPal pays mid-turn. It follows the receipt. */
+function parcelAfter(chat: RoomChat, orderId: string): void {
+  const delivery = db.get<Delivery>("deliveries", orderId);
+  if (delivery && !chat.events.some((e) => e.t === "ship" && e.order_id === orderId))
+    chat.events.push(deliveryEvent(delivery));
+}
+
+/** What this chat bought, for the courier to track or return. */
+function ordersOf(chat: RoomChat): PaidOrder[] {
+  return chat.events.flatMap((e) => {
+    if (e.t !== "receipt") return [];
+    const d = db.get<Delivery>("deliveries", e.order_id);
+    const r = db.get<Refund>("refunds", e.order_id);
+    return [
+      {
+        order_id: e.order_id,
+        shop: e.shop,
+        items: e.items.map((i) => String(i.title)).join(", "),
+        total: e.total,
+        delivery: d ? d.labels[d.stage] : undefined,
+        returned: r
+          ? r.decision === "decline"
+            ? "return declined"
+            : `refunded $${(r.amountCents / 100).toFixed(2)}`
+          : undefined,
+      },
+    ];
+  });
+}
+
 const unpaid = (chat: RoomChat) => chat.events.some((e) => e.t === "pay" && e.status === "open");
 
 /** An errand is over once what it bought is paid for and nothing is waiting. Its budget goes with it. */
@@ -430,6 +517,7 @@ function settled(chat: RoomChat, card: Extract<ChatEvent, { t: "pay" }>, order: 
       items: order.items ?? card.items,
       receipt_url: order.receipt_url ?? null,
     });
+    parcelAfter(chat, card.order_id);
     chat.amounts = false;
     finishErrands(chat);
     if (unpaid(chat)) touch(chat);
@@ -1067,6 +1155,19 @@ function roomTools(human: Human, courier: Courier, chat: RoomChat, message: stri
       case "order_status":
         if (!shop) return noShop(args.shop);
         return browse(shop, "order_status", { order_id: String(args.order_id ?? "") });
+      // The shop checks the order is this person's; its clerk, not the courier, decides a return.
+      case "track_order":
+        if (!shop) return noShop(args.shop);
+        return browse(shop, "track_order", { order_id: String(args.order_id ?? "") });
+      case "request_return": {
+        if (!shop) return noShop(args.shop);
+        const reason = String(args.reason ?? "")
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 500);
+        if (reason.length < 2) return { text: "Say why they want to return it, in their words.", isError: true };
+        return browse(shop, "request_return", { order_id: String(args.order_id ?? ""), reason });
+      }
       // Shares come from the shop's price and each contact's courier, here in code. The model only names the item and people.
       case "chip_in": {
         if (!shop) return noShop(args.shop);
@@ -1172,6 +1273,8 @@ const NOTES: Record<string, (step: Step) => string> = {
   start_errand: () => "Writing the errand…",
   invite: () => "Making the link…",
   tell_run: () => "Passing it on…",
+  track_order: (s) => `Asking ${s.data?.shop_name || s.args?.shop || "the shop"} where it is…`,
+  request_return: (s) => `Asking ${s.data?.shop_name || s.args?.shop || "the shop"}’s clerk…`,
 };
 
 /** The tools speak to the agent; strip the links and instructions meant for it. */
@@ -1220,6 +1323,7 @@ function report(chat: RoomChat, steps: Step[], reply: string): void {
         items: d.items ?? [],
         receipt_url: d.receipt_url ?? null,
       });
+      parcelAfter(chat, d.order_id);
     } else if (d.decision === "ask_human")
       chat.events.push({
         t: "ask",
@@ -1259,6 +1363,7 @@ function courierBrief(human: Human, courier: Courier, chat: RoomChat, callTool: 
           : [],
       ),
     ].join("; "),
+    orders: ordersOf(chat),
     contacts: contactLine(contactsOf(human)),
     friends: friendLine(friendsOf(human.id)),
     run: run && memberOf(run, human.id) ? runState(run, human.id) : undefined,
