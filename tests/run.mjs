@@ -1,25 +1,31 @@
 // Runs the e2e and the MCP SDK client check against a throwaway server pair, so tests never touch your demo or
-// sandbox data: simulated PayPal, deterministic intent rules, ports 4300/4400, data in data/test-run (wiped first).
+// sandbox data: simulated PayPal, deterministic intent rules, ports 4300/4400, data in data/test-run-4300 (wiped first).
 //
 //   npm test
 import { spawn } from "node:child_process";
 import { rmSync } from "node:fs";
 
-const COURIER_URL = "http://localhost:4300";
-const STORE_URL = "http://localhost:4400";
+// TEST_COURIER_PORT and TEST_STORE_PORT move the pair, so a second copy can run beside the first.
+const COURIER_PORT = process.env.TEST_COURIER_PORT || "4300";
+const STORE_PORT = process.env.TEST_STORE_PORT || "4400";
+const COURIER_URL = `http://localhost:${COURIER_PORT}`;
+const STORE_URL = `http://localhost:${STORE_PORT}`;
+const DATA_DIR = `data/test-run-${COURIER_PORT}`;
 const env = {
   ...process.env,
   PAYPAL_MODE: "simulated",
-  // The scripted courier, whatever .env says: tests never call a model.
+  // The scripted courier and the clerk's rules, whatever .env says: tests never call a model.
   ANTHROPIC_API_KEY: "",
   ANTHROPIC_AUTH_TOKEN: "",
   INTENT_CHECK: "on",
   INTENT_MODEL: "rules",
-  COURIER_PORT: "4300",
-  STORE_PORT: "4400",
+  // Parcels move a step a second, so the tests see one delivered.
+  SHIPPING_STEP_SECONDS: "1",
+  COURIER_PORT,
+  STORE_PORT,
   COURIER_URL,
   STORE_URL,
-  DATA_DIR: "data/test-run",
+  DATA_DIR,
 };
 
 async function up(url) {
@@ -43,7 +49,7 @@ for (const url of [COURIER_URL, STORE_URL]) {
   }
 }
 
-rmSync("data/test-run", { recursive: true, force: true });
+rmSync(DATA_DIR, { recursive: true, force: true });
 const servers = spawn(process.execPath, ["scripts/dev.mjs", "--no-watch"], {
   env,
   stdio: ["ignore", "ignore", "inherit"],
