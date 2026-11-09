@@ -47,7 +47,7 @@ const widgets: Record<string, any> = {
       ],
     },
     sort: [{ field: { id: "door.at" }, direction: "desc" }],
-    format: title("Who's at the door"),
+    format: title("Access log"),
   },
   recent: {
     type: "grid",

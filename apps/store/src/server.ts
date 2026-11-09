@@ -13,8 +13,10 @@ import { db, type Order } from "./db.ts";
 import { deskSnapshot } from "./desk.ts";
 import { deskAgentNote, deskAgentOn, deskTurn } from "./desk-agent.ts";
 import { dismiss, reportCourier, shopDesk } from "./desk-ops.ts";
-import { couriersPage, type DeskView, doorPage, ordersPage, reportsPage, todayPage } from "./desk-views.ts";
+import { couriersPage, type DeskView, doorPage, ordersPage, reportsPage, signInPage, todayPage } from "./desk-views.ts";
 import { cancelOrder, createMcpServer, settleOrder } from "./mcp.ts";
+import { DEFAULT_OWNER_SHOP, ownerApi, ownerPage, ownerShop, signInOwner, signOutOwner } from "./owner.ts";
+import { isSample, isSampleVisa, refreshSample } from "./sample.ts";
 import { startDeliveries } from "./shipping.ts";
 import { merchantDashboard, notFoundPage, paymentResult, receiptPage, shopGrid, storefront } from "./views.ts";
 
@@ -180,16 +182,42 @@ const DESK_BUNDLE = path.join(ROOT_DIR, "packages/shared/assets/desk/desk.js");
 
 /* ---------------- the shop desk: one shop's back office ---------------- */
 
-// The desk used to be one page for every shop. Now each shop has its own; the demo opens Juniper Records'.
-app.get("/merchant", (_req, res) => res.redirect(302, "/desk/juniper"));
+// The desk used to be one page for every shop. Now each shop has its own, behind its owner's sign-in.
+app.get("/merchant", (_req, res) => res.redirect(302, "/desk"));
 app.get("/desk", (req, res) => {
-  const shop = findShop(typeof req.query.shop === "string" ? req.query.shop : "") ?? JUNIPER;
-  res.redirect(302, `/desk/${shop.slug}`);
+  const picked = findShop(typeof req.query.shop === "string" ? req.query.shop : "");
+  const mine = ownerShop(req);
+  if (picked && picked !== mine) {
+    res.redirect(302, `/desk/sign-in?shop=${picked.slug}`);
+    return;
+  }
+  res.redirect(302, mine ? `/desk/${mine.slug}` : "/desk/sign-in");
 });
 
-const DESK_PAGES = { today: todayPage, orders: ordersPage, door: doorPage, couriers: couriersPage } as const;
+app.get("/desk/sign-in", (req, res) => {
+  const shop = findShop(typeof req.query.shop === "string" ? req.query.shop : "") ?? findShop(DEFAULT_OWNER_SHOP)!;
+  res.send(signInPage(shop, ownerShop(req)));
+});
+app.post("/desk/sign-in", express.urlencoded({ extended: false, limit: "2kb" }), (req, res) => {
+  const shop = findShop(typeof req.body?.shop === "string" ? req.body.shop : "");
+  if (!shop) {
+    res.redirect(303, "/desk/sign-in");
+    return;
+  }
+  signInOwner(res, shop);
+  // A first look around comes with each sign-in; "Show me around" in the rail brings it back.
+  res.redirect(303, `/desk/${shop.slug}?tour=1`);
+});
+app.post("/desk/sign-out", (_req, res) => {
+  signOutOwner(res);
+  res.redirect(303, "/desk/sign-in");
+});
 
-app.get(["/desk/:slug", "/desk/:slug/:view"], (req, res, next) => {
+const DESK_PAGES = { today: todayPage, orders: ordersPage, access: doorPage, couriers: couriersPage } as const;
+
+// "Door" was the access log's first name.
+app.get("/desk/:slug/door", (req, res) => res.redirect(301, `/desk/${req.params.slug}/access`));
+app.get(["/desk/:slug", "/desk/:slug/:view"], ownerPage, (req, res, next) => {
   const params = req.params as { slug: string; view?: string };
   const shop = findShop(params.slug);
   const view = (params.view ?? "today") as DeskView;
@@ -209,10 +237,14 @@ app.get(["/desk/:slug", "/desk/:slug/:view"], (req, res, next) => {
     res.send(reportsPage(shop, desk, boot, fs.existsSync(DESK_BUNDLE) ? "/assets/desk/desk.js" : null));
     return;
   }
-  res.send(DESK_PAGES[view as keyof typeof DESK_PAGES](shop, desk));
+  res.send(
+    view === "today"
+      ? todayPage(shop, desk, { tour: req.query.tour === "1" })
+      : DESK_PAGES[view as keyof typeof DESK_PAGES](shop, desk),
+  );
 });
 
-app.get("/desk/:slug/api", (req, res, next) => {
+app.get("/desk/:slug/api", ownerApi, (req, res, next) => {
   const shop = findShop(req.params.slug);
   if (!shop) {
     next();
@@ -222,7 +254,7 @@ app.get("/desk/:slug/api", (req, res, next) => {
 });
 
 /** The report builder's data, for this shop only. */
-app.get("/desk/:slug/api/desk", (req, res, next) => {
+app.get("/desk/:slug/api/desk", ownerApi, (req, res, next) => {
   const shop = findShop(req.params.slug);
   if (!shop) {
     next();
@@ -230,13 +262,13 @@ app.get("/desk/:slug/api/desk", (req, res, next) => {
   }
   res.set("Cache-Control", "no-store").json(deskSnapshot(shop.slug));
 });
-app.post("/desk/:slug/api/llm", express.json({ limit: "2mb" }), deskTurn);
+app.post("/desk/:slug/api/llm", ownerApi, express.json({ limit: "2mb" }), deskTurn);
 
 /**
  * The desk's buttons. Each is checked again here, whatever the page showed: a refund only through the clerk's checked
  * path, a cancel only for this shop's unpaid order, a report only for a pass seen at this shop.
  */
-app.post("/desk/:slug/api/act", express.json({ limit: "8kb" }), async (req, res) => {
+app.post("/desk/:slug/api/act", ownerApi, express.json({ limit: "8kb" }), async (req, res) => {
   const shop = findShop(req.params.slug);
   if (!shop) {
     res.status(404).json({ error: "No such shop." });
@@ -247,6 +279,9 @@ app.post("/desk/:slug/api/act", express.json({ limit: "8kb" }), async (req, res)
   const order = str("orderId") ? db.get<Order>("orders", str("orderId")) : undefined;
   const ours = order && (order.shop ?? "juniper") === shop.slug ? order : undefined;
   const fail = (status: number, error: string) => void res.status(status).json({ error });
+  // Sample rows show what a trading shop looks like; nothing real stands behind them to refund or report.
+  if (isSample(order) || isSampleVisa(str("visaId")))
+    return fail(409, "That's sample data, so nothing happens. Try it on an order from your own errand.");
   switch (str("act")) {
     case "confirm": {
       const out = await confirmAction(str("actionId"), shop.slug).catch(() => ({
@@ -307,7 +342,7 @@ app.post("/desk/:slug/api/act", express.json({ limit: "8kb" }), async (req, res)
 });
 
 /** The owner's clerk, for this shop alone. Its refunds are proposals that land in Needs you. */
-app.post("/desk/:slug/api/clerk", express.json({ limit: "64kb" }), async (req, res) => {
+app.post("/desk/:slug/api/clerk", ownerApi, express.json({ limit: "64kb" }), async (req, res) => {
   const shop = findShop(req.params.slug);
   const messages = ownerMessages(req.body);
   if (!shop || messages.at(-1)?.role !== "user") {
@@ -479,3 +514,6 @@ app.listen(config.store.port, config.bindHost, () => {
   console.log(`${SHOPS.length} shops → ${config.store.url}`);
 });
 startDeliveries();
+// The demo shop's sample activity, dated to today; checked hourly so it rolls over at midnight.
+refreshSample();
+setInterval(() => refreshSample(), 60 * 60 * 1000).unref();

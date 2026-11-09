@@ -68,6 +68,9 @@ const theme = studioTheme.withParams({
   studioWidgetBackgroundColor: "#ffffff",
   studioWidgetBorderRadius: 14,
   studioWidgetShadow: "none",
+  // Room to breathe: the builder's defaults are dense for a page that's mostly read.
+  studioWidgetPadding: 18,
+  studioCanvasPadding: 16,
   studioWidgetTitleFontFamily: "'Archivo', system-ui, sans-serif",
   studioWidgetTitleFontWeight: 800,
   studioWidgetTitleFontSize: 15,
@@ -109,6 +112,8 @@ function Desk({ boot }: { boot: Boot }) {
   const [desk, setDesk] = useState<DeskJson | null>(null);
   const [failed, setFailed] = useState(false);
   const [phone, setPhone] = useState(() => matchMedia(PHONE).matches);
+  // Opens as a dashboard to read. Editing brings in the panels to build charts and the report assistant.
+  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     const media = matchMedia(PHONE);
@@ -219,23 +224,49 @@ function Desk({ boot }: { boot: Boot }) {
       });
   }, [boot]);
 
-  if (!desk || !data)
-    return <p className="dk-wait">{failed ? "Couldn’t load the desk. Retrying…" : "Opening the desk…"}</p>;
+  if (!desk || !data) return failed ? <p className="dk-wait">Couldn’t load the reports. Retrying…</p> : <Skeleton />;
 
   return (
-    <AgStudio<any>
-      // Studio can't take a new source while running, so one arriving (refunds, say) starts it afresh.
-      key={`${sourceKey(desk)}|${phone ? "phone" : "desk"}`}
-      className="dk-studio"
-      data={data as any}
-      mode={phone ? "view" : "edit"}
-      initialState={DEFAULT_REPORT}
-      widgets={widgets as any}
-      theme={theme}
-      layout={{ minWidth: 250 } as any}
-      responsiveLayoutBreakpoints={[{ maxWidth: 700, layout: singleColumnLayout }] as any}
-      ai={phone ? undefined : (ai as any)}
-    />
+    <>
+      {phone ? null : (
+        <div className="dk-studio-bar">
+          <span>
+            {editing
+              ? "Drag fields onto the page, or ask the assistant for a chart."
+              : "Your shop at a glance. Edit to add charts or ask for one in words."}
+          </span>
+          <button type="button" className={`btn sm ${editing ? "" : "ghost"}`} onClick={() => setEditing(!editing)}>
+            {editing ? "Done" : "Edit report"}
+          </button>
+        </div>
+      )}
+      <AgStudio<any>
+        // Studio can't take a new source while running, so one arriving (refunds, say) starts it afresh.
+        key={`${sourceKey(desk)}|${phone ? "phone" : "desk"}`}
+        className="dk-studio"
+        data={data as any}
+        mode={!phone && editing ? "edit" : "view"}
+        initialState={DEFAULT_REPORT}
+        widgets={widgets as any}
+        theme={theme}
+        layout={{ minWidth: 250 } as any}
+        responsiveLayoutBreakpoints={[{ maxWidth: 700, layout: singleColumnLayout }] as any}
+        ai={phone ? undefined : (ai as any)}
+      />
+    </>
+  );
+}
+
+/** What the page shows while the data loads: the shape of the report, gently shimmering. */
+function Skeleton() {
+  return (
+    <div className="dk-skel" role="status" aria-busy="true" aria-label="Loading the reports">
+      <i />
+      <i />
+      <i />
+      <i className="wide" />
+      <i className="wide" />
+    </div>
   );
 }
 

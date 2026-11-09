@@ -4,6 +4,30 @@
  */
 
 /* ---------- the rail: the shop, its pages, the clerk ---------- */
+/* Black, where the buyer's app is cobalt: the same frame, so an owner always knows which side they're on. */
+.rail.dk-rail,
+.rail.dk-rail .rail-drawer {
+  background: var(--ink);
+}
+.dk-rail .rail-dot {
+  box-shadow: 0 0 0 2px var(--ink);
+}
+.dk-out {
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  background: none;
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  opacity: 0.65;
+  cursor: pointer;
+}
+.dk-out:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
 .dk-shop {
   display: flex;
   align-items: center;
@@ -794,7 +818,47 @@
 
 /* ---------- Reports: the builder gets the page's height, and nothing else scrolls inside it ---------- */
 .dk-reports .dk-root {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   height: max(620px, calc(100svh - 190px));
+}
+.dk-reports .dk-studio {
+  flex: 1;
+  min-height: 0;
+}
+.dk-studio-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13.5px;
+  color: var(--soft);
+}
+/* The report's shape while it loads. */
+.dk-skel {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  padding: 16px;
+  border-radius: 16px;
+  background: #f2efe9;
+}
+.dk-skel i {
+  height: 110px;
+  border-radius: 14px;
+  background: linear-gradient(90deg, #fff 25%, #f8f6f2 50%, #fff 75%);
+  background-size: 200% 100%;
+  animation: dk-shimmer 1.2s linear infinite;
+}
+.dk-skel .wide {
+  grid-column: span 3;
+  height: 220px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dk-skel i {
+    animation: none;
+  }
 }
 
 /* ---------- smaller screens ---------- */
@@ -823,14 +887,20 @@
     width: 100%;
     max-width: 28px;
   }
+  /* Four figures, two by two. */
   .dk-mini {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     border-left: 0;
     border-top: 1px solid var(--line);
   }
   .dk-mini li + li {
     border-top: 0;
+  }
+  .dk-mini li:nth-child(even) {
     border-left: 1px solid var(--line);
+  }
+  .dk-mini li:nth-child(n + 3) {
+    border-top: 1px solid var(--line);
   }
   .dk-mini a {
     flex-direction: column-reverse;
@@ -896,4 +966,205 @@
   background: var(--orange);
   border-color: var(--orange);
   color: #fff;
+}
+
+/* ---------- the owner's sign-in ---------- */
+body.dk-in-page {
+  background: var(--paper);
+}
+.dk-in {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 20px;
+  min-height: 100svh;
+  padding: 32px 16px;
+}
+.dk-in-logo .logo {
+  font-size: 28px;
+}
+.dk-in-card {
+  display: grid;
+  gap: 14px;
+  width: min(440px, 100%);
+  padding: 32px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: #fff;
+}
+.dk-in-tag {
+  justify-self: start;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.dk-in-card h1 {
+  margin: 0;
+  font-family: var(--display, "Archivo", system-ui, sans-serif);
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+.dk-in-card p {
+  margin: 0;
+  color: var(--soft);
+}
+.dk-in-f {
+  display: grid;
+  gap: 8px;
+  margin-top: 6px;
+}
+.dk-in-f label {
+  font-size: 13px;
+  font-weight: 650;
+}
+.dk-in-pick select {
+  width: 100%;
+  height: 48px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+}
+.dk-in-f .btn,
+.dk-in-go {
+  justify-content: center;
+  margin-top: 6px;
+}
+.dk-in-or {
+  text-align: center;
+  font-size: 13px;
+}
+.dk-in-card .dk-in-fine {
+  font-size: 13px;
+  color: var(--mute);
+}
+.dk-in-alt {
+  margin: 0;
+  font-size: 14px;
+  color: var(--soft);
+}
+.dk-in-alt a {
+  color: var(--ink);
+  font-weight: 650;
+  text-decoration: underline;
+}
+@media (max-width: 560px) {
+  .dk-in-card {
+    padding: 24px 20px;
+  }
+}
+
+/* A cell that explains a missing button. */
+.dk-note {
+  font-size: 12.5px;
+  color: var(--mute);
+}
+
+/* ---------- sample rows, the table credit, and rows that open something ---------- */
+.dk-sample {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border: 1px dashed var(--mute);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 650;
+  font-style: normal;
+  color: var(--soft);
+  vertical-align: 1px;
+}
+.dk-item {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px 0;
+}
+.dk-credit {
+  display: none;
+  margin: 8px 2px 0;
+  font-size: 12px;
+  color: var(--mute);
+  text-align: right;
+}
+.dk-credit a {
+  color: var(--soft);
+  font-weight: 650;
+}
+.dk-credit a:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+/* The credit is only true once the list became an AG Grid table, which happens on a wide screen. */
+.dk-grid + .dk-credit {
+  display: block;
+}
+.dk-link-row {
+  cursor: pointer;
+}
+.dk-needs-s[hidden] {
+  display: none;
+}
+
+/* ---------- loading: a calm placeholder, then the table fades in ---------- */
+@keyframes dk-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+@keyframes dk-fade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+.dk-grid {
+  animation: dk-fade 0.35s ease-out both;
+}
+.dk-big,
+.dk-mini b,
+.dk-bars i {
+  animation: dk-fade 0.4s ease-out both;
+}
+.dk-bars i {
+  transform-origin: bottom;
+}
+/* On a wide screen the server's list is replaced by a table as soon as the script runs: until then, a placeholder. */
+@media (min-width: 900px) {
+  [data-grid] {
+    position: relative;
+    min-height: 240px;
+  }
+  [data-grid] > * {
+    visibility: hidden;
+  }
+  [data-grid]::after {
+    content: "";
+    position: absolute;
+    inset: 12px;
+    border-radius: 10px;
+    background:
+      repeating-linear-gradient(to bottom, transparent 0 46px, #fff 46px 58px),
+      linear-gradient(90deg, #f1eee8 25%, #f8f6f2 50%, #f1eee8 75%);
+    background-size:
+      100% 100%,
+      200% 100%;
+    animation: dk-shimmer 1.2s linear infinite;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dk-grid,
+  .dk-big,
+  .dk-mini b,
+  .dk-bars i,
+  [data-grid]::after {
+    animation: none;
+  }
 }

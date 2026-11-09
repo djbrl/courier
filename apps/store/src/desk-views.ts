@@ -7,12 +7,12 @@ import type { CourierFace, NeedRow, ShopDesk } from "./desk-ops.ts";
  * lists for AG Grid tables that refresh, sort, filter and act.
  */
 
-export type DeskView = "today" | "orders" | "door" | "couriers" | "reports";
+export type DeskView = "today" | "orders" | "access" | "couriers" | "reports";
 
 const LABEL: Record<DeskView, string> = {
   today: "Today",
   orders: "Orders",
-  door: "Door",
+  access: "Access log",
   couriers: "Couriers",
   reports: "Reports",
 };
@@ -22,7 +22,8 @@ const ICON: Record<DeskView, string> = {
     '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="6.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10 6.4V10l2.4 1.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
   orders:
     '<svg viewBox="0 0 20 20"><path d="M4 6.5h12l-1.2 9.5H5.2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M7.5 6.5V5a2.5 2.5 0 0 1 5 0v1.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>',
-  door: '<svg viewBox="0 0 20 20"><path d="M5 17V3.5h10V17M3 17h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><circle cx="12.3" cy="10.4" r="1.1" fill="currentColor"/></svg>',
+  access:
+    '<svg viewBox="0 0 20 20"><path d="M5 17V3.5h10V17M3 17h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><circle cx="12.3" cy="10.4" r="1.1" fill="currentColor"/></svg>',
   couriers:
     '<svg viewBox="0 0 20 20"><rect x="2.5" y="4" width="15" height="12" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="7.3" cy="9.3" r="1.9" fill="currentColor"/><path d="M11 9h4M11 12h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
   reports:
@@ -58,7 +59,7 @@ export const needButtons = (n: NeedRow) =>
 
 function frame(shop: Shop, view: DeskView, desk: ShopDesk, main: RawHtml, scripts: string[]): string {
   const item = (v: DeskView, n?: number) =>
-    html`<a href="${href(shop, v)}" ${view === v ? raw('aria-current="page"') : ""}>${raw(ICON[v])}${LABEL[v]}${n ? html`<span class="n hot" data-count="needs">${n}</span>` : ""}</a>`;
+    html`<a href="${href(shop, v)}" data-tour="rail-${v}" ${view === v ? raw('aria-current="page"') : ""}>${raw(ICON[v])}${LABEL[v]}${n ? html`<span class="n hot" data-count="needs">${n}</span>` : ""}</a>`;
   return courierLayout({
     title: `${LABEL[view]} · ${shop.name} desk`,
     bodyClass: "app-page dk-page",
@@ -75,19 +76,21 @@ function frame(shop: Shop, view: DeskView, desk: ShopDesk, main: RawHtml, script
           <nav aria-label="${shop.name} desk">
             ${item("today", desk.counts.needs)}
             ${item("orders")}
-            ${item("door")}
+            ${item("access")}
             ${item("couriers")}
             ${item("reports")}
           </nav>
           <div class="dk-rail-f">
             <button type="button" class="dk-clerk-open" data-clerk-open>Ask the clerk</button>
             <a href="/${shop.slug}">Storefront ↗</a>
+            <a href="${base(shop)}?tour=1">Show me around</a>
             <form class="dk-switch" method="get" action="/desk">
               <label for="dk-shop-pick">Demo: switch shop</label>
               <select id="dk-shop-pick" name="shop" data-autosubmit>${SHOPS.map(
                 (s) => html`<option value="${s.slug}" ${s === shop ? raw("selected") : ""}>${s.name}</option>`,
               )}</select>
             </form>
+            <form method="post" action="/desk/sign-out"><button type="submit" class="dk-out">Sign out</button></form>
           </div>
         </div>
       </aside>
@@ -114,6 +117,9 @@ function clerkDrawer(shop: Shop): RawHtml {
   </aside>`;
 }
 
+/** Says where the tables come from, under each one on a wide screen (a phone gets plain lists instead). */
+const AG_CREDIT = html`<p class="dk-credit">Table powered by <a href="https://www.ag-grid.com" target="_blank" rel="noopener">AG Grid</a></p>`;
+
 /** The page's title block, as in the app. */
 const head = (title: string, sub: unknown, action?: unknown) =>
   html`<header class="pg-h"><div><h1 class="big">${title}</h1>${sub ? html`<p>${sub}</p>` : ""}</div>${action ?? ""}</header>`;
@@ -132,74 +138,93 @@ function needCard(n: NeedRow): RawHtml {
   </li>`;
 }
 
-export function todayPage(shop: Shop, desk: ShopDesk): string {
+/** The first look around the desk, ending on the clerk. Says plainly which rows are made up. */
+function tourSteps(shop: Shop, desk: ShopDesk) {
+  const sample = desk.orders.some((o) => o.sample);
+  return [
+    {
+      target: "pulse",
+      title: `This is ${shop.name} today.`,
+      body: "Orders placed by couriers, AI agents shopping for real people, with what they paid, refunds and parcels on the road.",
+    },
+    {
+      target: "orders",
+      title: "Every order, with its proof.",
+      body: sample
+        ? `Rows marked Sample are made up, so ${shop.name} doesn't start empty. Orders from your own errands in the demo land here too, for real. Open one for the errand, its limits and PayPal's check.`
+        : "Open one for the errand, its limits and PayPal's check.",
+    },
+    {
+      target: "rail-access",
+      title: "Who got in, and who didn't.",
+      body: "Every agent that tried to shop here. No ID, a forged pass or an order over budget is turned away in code, before it reaches you.",
+    },
+    {
+      target: "rail-reports",
+      title: "Build your own reports.",
+      body: "Chart your orders and couriers with AG Studio, or ask for a chart in words.",
+    },
+    {
+      target: "clerk",
+      title: "And ask the clerk.",
+      body: "It reads your orders, parcels and PayPal payments, and can propose a refund. Nothing moves until you confirm.",
+      cta: { label: "Ask the clerk", href: "#clerk" },
+    },
+  ];
+}
+
+export function todayPage(shop: Shop, desk: ShopDesk, opts: { tour?: boolean } = {}): string {
   const { counts } = desk;
-  const top = Math.max(1, ...desk.week.map((d) => d.cents));
+  const top = Math.max(1, ...desk.week.map((d) => d.orders));
   const bars = desk.week.map(
     (d, i) =>
-      html`<li class="${i === desk.week.length - 1 ? "now" : ""}" title="${d.day}: ${d.amount}"><i style="--h:${Math.max(4, Math.round((d.cents / top) * 100))}%"></i><span>${i === desk.week.length - 1 ? "Today" : d.day.slice(0, 1)}</span></li>`,
+      html`<li class="${i === desk.week.length - 1 ? "now" : ""}" title="${d.day}: ${d.orders} ${d.orders === 1 ? "order" : "orders"}, ${d.amount}"><i style="--h:${Math.max(4, Math.round((d.orders / top) * 100))}%"></i><span>${i === desk.week.length - 1 ? "Today" : d.day.slice(0, 1)}</span></li>`,
   );
-  const mini = (key: keyof ShopDesk["counts"], label: string, to: string) =>
+  const stat = (key: keyof ShopDesk["counts"], label: string, to: string) =>
     html`<li><a href="${to}"><span>${label}</span><b data-count="${key}">${counts[key]}</b></a></li>`;
-  const needs = desk.needs.length
-    ? html`<ul class="dk-needs" data-grid="needs">${desk.needs.map(needCard)}</ul>`
-    : html`<div class="card dk-empty" data-grid="needs"><b>Nothing needs you.</b><p>Couriers are shopping inside their limits. Refunds the clerk proposes, orders nobody paid and couriers that tried to trick the shop land here.</p></div>`;
-  const parcels = desk.parcels.filter((p) => !p.delivered);
+  const latest = desk.orders.slice(0, 8);
   const main = html`<div class="pg pg-wide"><div class="pg-in">
     ${head(
       shop.name,
-      "Every courier here shows a verified ID, never the person's name.",
-      html`<a class="btn sm ghost" href="${config.courier.url}/bots">Send some bots ↗</a>`,
+      "Today at your shop. Every courier shows a verified ID, never the person's name.",
+      html`<button type="button" class="btn sm" data-clerk-open data-tour="clerk">Ask the clerk</button>`,
     )}
-    <section class="card dk-pulse" aria-label="Today">
+    <section class="dk-needs-s" id="needs" ${desk.needs.length ? "" : raw("hidden")}>
+      <div class="pg-st"><h2>Needs you <span class="dk-badge" data-count="needs">${counts.needs}</span></h2><span class="fine">Each button is checked again in code before anything moves.</span></div>
+      <ul class="dk-needs" data-grid="needs">${desk.needs.map(needCard)}</ul>
+    </section>
+    <section class="card dk-pulse" aria-label="Today" data-tour="pulse">
       <div class="dk-hero">
-        <span class="dk-k">Paid by couriers today</span>
-        <b class="dk-big" data-count="paidToday">${counts.paidToday}</b>
-        <span class="dk-sub"><b data-count="paidWeek">${counts.paidWeek}</b> over the last 7 days</span>
+        <span class="dk-k">Orders today</span>
+        <b class="dk-big" data-count="ordersToday">${counts.ordersToday}</b>
+        <span class="dk-sub"><b data-count="ordersWeek">${counts.ordersWeek}</b> in the last 7 days</span>
         <ol class="dk-bars" aria-hidden="true">${bars}</ol>
       </div>
       <ul class="dk-mini">
-        ${mini("ordersToday", "Orders today", href(shop, "orders"))}
-        ${mini("parcels", "Parcels on the road", "#parcels")}
-        ${mini("turnedAwayToday", "Turned away today", href(shop, "door"))}
+        ${stat("paidToday", "Paid today", href(shop, "orders"))}
+        ${stat("refundsWeek", "Refunds this week", href(shop, "orders"))}
+        ${stat("parcels", "Parcels on the road", href(shop, "orders"))}
+        ${stat("turnedAwayToday", "Turned away today", href(shop, "access"))}
       </ul>
     </section>
     ${section(
-      html`Needs you <span class="dk-badge" data-count="needs" ${counts.needs ? "" : raw("hidden")}>${counts.needs}</span>`,
-      html`<span class="fine">Each button is checked again in code before anything moves.</span>`,
-      needs,
-      "needs",
+      "Latest orders",
+      html`<a class="fine link" href="${href(shop, "orders")}">All orders</a>`,
+      latest.length
+        ? html`<div data-tour="orders"><ul class="card dk-list dk-orders" data-grid="latest">${latest.map(
+            (o) =>
+              html`<li>${who(o.courier, o.pseudonym)}<span class="dk-li-m"><b>${o.item}${o.sample ? html` <span class="dk-sample">Sample</span>` : ""}</b><small>${o.placed} · ${o.stage}</small></span><span class="pr">${o.amount}</span></li>`,
+          )}</ul>${AG_CREDIT}</div>`
+        : html`<div class="card dk-empty"><b>No orders yet.</b><p>Ask Claude to buy something from ${shop.name}, and it shows up here.</p></div>`,
     )}
-    <div class="dk-two">
-      ${section(
-        "On their way",
-        html`<a class="fine link" href="${href(shop, "orders")}">All orders</a>`,
-        parcels.length
-          ? html`<ul class="card dk-list" data-grid="parcels">${parcels
-              .slice(0, 8)
-              .map(
-                (p) =>
-                  html`<li>${who(p.courier)}<span class="dk-li-m"><b>${p.item}</b><small>${p.carrier} · ${p.tracking}</small></span><span class="dk-pill">${p.step}</span></li>`,
-              )}</ul>`
-          : html`<div class="card dk-empty sm"><p>No parcels on the road. ${desk.policy.delivery}.</p></div>`,
-        "parcels",
-      )}
-      ${section(
-        "Turned away, and why",
-        html`<a class="fine link" href="${href(shop, "door")}">The door</a>`,
-        desk.reasons.length
-          ? html`<ul class="card dk-list" data-grid="reasons">${desk.reasons
-              .slice(0, 8)
-              .map(
-                (r) =>
-                  html`<li><span class="dk-count">${r.count}</span><span class="dk-li-m"><b>${r.reason}</b><small>Last: ${r.lastCourier}, ${r.lastAgo}</small></span></li>`,
-              )}</ul>`
-          : html`<div class="card dk-empty sm"><p>No one has been turned away yet.</p></div>`,
-      )}
-    </div>
-    <p class="fine">Returns policy: ${desk.policy.returns}</p>
-  </div></div>`;
-  return frame(shop, "today", desk, main, ["/assets/desk/desk-ops.js"]);
+  </div></div>${
+    opts.tour
+      ? raw(
+          `<script type="application/json" id="tour">${JSON.stringify(tourSteps(shop, desk)).replace(/</g, "\\u003c")}</script>`,
+        )
+      : ""
+  }`;
+  return frame(shop, "today", desk, main, ["/assets/desk/desk-ops.js", ...(opts.tour ? ["/assets/tour.js"] : [])]);
 }
 
 /* ---------------- Orders ---------------- */
@@ -208,7 +233,7 @@ export function ordersPage(shop: Shop, desk: ShopDesk): string {
   const main = html`<div class="pg pg-wide"><div class="pg-in">
     ${head(
       "Orders",
-      `${desk.orders.length} ${desk.orders.length === 1 ? "order" : "orders"} from couriers. Open one for its proof: the errand, the limits and PayPal's check.`,
+      `${desk.orders.length} ${desk.orders.length === 1 ? "order" : "orders"} from couriers. Open one for its proof: the errand, the limits and PayPal's check.${desk.orders.some((o) => o.sample) ? " Rows marked Sample are made up, so the desk isn't empty; orders from your own errands land here too." : ""}`,
     )}
     <div class="dk-tools"><input type="search" class="dk-filter" data-filter="orders" placeholder="Find a courier, an item, an order" aria-label="Filter orders"><button type="button" class="btn sm ghost" data-export="orders">Download CSV</button></div>
     ${
@@ -217,8 +242,8 @@ export function ordersPage(shop: Shop, desk: ShopDesk): string {
             .slice(0, 40)
             .map(
               (o) =>
-                html`<li>${who(o.courier, o.pseudonym)}<span class="dk-li-m"><b>${o.item}</b><small>${o.placed} · ${o.stage}</small></span><span class="pr">${o.amount}</span></li>`,
-            )}</ul>`
+                html`<li>${who(o.courier, o.pseudonym)}<span class="dk-li-m"><b>${o.item}${o.sample ? html` <span class="dk-sample">Sample</span>` : ""}</b><small>${o.placed} · ${o.stage}</small></span><span class="pr">${o.amount}</span></li>`,
+            )}</ul>${AG_CREDIT}`
         : html`<div class="card dk-empty"><b>No orders yet.</b><p>Ask Claude to buy something from ${shop.name}, and it shows up here.</p></div>`
     }
     <div class="dk-detail card" id="dk-detail" hidden></div>
@@ -226,15 +251,14 @@ export function ordersPage(shop: Shop, desk: ShopDesk): string {
   return frame(shop, "orders", desk, main, ["/assets/desk/desk-ops.js"]);
 }
 
-/* ---------------- Door ---------------- */
+/* ---------------- Access log: every agent that tried to shop here ---------------- */
 
 export function doorPage(shop: Shop, desk: ShopDesk): string {
   const refused = desk.door.filter((d) => !d.allowed).length;
   const main = html`<div class="pg pg-wide"><div class="pg-in">
     ${head(
-      "The door",
-      "Every agent that knocked: couriers with a valid ID come in; anything else is turned away, with the reason.",
-      html`<a class="btn sm ghost" href="${config.courier.url}/bots">Send some bots ↗</a>`,
+      "Access log",
+      "Every agent that tried to shop here. Couriers with a valid ID got in; anything else was turned away, and here's why.",
     )}
     ${
       desk.reasons.length
@@ -244,7 +268,7 @@ export function doorPage(shop: Shop, desk: ShopDesk): string {
           )}</div>`
         : ""
     }
-    <div class="dk-tools"><input type="search" class="dk-filter" data-filter="door" placeholder="Find a courier or a reason" aria-label="Filter the door"><label class="dk-check"><input type="checkbox" data-show-let-in> Show couriers let in</label></div>
+    <div class="dk-tools"><input type="search" class="dk-filter" data-filter="door" placeholder="Find a courier or a reason" aria-label="Filter the access log"><label class="dk-check"><input type="checkbox" data-show-let-in> Show couriers let in</label></div>
     ${
       desk.door.length
         ? html`<ul class="card dk-list" data-grid="door">${desk.door
@@ -252,13 +276,13 @@ export function doorPage(shop: Shop, desk: ShopDesk): string {
             .slice(0, 40)
             .map(
               (d) =>
-                html`<li>${who(d.face, d.pseudonym)}<span class="dk-li-m"><b>${d.reason}</b><small>${d.action} · ${d.detail}</small></span><time datetime="${d.at}">${d.ago}</time></li>`,
-            )}</ul>`
-        : html`<div class="card dk-empty"><b>No one has knocked yet.</b></div>`
+                html`<li>${who(d.face, d.pseudonym)}<span class="dk-li-m"><b>${d.reason}${d.sample ? html` <span class="dk-sample">Sample</span>` : ""}</b><small>${d.action} · ${d.detail}</small></span><time datetime="${d.at}">${d.ago}</time></li>`,
+            )}</ul>${AG_CREDIT}`
+        : html`<div class="card dk-empty"><b>No agent has tried to shop here yet.</b></div>`
     }
     <p class="fine">${refused} turned away in all. Couriers polling for news fold into one row.</p>
   </div></div>`;
-  return frame(shop, "door", desk, main, ["/assets/desk/desk-ops.js"]);
+  return frame(shop, "access", desk, main, ["/assets/desk/desk-ops.js"]);
 }
 
 /* ---------------- Couriers ---------------- */
@@ -275,7 +299,7 @@ export function couriersPage(shop: Shop, desk: ShopDesk): string {
         ? html`<ul class="card dk-list" data-grid="couriers">${desk.couriers.map(
             (c) =>
               html`<li>${who(c.courier, c.pseudonym)}<span class="dk-li-m"><b>${c.orders} ${c.orders === 1 ? "order" : "orders"} · ${c.paid}</b><small>${c.turnedAway ? `${c.turnedAway} turned away · ` : ""}Last seen ${c.lastAgo}</small></span><span class="dk-pill s-${c.standing.toLowerCase().replace(/ /g, "-")}">${c.standing}</span></li>`,
-          )}</ul>`
+          )}</ul>${AG_CREDIT}`
         : html`<div class="card dk-empty"><b>No couriers yet.</b></div>`
     }
   </div></div>`;
@@ -295,15 +319,48 @@ export function reportsPage(shop: Shop, desk: ShopDesk, boot: StudioBoot, bundle
   const main = html`<div class="pg pg-wide dk-reports"><div class="pg-in">
     ${head(
       "Reports",
-      "Build your own charts from this shop's orders, door and couriers. Ask the report assistant for one, or drag your own.",
+      "Charts of this shop's orders, access log and couriers. Edit the report to add your own, or ask for one in words.",
     )}
     <div id="desk" class="dk-root" data-boot="${JSON.stringify(boot)}">
       ${
         bundle
-          ? html`<p class="dk-wait">Opening the report builder…</p>`
+          ? html`<div class="dk-skel" role="status" aria-busy="true" aria-label="Loading the reports"><i></i><i></i><i></i><i class="wide"></i><i class="wide"></i></div>`
           : html`<p class="dk-wait">The report builder isn't built yet. Run <code>npm run build:desk</code>.</p>`
       }
     </div>
   </div></div>`;
   return frame(shop, "reports", desk, main, ["/assets/desk/desk-ops.js", ...(bundle ? [bundle] : [])]);
+}
+
+/* ---------------- sign-in ---------------- */
+
+/** The owner's way in. The demo has no passwords: picking a shop signs you in as its owner. */
+export function signInPage(shop: Shop, signedIn: Shop | undefined): string {
+  return courierLayout({
+    title: "Sign in · Shop desk",
+    bodyClass: "dk-in-page",
+    styles: ["/assets/desk.css"],
+    body: html`<main class="dk-in">
+      <a class="dk-in-logo" href="${config.courier.url}/for-shops" aria-label="Courier for shops">${LOGO}</a>
+      <section class="dk-in-card" aria-labelledby="dk-in-h">
+        <span class="dk-in-tag">Shop desk</span>
+        <h1 id="dk-in-h">Sign in to your shop.</h1>
+        <p>See today’s orders, the couriers that shop with you and every ${PP} payment, and answer what needs you.</p>
+        ${
+          signedIn
+            ? html`<a class="btn dk-in-go" href="/desk/${signedIn.slug}">Open ${signedIn.name}’s desk</a><p class="dk-in-or">or sign in to another shop</p>`
+            : ""
+        }
+        <form method="post" action="/desk/sign-in" class="dk-in-f">
+          <label for="dk-in-shop">Your shop</label>
+          <div class="dk-in-pick"><select id="dk-in-shop" name="shop">${SHOPS.map(
+            (s) => html`<option value="${s.slug}" ${s === shop ? raw("selected") : ""}>${s.name}</option>`,
+          )}</select></div>
+          <button class="btn ${signedIn ? "ghost" : ""}" type="submit">Sign in as the owner</button>
+        </form>
+        <p class="dk-in-fine">A demo: there’s no password, and every shop is made up. A real shop signs in with its own account.</p>
+      </section>
+      <p class="dk-in-alt">Shopping instead? <a href="${config.courier.url}/start/sign-in">Try Courier as a buyer</a></p>
+    </main>`,
+  });
 }

@@ -93,9 +93,9 @@ const SOURCES: Record<string, { name: string; description: string; fields: Field
     ],
   },
   door: {
-    name: "At the door",
+    name: "Access log",
     description:
-      "What couriers asked for at the shop's door and whether they were let in. Protocol housekeeping is left out, and " +
+      "What agents asked for at the shop and whether they were let in. Protocol housekeeping is left out, and " +
       "repeated status checks are folded into one row with a count.",
     fields: [
       text("id", "Entry"),

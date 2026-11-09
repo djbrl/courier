@@ -3,7 +3,6 @@ import {
   config,
   courierLayout,
   courierVars,
-  deliveryShort,
   findShop,
   html,
   JUNIPER,
@@ -73,7 +72,7 @@ export function shopGrid(): string {
       <nav class="shopg" aria-label="Shops">${SHOPS.map(
         (s) => html`<a class="shopg-t" href="/${s.slug}">${shopLogo(s)}<b>${s.name}</b><small>${s.sells}</small></a>`,
       )}</nav>
-      ${ownerLine("/desk/juniper", `Own a shop? See how ${JUNIPER.name} runs its desk`)}
+      ${ownerLine("/desk/sign-in", "Run one of these shops? Open its desk")}
       <p class="fine">${NOT_REAL}</p>
     </main>`,
   );
@@ -83,10 +82,10 @@ export function shopGrid(): string {
 const ownerLine = (href: string, label: string) =>
   html`<p class="sf-own"><a class="link" href="${href}">${label} →</a></p>`;
 
-/** What a courier can count on here, in one line under the banner. */
-function promiseStrip(shop: Shop): RawHtml {
+/** What a courier can count on here, folded into the shop's one line of details. */
+function promiseLine(shop: Shop, count: number): RawHtml {
   const policy = afterSaleOf(shop.slug);
-  return html`<p class="sf-strip"><span><b>Couriers welcome</b></span><span>${returnsShort(policy)}</span><span>${deliveryShort(policy)}</span><span>Pays with ${PP}</span></p>`;
+  return html`<p class="sf-meta"><span class="sf-open">Open now</span> · ${count} items · ${returnsShort(policy)} · Pays with ${PP}</p>`;
 }
 
 /** A styled page for an address that isn't a shop, an item or a receipt. */
@@ -109,9 +108,9 @@ const labelFor = (category: string) => category[0]!.toUpperCase() + category.sli
 export function storefront(shop: Shop, items: Item[], category = ""): string {
   const categories = [...new Set(items.map((i) => i.category))];
   const shown = categories.filter((c) => !category || c === category);
-  const example = items[0] ? `Get me ${items[0].title} from ${shop.name}.` : `What does ${shop.name} have?`;
+  // A picture, a name and a price: the rest is for the item's own page and the courier's questions.
   const card = (i: Item) =>
-    html`<li class="sf-i"><span class="sf-t"><b>${i.title}</b><span class="pr">${money(i.priceCents)}</span><small>${i.artist} · ${i.blurb}</small></span><span class="sf-cv">${itemArt(i, shop.slug)}</span></li>`;
+    html`<li class="sf-c" title="${i.blurb}"><span class="sf-cv">${itemArt(i, shop.slug)}</span><b>${i.title}</b><span class="pr">${money(i.priceCents)}</span></li>`;
   return storePage(
     shop.name,
     "shop",
@@ -119,23 +118,20 @@ export function storefront(shop: Shop, items: Item[], category = ""): string {
       <section class="sf-hero">
         <div class="sf-banner" aria-hidden="true"><div class="sf-peek">${items.slice(0, 3).map((i) => html`<span class="sf-cv">${itemArt(i, shop.slug)}</span>`)}</div></div>
         <div class="sf-id">${shopLogo(shop, "lg")}
-          <div><h1>${shop.name}</h1><p>${shop.sells}</p><p class="sf-meta"><span class="sf-open">Open now</span> · ${items.length} items</p></div>
-          <p class="sf-ask"><small>Shopping with a courier? Ask:</small><span>“${example}”</span></p>
+          <div><h1>${shop.name}</h1><p>${shop.sells}</p>${promiseLine(shop, items.length)}</div>
+          <a class="sf-owner" href="/desk/sign-in?shop=${shop.slug}"><small>Are you the owner?</small><b>Open the shop desk <span aria-hidden="true">→</span></b></a>
         </div>
       </section>
-      ${promiseStrip(shop)}
       <div class="sf-body">
         <nav class="sf-menu" aria-label="Menu">
-          <small>Menu</small>
           <a href="/${shop.slug}" ${category ? "" : raw('aria-current="true"')}>Everything</a>
           ${categories.map((c) => html`<a href="/${shop.slug}?c=${encodeURIComponent(c)}" ${c === category ? raw('aria-current="true"') : ""}>${labelFor(c)}</a>`)}
         </nav>
         <div class="sf-secs">
           ${shown.map(
             (c) =>
-              html`<section><h2>${labelFor(c)}</h2><ul class="sf-g">${items.filter((i) => i.category === c).map(card)}</ul></section>`,
+              html`<section><h2>${labelFor(c)}</h2><ul class="sf-cards">${items.filter((i) => i.category === c).map(card)}</ul></section>`,
           )}
-          ${ownerLine(`/desk/${shop.slug}`, `Own ${shop.name}? Open its desk`)}
           <p class="fine">${NOT_REAL}</p>
         </div>
       </div>

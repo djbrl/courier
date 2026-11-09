@@ -36,6 +36,8 @@ export interface Order {
   group?: string;
   /** Given back through PayPal after a return. */
   refundedCents?: number;
+  /** Made up for the demo shop's desk (sample.ts): shown, never acted on. */
+  sample?: boolean;
 }
 
 /** The steps a parcel goes through. PayPal's tracker only knows SHIPPED and DELIVERED; the rest are the carrier's scans. */
@@ -61,6 +63,9 @@ export interface Shipment {
   /** What PayPal said when the clerk added or closed the tracker; null when it isn't tracked there. */
   paypal: { status: "SHIPPED" | "DELIVERED"; mode: string } | { error: string; mode: string } | null;
   simulated?: boolean;
+  /** Made up for the demo shop's desk, with the step it's frozen at. */
+  sample?: boolean;
+  sampleStage?: number;
 }
 
 /** A return asked for by a courier, or a refund the owner confirmed. One per order, decided once. */
@@ -80,6 +85,7 @@ export interface ReturnRecord {
   decidedBy: string;
   paypalMode: string;
   at: string;
+  sample?: boolean;
 }
 
 /** A refund the owner's clerk proposed. Nothing moves until the owner confirms it. */

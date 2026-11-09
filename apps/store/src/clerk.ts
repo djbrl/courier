@@ -352,6 +352,7 @@ function cleanTransactions(data: any) {
 function propose(orderId: string, dollars: unknown, note: unknown, shop?: string): ClerkAction | { problem: string } {
   const order = db.get<Order>("orders", orderId);
   if (!order || !inShop(shop)(order)) return { problem: `There's no order ${orderId}${shop ? " at this shop" : ""}.` };
+  if (order.sample) return { problem: `${order.id} is sample data: there's no payment behind it to refund.` };
   const room = refundRoom(order, refunded(order.id));
   if (!room.ok) return { problem: room.problem };
   const value = dollars === undefined || dollars === null || dollars === "" ? undefined : String(dollars);

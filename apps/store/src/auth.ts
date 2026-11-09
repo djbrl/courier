@@ -55,6 +55,8 @@ export interface RequestLogEntry {
   code?: string | null;
   /** The shop whose door it was. Unset on entries logged before shops had their own desks. */
   shop?: string;
+  /** Made up for the demo shop's desk (sample.ts). */
+  sample?: boolean;
 }
 
 /** Whether this ID's payments go to the PayPal simulator rather than the PayPal sandbox. Read from the signed claim

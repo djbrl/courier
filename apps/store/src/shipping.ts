@@ -20,6 +20,7 @@ export const stageLabels = (s: Pick<Shipment, "carrier">) => LABELS[s.carrier ==
 
 /** Where a parcel is now, from the time it left. */
 export function stageOf(s: Shipment, now = Date.now()): number {
+  if (s.sampleStage !== undefined) return s.sampleStage;
   if (s.deliveredAt) return STAGES.length - 1;
   return Math.max(0, Math.min(STAGES.length - 1, Math.floor((now - Date.parse(s.shippedAt)) / config.shipping.stepMs)));
 }
@@ -105,7 +106,8 @@ export async function ship(order: Order, parcel?: string): Promise<Shipment | nu
 
 /** Moves every parcel on to where the clock says it is, and tells Courier each new step. */
 async function advance(): Promise<void> {
-  for (const s of db.list<Shipment>("shipments", (x) => !x.deliveredAt, Infinity)) {
+  // Sample parcels stay where they were drawn, and Courier never hears of them.
+  for (const s of db.list<Shipment>("shipments", (x) => !x.deliveredAt && !x.sample, Infinity)) {
     const stage = stageOf(s);
     if (stage <= s.told) continue;
     let next: Shipment = { ...s, told: stage };

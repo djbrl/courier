@@ -8151,6 +8151,43 @@ html:has(body.ob2-page) {
   height: 34px;
 }
 /* Three ways in, stacked full width. One that can't be used stays visible, faded, with the reason under it. */
+/* The demo's first question: a buyer or a shop owner. */
+.ob2-q {
+  margin: 26px 0 10px;
+  font-weight: 700;
+}
+.ob2-pick {
+  display: grid;
+  gap: 10px;
+}
+.ob2-opt {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--ink);
+  transition: border-color 0.15s;
+}
+.ob2-opt:hover {
+  border-color: var(--ink);
+}
+.ob2-opt b {
+  font-size: 17px;
+}
+.ob2-opt small {
+  grid-row: 2;
+  color: var(--soft);
+  font-size: 14px;
+}
+.ob2-opt svg,
+.ob2-opt .go {
+  grid-row: 1 / 3;
+  grid-column: 2;
+}
 .ob2-ways {
   display: grid;
   gap: 10px;
@@ -9252,6 +9289,77 @@ html:has(body.app-page) {
   color: var(--mute);
 }
 
+/* The shops as one list: a row each, logo, name and what it sells, so twenty shops read top to bottom. */
+.shl {
+  display: grid;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #fff;
+  overflow: hidden;
+}
+.shl-r {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  transition: background 0.15s;
+}
+.shl-r + .shl-r {
+  border-top: 1px solid var(--line);
+}
+.shl-r:hover {
+  background: var(--paper);
+}
+.shl-r .slogo {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+}
+.shl-b {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.shl-b b {
+  font-size: 15.5px;
+  font-weight: 650;
+}
+.shl-b small {
+  font-size: 13.5px;
+  color: var(--mute);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.shl-go {
+  display: inline-flex;
+  gap: 4px;
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--soft);
+}
+.shl-r:hover .shl-go {
+  color: var(--ink);
+}
+.shl-r .chev {
+  width: 18px;
+  height: 18px;
+  color: var(--mute);
+}
+@media (max-width: 560px) {
+  .shl-r {
+    padding: 12px 14px;
+    gap: 12px;
+  }
+  .shl-go {
+    font-size: 0;
+  }
+  .shl-go span {
+    font-size: 15px;
+  }
+}
+
 /* One shop in the app: who it is, what it sees of you, then your history beside its promises. */
 .shp-id {
   display: flex;
@@ -9438,5 +9546,96 @@ html:has(body.app-page) {
   .sf-strip {
     margin-top: 0;
     font-size: 13.5px;
+  }
+}
+
+/* The storefront, plainer: the shop's card, its owner's way in, a menu, and pictures with prices. */
+.sf-menu a[aria-current] {
+  box-shadow: none;
+}
+.sf-menu a {
+  font-weight: 600;
+}
+.sf-id {
+  align-items: end;
+}
+.sf-owner {
+  display: grid;
+  gap: 2px;
+  padding: 14px 20px;
+  border-radius: 16px;
+  background: var(--ink);
+  color: #fff;
+  text-decoration: none;
+  transition: transform 0.15s ease;
+}
+.sf-owner:hover {
+  transform: translateY(-1px);
+}
+.sf-owner small {
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+}
+.sf-owner b {
+  font-size: 16.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.sf-cards {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 22px 18px;
+}
+.sf-c {
+  display: grid;
+  gap: 3px;
+  align-content: start;
+}
+.sf-c .sf-cv {
+  aspect-ratio: 4 / 3;
+  margin-bottom: 8px;
+}
+.sf-c b {
+  font-size: 15.5px;
+  line-height: 1.3;
+}
+.sf-c .pr {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--soft);
+}
+@media (max-width: 900px) {
+  .sf-owner {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+  .sf-menu a {
+    border: 0;
+    background: #f6f4ef;
+  }
+  .sf-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 12px;
+  }
+}
+@media (min-width: 901px) {
+  /* Only the logo overlaps the banner; the name and the owner's way in sit clear of it. */
+  .sf-id > div,
+  .sf-owner {
+    margin-bottom: 4px;
+    align-self: end;
+  }
+  .sf-id {
+    align-items: start;
+  }
+  .sf-id > div {
+    padding-top: 54px;
+  }
+  .sf-owner {
+    margin-top: 58px;
   }
 }

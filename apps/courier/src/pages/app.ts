@@ -465,19 +465,20 @@ export function shopsPage(d: Desk): string {
   const yours = used.length
     ? html`<section aria-label="Your shops">
       <div class="pg-st"><h2>Your shops</h2><span class="fine">Where your couriers have been</span></div>
-      <div class="ysh">${used.map(
-        (u) => html`<a class="ysh-t" href="/app/shops/${u.shop.slug}">${shopLogo(u.shop)}
-          <span class="ysh-b"><b>${u.shop.name}</b><small>${plural(u.errands.size, "errand")} · ${u.spentCents ? `${short(u.spentCents)} spent` : "nothing bought yet"} · ${timeAgo(u.last)}</small>
+      <div class="shl">${used.map(
+        (u) => html`<a class="shl-r" href="/app/shops/${u.shop.slug}">${shopLogo(u.shop)}
+          <span class="shl-b"><b>${u.shop.name}</b><small>${plural(u.errands.size, "errand")} · ${u.spentCents ? `${short(u.spentCents)} spent` : "nothing bought yet"} · ${timeAgo(u.last)}</small>
           ${u.parcel ? html`<span class="ysh-p"><i aria-hidden="true"></i>Parcel: ${u.parcel.labels[u.parcel.stage]}</span>` : ""}</span>${CHEVRON}</a>`,
       )}</div>
     </section>`
     : "";
+  // Straight to the shop itself: what anyone sees there, and the way into its desk for its owner.
   const body = html`${yours}
     <section aria-label="All shops">
       ${used.length ? html`<div class="pg-st"><h2>All shops</h2><span class="n">${SHOPS.length}</span></div>` : ""}
-      <div class="shg">${SHOPS.map(
+      <div class="shl">${SHOPS.map(
         (s) =>
-          html`<a class="shg-t" href="/app/shops/${s.slug}">${shopLogo(s)}<span class="shg-b"><b>${s.name}</b><small>${s.sells}</small><span class="shg-chip">${policyChip(afterSaleOf(s.slug))}</span></span></a>`,
+          html`<a class="shl-r" href="${config.store.url}/${s.slug}">${shopLogo(s)}<span class="shl-b"><b>${s.name}</b><small>${s.sells}</small></span><span class="shl-go">Visit<span aria-hidden="true">↗</span></span></a>`,
       )}</div>
     </section>
     <p class="fine">Demo shops with made-up names and products, not affiliated with any real brand. No real money moves.</p>`;
@@ -573,7 +574,7 @@ export function shopPage(d: Desk, shop: Shop, opts: { pseudonym: string; refunds
       </section>
       <section class="card list shp-links">
         <a class="li" href="${config.store.url}/${shop.slug}" target="_blank" rel="noopener"><span class="li-t"><b>Open the storefront ↗</b><small>What anyone sees at ${shop.name}</small></span></a>
-        <a class="li" href="${config.store.url}/desk/${shop.slug}" target="_blank" rel="noopener"><span class="li-t"><b>See this shop’s desk ↗</b><small>The owner’s side: orders, parcels and returns. Open to everyone in the demo.</small></span></a>
+        <a class="li" href="${config.store.url}/desk/${shop.slug}" target="_blank" rel="noopener"><span class="li-t"><b>See this shop’s desk ↗</b><small>The owner’s side: orders, parcels and returns. In the demo, anyone can sign in as its owner.</small></span></a>
       </section>
     </aside>`;
   const body = html`<div class="pg pg-wide"><div class="pg-in">

@@ -8,16 +8,7 @@ import {
   ModuleRegistry,
   themeQuartz,
 } from "ag-grid-community";
-import type {
-  CourierFace,
-  CourierRow,
-  DoorRow,
-  NeedRow,
-  OrderRow,
-  ParcelRow,
-  ReasonRow,
-  ShopDesk,
-} from "../src/desk-ops.ts";
+import type { CourierFace, CourierRow, DoorRow, NeedRow, OrderRow, ReasonRow, ShopDesk } from "../src/desk-ops.ts";
 
 /*
  * The shop desk in the browser. The server draws every page as plain lists; on a wide screen this swaps them for AG Grid
@@ -29,7 +20,7 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 
 interface Boot {
   shop: string;
-  view: "today" | "orders" | "door" | "couriers" | "reports";
+  view: "today" | "orders" | "access" | "couriers" | "reports";
   api: string;
   desk: ShopDesk;
 }
@@ -38,6 +29,8 @@ const bootEl = document.getElementById("dk-boot");
 const boot = bootEl ? (JSON.parse(bootEl.textContent ?? "{}") as Boot) : null;
 const WIDE = matchMedia("(min-width: 900px)");
 const POLL_MS = 8000;
+/** How many orders Today shows. */
+const LATEST = 8;
 
 /** Courier's look for the grids: paper header, hairlines, cobalt for focus, the app's fonts. */
 const theme = themeQuartz.withParams({
@@ -93,6 +86,9 @@ function who(face: CourierFace | null, sub?: string | null): HTMLElement {
 }
 
 const pill = (text: string, kind = "") => el("span", { className: `dk-pill ${kind}`, text });
+/** Marks a made-up row (sample.ts) wherever it shows, so nobody mistakes it for a real order. */
+const sampleTag = (row: { sample?: boolean }) =>
+  row.sample ? el("span", { className: "dk-sample", text: "Sample", title: "Made up so the desk isn't empty" }) : null;
 
 const pillKind = (text: string) => {
   const t = text.toLowerCase();
@@ -306,38 +302,13 @@ function needsGrid(rows: NeedRow[]) {
   );
 }
 
-function parcelsGrid(rows: ParcelRow[]) {
-  return mount<ParcelRow>(
-    "parcels",
-    base(
-      rows,
-      [
-        {
-          headerName: "Courier",
-          field: "courier.name",
-          flex: 1,
-          minWidth: 140,
-          cellRenderer: render<ParcelRow>((r) => who(r.courier)),
-        },
-        { headerName: "Item", field: "item", flex: 1.2, ...wrap },
-        {
-          headerName: "Where",
-          field: "step",
-          width: 150,
-          cellRenderer: render<ParcelRow>((r) => pill(r.step, pillKind(r.step))),
-          enableCellChangeFlash: true,
-        },
-      ],
-      { getRowId: (p) => p.data.orderId, pagination: false },
-    ),
-  );
-}
-
-function ordersGrid(rows: OrderRow[]) {
+/** All orders on Orders; on Today, the latest few, each opening its proof on Orders. */
+function ordersGrid(rows: OrderRow[], key: "orders" | "latest" = "orders") {
+  const latest = key === "latest";
   const api = mount<OrderRow>(
-    "orders",
+    key,
     base(
-      rows,
+      latest ? rows.slice(0, LATEST) : rows,
       [
         {
           headerName: "Placed",
@@ -353,7 +324,14 @@ function ordersGrid(rows: OrderRow[]) {
           cellRenderer: render<OrderRow>((r) => who(r.courier, r.pseudonym)),
           getQuickFilterText: (p) => `${p.data?.courier.name} ${p.data?.pseudonym}`,
         },
-        { headerName: "Item", field: "item", flex: 1, minWidth: 220, ...wrap },
+        {
+          headerName: "Item",
+          field: "item",
+          flex: 1,
+          minWidth: 220,
+          cellRenderer: render<OrderRow>((r) => el("span", { className: "dk-item" }, r.item, sampleTag(r))),
+          ...wrap,
+        },
         {
           headerName: "Amount",
           field: "amountCents",
@@ -368,16 +346,45 @@ function ordersGrid(rows: OrderRow[]) {
           enableCellChangeFlash: true,
           cellRenderer: render<OrderRow>((r) => pill(r.stage, pillKind(r.stage))),
         },
-        { headerName: "Paid with", field: "paidWith", width: 150 },
-        { headerName: "Order", field: "orderId", flex: 1, minWidth: 150, cellClass: "dk-mono" },
+        ...(latest
+          ? []
+          : [
+              { headerName: "Paid with", field: "paidWith", width: 150 } as ColDef<OrderRow>,
+              {
+                headerName: "Order",
+                field: "orderId",
+                flex: 1,
+                minWidth: 150,
+                cellClass: "dk-mono",
+              } as ColDef<OrderRow>,
+            ]),
       ],
-      {
-        getRowId: (p) => p.data.orderId,
-        rowSelection: { mode: "singleRow", checkboxes: false, enableClickSelection: true },
-        onSelectionChanged: (e) => showOrder(e.api.getSelectedRows()[0] ?? null, true),
-      },
+      latest
+        ? {
+            getRowId: (p) => p.data.orderId,
+            pagination: false,
+            rowClass: "dk-link-row",
+            onRowClicked: (e) => {
+              if (e.data)
+                location.href = `${boot!.api.replace(/\/api$/, "")}/orders?order=${encodeURIComponent(e.data.orderId)}`;
+            },
+          }
+        : {
+            getRowId: (p) => p.data.orderId,
+            rowSelection: { mode: "singleRow", checkboxes: false, enableClickSelection: true },
+            onSelectionChanged: (e) => showOrder(e.api.getSelectedRows()[0] ?? null, true),
+          },
     ),
   );
+  // Opened from Today: show that order's proof straight away.
+  const wanted = new URLSearchParams(location.search).get("order");
+  if (api && !latest && wanted) {
+    const node = api.getRowNode(wanted);
+    if (node) {
+      api.ensureNodeVisible(node, "middle");
+      node.setSelected(true);
+    }
+  }
   return api;
 }
 
@@ -459,7 +466,14 @@ function doorGrid(rows: DoorRow[]) {
           headerName: "Outcome",
           field: "reason",
           width: 190,
-          cellRenderer: render<DoorRow>((r) => pill(r.allowed ? "Let in" : r.reason, r.allowed ? "s-ok" : "s-bad")),
+          cellRenderer: render<DoorRow>((r) =>
+            el(
+              "span",
+              { className: "dk-item" },
+              pill(r.allowed ? "Let in" : r.reason, r.allowed ? "s-ok" : "s-bad"),
+              sampleTag(r),
+            ),
+          ),
         },
         { headerName: "In detail", field: "detail", flex: 1, minWidth: 260, ...wrap },
         {
@@ -499,8 +513,10 @@ function couriersGrid(rows: CourierRow[]) {
         {
           headerName: "Courier",
           field: "courier.name",
-          width: 220,
-          cellRenderer: render<CourierRow>((r) => who(r.courier, r.pseudonym)),
+          width: 240,
+          cellRenderer: render<CourierRow>((r) =>
+            el("span", { className: "dk-item" }, who(r.courier, r.pseudonym), sampleTag(r)),
+          ),
           getQuickFilterText: (p) => `${p.data?.courier.name} ${p.data?.pseudonym}`,
         },
         { headerName: "Orders", field: "orders", width: 100, type: "rightAligned" },
@@ -528,7 +544,16 @@ function couriersGrid(rows: CourierRow[]) {
           minWidth: 150,
           sortable: false,
           cellRenderer: render<CourierRow>((r) =>
-            r.standing === "Reported" || !r.visaIds.length ? "" : button("report", { visaId: r.visaIds.at(-1) }),
+            r.standing === "Reported"
+              ? ""
+              : r.visaIds.length
+                ? button("report", { visaId: r.visaIds.at(-1) })
+                : // Only an errand has a pass to suspend. Between errands, a connected Claude has none here yet.
+                  el("span", {
+                    className: "dk-note",
+                    text: "No errand to report",
+                    title: "This courier hasn't had an errand here. You can report it once it has one.",
+                  }),
           ),
         },
       ],
@@ -593,11 +618,13 @@ async function refresh(now = false) {
     boot.desk = desk;
     updateCounts(desk);
     updateReasons(desk.reasons);
+    const needs = document.getElementById("needs");
+    if (needs) {
+      needs.hidden = desk.needs.length === 0;
+      if (desk.needs.length && WIDE.matches && !grids.has("needs")) needsGrid(desk.needs);
+    }
     grids.get("needs")?.setGridOption("rowData", desk.needs);
-    grids.get("parcels")?.setGridOption(
-      "rowData",
-      desk.parcels.filter((p) => !p.delivered),
-    );
+    grids.get("latest")?.setGridOption("rowData", desk.orders.slice(0, LATEST));
     grids.get("door")?.setGridOption("rowData", desk.door);
     grids.get("couriers")?.setGridOption("rowData", desk.couriers);
     const orders = grids.get("orders");
@@ -679,6 +706,14 @@ function wireClerk() {
   for (const b of document.querySelectorAll("[data-clerk-open]")) b.addEventListener("click", () => open(true));
   for (const b of document.querySelectorAll("[data-clerk-close]")) b.addEventListener("click", () => open(false));
   document.addEventListener("keydown", (e) => e.key === "Escape" && open(false));
+  // The tour's last step links here.
+  const fromLink = () => {
+    if (location.hash !== "#clerk") return;
+    window.history.replaceState(null, "", location.pathname);
+    open(true);
+  };
+  addEventListener("hashchange", fromLink);
+  fromLink();
 
   const say = async (text: string) => {
     history.push({ role: "user", content: text });
@@ -736,14 +771,16 @@ if (boot) {
   const d = boot.desk;
   if (WIDE.matches) {
     if (boot.view === "today") {
-      needsGrid(d.needs);
-      parcelsGrid(d.parcels.filter((p) => !p.delivered));
+      if (d.needs.length) needsGrid(d.needs);
+      ordersGrid(d.orders, "latest");
     }
     if (boot.view === "orders") ordersGrid(d.orders);
-    if (boot.view === "door") doorGrid(d.door);
+    if (boot.view === "access") doorGrid(d.door);
     if (boot.view === "couriers") couriersGrid(d.couriers);
   }
   wireTools();
   wireClerk();
+  // The tour runs once per visit to ?tour=1; a reload shouldn't start it again.
+  if (new URLSearchParams(location.search).has("tour")) history.replaceState(null, "", location.pathname);
   if (boot.view !== "reports") setInterval(() => void refresh(), POLL_MS);
 }

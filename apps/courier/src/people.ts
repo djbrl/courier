@@ -24,18 +24,24 @@ export interface Contact {
 }
 
 const SEEDS: Pick<Contact, "name" | "relation" | "courierName" | "color" | "limitCents">[] = [
-  { name: "Leo", relation: "brother", courierName: "Otto", color: "tang", limitCents: 5000 },
-  { name: "Priya", relation: "friend", courierName: "Mika", color: "ink", limitCents: 4000 },
-  { name: "Noor", relation: "flatmate", courierName: "Rémy", color: "hivis", limitCents: 2500 },
+  { name: "Moussa Ndiaye", relation: "brother", courierName: "Otto", color: "tang", limitCents: 5000 },
+  { name: "Camille Laurent", relation: "friend", courierName: "Mika", color: "ink", limitCents: 4000 },
+  { name: "Wei Zhang", relation: "flatmate", courierName: "Rémy", color: "hivis", limitCents: 2500 },
 ];
+
+/** Contacts seeded before the demo three had full names keep their courier and history, under the new name. */
+const RENAMED: Record<string, string> = { Leo: "Moussa Ndiaye", Priya: "Camille Laurent", Noor: "Wei Zhang" };
 
 /** Something to split with each of them, to start from. */
 const IDEAS: Record<string, string> = {
-  Leo: "the Late Night Jazz box set for Dad",
-  Priya: "flowers for Noor’s birthday",
-  Noor: "dinner for the flat tonight",
+  "Moussa Ndiaye": "the Late Night Jazz box set for Dad",
+  "Camille Laurent": "flowers for Wei’s birthday",
+  "Wei Zhang": "dinner for the flat tonight",
 };
 export const ideaFor = (contact: Contact) => IDEAS[contact.name] ?? "something together";
+
+/** What people call them in conversation. */
+export const firstNameOf = (contact: Pick<Contact, "name">) => contact.name.split(" ")[0]!;
 
 /** A simulated person with a courier and a saved PayPal at the simulator, ready to pay their share. */
 function seed(owner: Human, s: (typeof SEEDS)[number]): Contact {
@@ -62,7 +68,7 @@ function seed(owner: Human, s: (typeof SEEDS)[number]): Contact {
     mode: "demo",
     createdAt: now,
   });
-  const email = `${s.name.toLowerCase()}@sim-paypal.test`;
+  const email = `${firstNameOf(s).toLowerCase()}@sim-paypal.test`;
   const vaultId = newId("VT").replace("_", "-");
   db.put("sim_payment_tokens", vaultId, { id: vaultId, setupTokenId: "seeded", email, deleted: false });
   db.put<SavedPayPalRecord>("saved_paypal", humanId, { humanId, vaultId, email });
@@ -73,6 +79,14 @@ function seed(owner: Human, s: (typeof SEEDS)[number]): Contact {
 /** A person's contacts. Everyone gets the demo three the first time they look. */
 export function contactsOf(owner: Human): Contact[] {
   const found = db.list<Contact>("contacts", (c) => c.ownerId === owner.id, Infinity);
+  for (const c of found) {
+    const name = RENAMED[c.name];
+    if (!name) continue;
+    db.put<Contact>("contacts", c.id, { ...c, name });
+    const them = db.get<Human>("humans", c.humanId);
+    if (them) db.put<Human>("humans", them.id, { ...them, displayName: name });
+    c.name = name;
+  }
   const have = found.length ? found : SEEDS.map((s) => seed(owner, s));
   return have.sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.name.localeCompare(b.name));
 }
@@ -88,7 +102,10 @@ export function findContacts(owner: Human, names: unknown): { found: Contact[]; 
       .toLowerCase()
       .replace(/^(my|our)\s+/, "")
       .trim();
-    const contact = all.find((c) => c.name.toLowerCase() === key || c.relation === key);
+    // Their full name, their first name ("chip in with Moussa"), or how they're related.
+    const contact = all.find(
+      (c) => c.name.toLowerCase() === key || firstNameOf(c).toLowerCase() === key || c.relation === key,
+    );
     if (!contact) unknown.push(name);
     else if (!found.includes(contact)) found.push(contact);
   }

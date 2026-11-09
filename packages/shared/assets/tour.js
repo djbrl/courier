@@ -67,6 +67,8 @@
         ${last ? `<a class="btn" href="${esc(step.cta.href)}">${esc(step.cta.label)}</a>` : `<button type="button" class="btn" data-do="next">Next</button>`}</div>`;
     target()?.scrollIntoView({ block: "center", inline: "nearest" });
     place();
+    // A table under the spotlight may still be sizing its rows: measure again once it has.
+    setTimeout(place, 400);
     box.querySelector(".btn").focus();
   }
 
@@ -85,6 +87,8 @@
   }
 
   box.addEventListener("click", (e) => {
+    // A link to something on this page (the desk's clerk) closes the tour as it goes.
+    if (e.target.closest('a[href^="#"]')) end();
     const action = e.target.closest("[data-do]")?.dataset.do;
     if (action === "skip") end();
     if (action === "next") {

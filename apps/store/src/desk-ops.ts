@@ -5,6 +5,7 @@ import { deliveryView } from "./clerk.ts";
 import { courierApi } from "./courier-api.ts";
 import { type ClerkAction, db, type Order, type ReturnRecord, type Shipment } from "./db.ts";
 import { colorFor, type DeskDoorEntry, doorLog, shortPseudonym } from "./desk.ts";
+import { isSampleVisa } from "./sample.ts";
 
 /*
  * One shop's back office: what needs the owner, its orders, parcels, door and couriers, as rows the desk's grids draw.
@@ -137,6 +138,8 @@ export interface OrderRow {
   reported: boolean;
   parcel: { carrier: string; tracking: string; steps: { label: string; done: boolean }[] } | null;
   returned: { decision: string; amount: string; note: string; reason: string; by: string } | null;
+  /** Made up so the demo shop's desk isn't empty. */
+  sample: boolean;
 }
 
 export interface ParcelRow {
@@ -149,6 +152,7 @@ export interface ParcelRow {
   delivered: boolean;
   shippedAt: string;
   shipped: string;
+  sample: boolean;
 }
 
 export interface DoorRow extends DeskDoorEntry {
@@ -160,6 +164,7 @@ export interface DoorRow extends DeskDoorEntry {
   /** The pass it showed, if any, so the owner can report it. */
   visaId: string | null;
   reported: boolean;
+  sample: boolean;
 }
 
 export interface ReasonRow {
@@ -182,6 +187,7 @@ export interface CourierRow {
   lastSeen: string;
   lastAgo: string;
   standing: "Good" | "Reported" | "Turned away";
+  sample: boolean;
 }
 
 export interface ShopDesk {
@@ -194,9 +200,11 @@ export interface ShopDesk {
     ordersToday: number;
     turnedAwayToday: number;
     parcels: number;
+    ordersWeek: number;
+    refundsWeek: number;
   };
-  /** What couriers paid on each of the last seven days, oldest first, for the trend under today's total. */
-  week: { day: string; cents: number; amount: string }[];
+  /** Orders and what couriers paid on each of the last seven days, oldest first, for the trend under today's count. */
+  week: { day: string; orders: number; cents: number; amount: string }[];
   needs: NeedRow[];
   orders: OrderRow[];
   parcels: ParcelRow[];
@@ -280,6 +288,7 @@ function orderRow(o: Order, ret: ReturnRecord | undefined): OrderRow {
           by: ret.by === "owner" ? "You" : ret.decidedBy === "rules" ? "The clerk (written rules)" : "The clerk",
         }
       : null,
+    sample: Boolean(o.sample),
   };
 }
 
@@ -295,6 +304,7 @@ export function shopDesk(shop: Shop): ShopDesk {
   const requests = db.list<RequestLogEntry>("requests", (r) => (r.shop ?? "juniper") === shop.slug, 5000);
   const visaOf = new Map(requests.flatMap((r) => (r.visaId ? [[r.id, r.visaId] as const] : [])));
   const detailOf = new Map(requests.map((r) => [r.id, r.reason]));
+  const sampled = new Set(requests.flatMap((r) => (r.sample ? [r.id] : [])));
   // A visa the door itself reported for flooding is as reported as one the owner reported here.
   const doorReported = new Set(
     requests.flatMap((r) =>
@@ -309,6 +319,7 @@ export function shopDesk(shop: Shop): ShopDesk {
     detail: d.allowed ? (d.count > 1 ? `${d.count} times` : "") : (detailOf.get(d.id) ?? d.reason),
     visaId: visaOf.get(d.id) ?? null,
     reported: isReported(visaOf.get(d.id)) || doorReported.has(visaOf.get(d.id) ?? ""),
+    sample: sampled.has(d.id),
   }));
 
   /* ---- what needs the owner ---- */
@@ -335,7 +346,8 @@ export function shopDesk(shop: Shop): ShopDesk {
     });
   }
   for (const o of raw) {
-    if (o.status !== "awaiting_approval" || now - Date.parse(o.createdAt) < STALE_UNPAID_MS) continue;
+    // Sample rows never ask anything of the owner: there's nothing behind them to act on.
+    if (o.sample || o.status !== "awaiting_approval" || now - Date.parse(o.createdAt) < STALE_UNPAID_MS) continue;
     const id = `unpaid:${o.id}`;
     if (isDismissed(shop.slug, id)) continue;
     needs.push({
@@ -357,7 +369,7 @@ export function shopDesk(shop: Shop): ShopDesk {
     });
   }
   for (const r of returns.values()) {
-    if (r.by !== "clerk" || r.decision === "full" || now - Date.parse(r.at) > RECENT_MS) continue;
+    if (r.sample || r.by !== "clerk" || r.decision === "full" || now - Date.parse(r.at) > RECENT_MS) continue;
     const id = `return:${r.orderId}`;
     const o = byId.get(r.orderId);
     if (!o || isDismissed(shop.slug, id)) continue;
@@ -382,7 +394,7 @@ export function shopDesk(shop: Shop): ShopDesk {
     });
   }
   for (const d of door) {
-    if (d.allowed || d.reason !== "Injection attempt" || now - Date.parse(d.at) > RECENT_MS) continue;
+    if (d.sample || d.allowed || d.reason !== "Injection attempt" || now - Date.parse(d.at) > RECENT_MS) continue;
     const visaId = visaOf.get(d.id) ?? null;
     const id = `door:${d.id}`;
     if (isDismissed(shop.slug, id) || isReported(visaId)) continue;
@@ -424,6 +436,7 @@ export function shopDesk(shop: Shop): ShopDesk {
           delivered: Boolean(view.delivered_at),
           shippedAt: s.shippedAt,
           shipped: ago(s.shippedAt),
+          sample: Boolean(s.sample),
         },
       ];
     })
@@ -463,6 +476,7 @@ export function shopDesk(shop: Shop): ShopDesk {
         lastSeen: at,
         lastAgo: "",
         standing: "Good",
+        sample: false,
       } satisfies CourierRow);
     if (at > c.lastSeen) c.lastSeen = at;
     couriers.set(pseudonym, c);
@@ -487,6 +501,7 @@ export function shopDesk(shop: Shop): ShopDesk {
     if (v && !c.visaIds.includes(v)) c.visaIds.push(v);
   }
   for (const c of couriers.values()) {
+    c.sample = c.visaIds.length > 0 && c.visaIds.every(isSampleVisa);
     c.paid = money(c.paidCents);
     c.lastAgo = ago(c.lastSeen);
     c.standing =
@@ -505,13 +520,13 @@ export function shopDesk(shop: Shop): ShopDesk {
     start.setHours(0, 0, 0, 0);
     start.setDate(start.getDate() - (6 - i));
     const from = start.getTime();
-    const cents = paid
-      .filter((o) => {
-        const at = Date.parse(o.paidAt ?? o.createdAt);
-        return at >= from && at < from + DAY_MS;
-      })
-      .reduce((sum, o) => sum + o.totalCents, 0);
-    return { day: start.toLocaleDateString("en-US", { weekday: "short" }), cents, amount: money(cents) };
+    const within = (iso: string) => {
+      const at = Date.parse(iso);
+      return at >= from && at < from + DAY_MS;
+    };
+    const cents = paid.filter((o) => within(o.paidAt ?? o.createdAt)).reduce((sum, o) => sum + o.totalCents, 0);
+    const orders = raw.filter((o) => o.status !== "cancelled" && within(o.createdAt)).length;
+    return { day: start.toLocaleDateString("en-US", { weekday: "short" }), orders, cents, amount: money(cents) };
   });
   return {
     shop: { slug: shop.slug, name: shop.name, sells: shop.sells, tile: shop.tile },
@@ -525,6 +540,9 @@ export function shopDesk(shop: Shop): ShopDesk {
       ordersToday: raw.filter((o) => today(o.createdAt)).length,
       turnedAwayToday: door.filter((d) => !d.allowed && today(d.at)).length,
       parcels: parcels.filter((p) => !p.delivered).length,
+      ordersWeek: week.reduce((sum, d) => sum + d.orders, 0),
+      refundsWeek: [...returns.values()].filter((x) => x.decision !== "decline" && now - Date.parse(x.at) < 7 * DAY_MS)
+        .length,
     },
     week,
     needs,
