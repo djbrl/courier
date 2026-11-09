@@ -1,12 +1,18 @@
-import { config, internalFetch } from "@courier/shared";
+import { config } from "@courier/shared";
+import { CourierShopsClient } from "../../../sdk/typescript/src/index.ts";
 
 /*
- * Everything a shop asks Courier, in one place. Each call is an operation in sdk/src/spec/openapi.json (the spec the
- * shop SDKs are generated from), under the same name, so a shop on the SDK makes the same calls as these demo shops.
+ * Everything a shop asks Courier, through the Courier Shops SDK that APIMatic generates from sdk/src/spec/openapi.json.
+ * The demo shops run on the same SDK a real shop would install. The types below are what the store's code relies on;
+ * the SDK's own are open-ended (an enum also takes any string), so each call narrows its answer to them.
  */
 
-const at = (path: string) => `${config.courier.url}/internal${path}`;
-const id = encodeURIComponent;
+const client = new CourierShopsClient({
+  shopKey: config.internalSecret,
+  serverOptions: { baseUrl: `${config.courier.url}/internal` },
+  // A knock waits on these calls, so a Courier that's down is reported at once rather than after retries.
+  retry: { maxRetries: 0, timeout: 15_000 },
+});
 
 export interface Errand {
   id: string;
@@ -16,7 +22,7 @@ export interface Errand {
   spendLimitCents: number;
   perPurchaseLimitCents: number;
   remainingCents: number;
-  expiresAt: string;
+  expiresAt: Date;
   bond: { status: string; amountCents: number } | null;
 }
 
@@ -111,23 +117,25 @@ export interface Return {
 type Ok = { ok: boolean; skipped?: boolean };
 
 export const courierApi = {
-  getErrand: (visaId: string) => internalFetch<Errand>(at(`/visas/${id(visaId)}`)),
-  getConnection: (connectionId: string) => internalFetch<Connection>(at(`/connections/${id(connectionId)}`)),
+  getErrand: async (visaId: string) => (await client.errands.getErrand({ visaId })) as Errand,
+  getConnection: async (connectionId: string) =>
+    (await client.connections.getConnection({ connectionId })) as Connection,
   requestTicket: (connectionId: string, body: TicketRequest) =>
-    internalFetch<{ url?: string; issued?: boolean }>(at(`/connections/${id(connectionId)}/ticket`), { body }),
-  checkSpend: (body: SpendCheck) => internalFetch<SpendDecision>(at("/spend/check"), { body }),
-  chargeSavedPaypal: (body: Charge) =>
-    internalFetch<{ orderId: string; status: string; captureId: string | null }>(at("/spend/charge"), { body }),
-  commitSpend: (body: Commit) =>
-    internalFetch<{ ok: boolean; spentCents: number; remainingCents: number }>(at("/spend/commit"), { body }),
-  releaseHold: (holdId: string) => internalFetch<Ok>(at("/spend/release"), { body: { holdId } }),
-  getApproval: (approvalId: string) =>
-    internalFetch<{ status: "pending" | "approved" | "denied" }>(at(`/approvals/${id(approvalId)}`)),
-  recordApproval: (approvalId: string, body: { visaId: string; decision: "approved" | "denied" }) =>
-    internalFetch<{ status: "approved" | "denied" }>(at(`/approvals/${id(approvalId)}/decide`), { body }),
-  addStep: (body: Step) => internalFetch<Ok>(at("/stamps"), { body }),
-  updateParcel: (body: Parcel) => internalFetch<Ok>(at("/shipments"), { body }),
-  updateReturn: (body: Return) => internalFetch<Ok>(at("/returns"), { body }),
+    client.connections.requestTicket({ connectionId, body }) as Promise<{ url?: string; issued?: boolean }>,
+  checkSpend: async (body: SpendCheck) => (await client.spending.checkSpend({ body })) as SpendDecision,
+  chargeSavedPaypal: async (body: Charge) => {
+    const charged = await client.spending.chargeSavedPaypal({ body });
+    return { orderId: charged.orderId, status: charged.status, captureId: charged.captureId ?? null };
+  },
+  commitSpend: (body: Commit) => client.spending.commitSpend({ body }),
+  releaseHold: (holdId: string) => client.spending.releaseHold({ body: { holdId } }) as Promise<Ok>,
+  getApproval: async (approvalId: string) =>
+    (await client.approvals.getApproval({ approvalId })) as { status: "pending" | "approved" | "denied" },
+  recordApproval: async (approvalId: string, body: { visaId: string; decision: "approved" | "denied" }) =>
+    (await client.approvals.recordApproval({ approvalId, body })) as { status: "approved" | "denied" },
+  addStep: (body: Step) => client.afterSale.addStep({ body }) as Promise<Ok>,
+  updateParcel: (body: Parcel) => client.afterSale.updateParcel({ body }) as Promise<Ok>,
+  updateReturn: (body: Return) => client.afterSale.updateReturn({ body }) as Promise<Ok>,
   reportCourier: (body: { visaId: string; reason: string; evidence?: Record<string, unknown> }) =>
-    internalFetch<{ ok: boolean; status: string; bondOutcome: string }>(at("/report"), { body }),
+    client.reports.reportCourier({ body }),
 };

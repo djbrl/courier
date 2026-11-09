@@ -4,22 +4,47 @@
     "title": "Courier Shops",
     "version": "1.0.0",
     "description": "What a shop calls on Courier to serve AI shopping agents (couriers) safely.\n\nA courier arrives with a signed token from Courier. The shop verifies the token against Courier's public keys (`/jwks.json`), then uses this API to:\n\n- check what the courier's errand still allows, and ask Courier before every hold or purchase;\n- charge the person's saved PayPal, record what was paid, and release what wasn't;\n- tell the errand about parcels and returns;\n- report a courier that misbehaves.\n\nLimits are enforced by Courier in code. The shop never learns who the person is: it sees a pairwise pseudonym (`sub`), the courier's name and the errand's limits.",
-    "license": { "name": "MIT", "url": "https://opensource.org/licenses/MIT" }
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
   },
   "servers": [
     {
-      "url": "{courierUrl}/internal",
-      "variables": { "courierUrl": { "default": "http://localhost:4000", "description": "Where Courier runs." } }
+      "url": "http://localhost:4000/internal",
+      "description": "Courier's shop API. Point baseUrl at your Courier, ending in /internal."
     }
   ],
-  "security": [{ "shopKey": [] }],
+  "security": [
+    {
+      "shopKey": []
+    }
+  ],
   "tags": [
-    { "name": "Errands", "description": "What an errand allows and how much of it is left." },
-    { "name": "Connections", "description": "A person's Claude, connected to a shop between errands." },
-    { "name": "Spending", "description": "Ask before every hold or purchase, then charge, commit or release." },
-    { "name": "Approvals", "description": "The person's answer when Courier asked them first." },
-    { "name": "After sale", "description": "Parcels, returns and other steps the person sees on their errand." },
-    { "name": "Reports", "description": "Report a courier that misbehaves." }
+    {
+      "name": "Errands",
+      "description": "What an errand allows and how much of it is left."
+    },
+    {
+      "name": "Connections",
+      "description": "A person's Claude, connected to a shop between errands."
+    },
+    {
+      "name": "Spending",
+      "description": "Ask before every hold or purchase, then charge, commit or release."
+    },
+    {
+      "name": "Approvals",
+      "description": "The person's answer when Courier asked them first."
+    },
+    {
+      "name": "After sale",
+      "description": "Parcels, returns and other steps the person sees on their errand."
+    },
+    {
+      "name": "Reports",
+      "description": "Report a courier that misbehaves."
+    }
   ],
   "paths": {
     "/visas/{visaId}": {
@@ -28,14 +53,28 @@
         "operationId": "getErrand",
         "summary": "Get an errand's standing",
         "description": "The errand's status and what is left to spend. Call it when a courier knocks: a revoked or used-up errand is turned away within seconds.",
-        "parameters": [{ "$ref": "#/components/parameters/VisaId" }],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/VisaId"
+          }
+        ],
         "responses": {
           "200": {
             "description": "The errand.",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Errand" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Errand"
+                }
+              }
+            }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
-          "404": { "$ref": "#/components/responses/NotFound" }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
         }
       }
     },
@@ -45,14 +84,28 @@
         "operationId": "getConnection",
         "summary": "Get a connection's standing",
         "description": "Whether a connected Claude is still allowed in, and its current errand as a short-lived signed token (verify it like any Courier token).",
-        "parameters": [{ "$ref": "#/components/parameters/ConnectionId" }],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ConnectionId"
+          }
+        ],
         "responses": {
           "200": {
             "description": "The connection.",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Connection" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Connection"
+                }
+              }
+            }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
-          "404": { "$ref": "#/components/responses/NotFound" }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
         }
       }
     },
@@ -62,18 +115,38 @@
         "operationId": "requestTicket",
         "summary": "Ask the person for an errand",
         "description": "When a connected Claude wants to buy with no errand open. Returns a link for the person to set the budget, or, when the person already chose a budget in their chat app and has PayPal saved, opens the errand at once. The agent's numbers are only suggestions.",
-        "parameters": [{ "$ref": "#/components/parameters/ConnectionId" }],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ConnectionId"
+          }
+        ],
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TicketRequest" } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TicketRequest"
+              }
+            }
+          }
         },
         "responses": {
           "200": {
             "description": "A link or a new errand.",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TicketResult" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketResult"
+                }
+              }
+            }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
-          "404": { "$ref": "#/components/responses/NotFound" }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
         }
       }
     },
@@ -85,14 +158,28 @@
         "description": "Courier checks the errand's limits in code, then whether the items fit what the person asked for. It approves (with a hold on the budget for a checkout), denies with a code, or asks the person first.",
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SpendCheck" } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpendCheck"
+              }
+            }
+          }
         },
         "responses": {
           "200": {
             "description": "Courier's decision.",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SpendDecision" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpendDecision"
+                }
+              }
+            }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
         }
       }
     },
@@ -104,19 +191,43 @@
         "description": "Only when the decision said `autopay`. Charges exactly the held amount, once per hold.",
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Charge" } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Charge"
+              }
+            }
+          }
         },
         "responses": {
           "200": {
             "description": "The PayPal order.",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChargeResult" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChargeResult"
+                }
+              }
+            }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
-          "404": { "$ref": "#/components/responses/NotFound" },
-          "409": { "$ref": "#/components/responses/Conflict" },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
           "502": {
             "description": "PayPal didn't take the payment.",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -129,15 +240,31 @@
         "description": "After PayPal captured the payment. Idempotent per hold.",
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Commit" } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Commit"
+              }
+            }
+          }
         },
         "responses": {
           "200": {
             "description": "What the errand has spent.",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CommitResult" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommitResult"
+                }
+              }
+            }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
-          "404": { "$ref": "#/components/responses/NotFound" }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
         }
       }
     },
@@ -149,14 +276,28 @@
         "description": "When an order is cancelled before it is paid.",
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Release" } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Release"
+              }
+            }
+          }
         },
         "responses": {
           "200": {
             "description": "Released.",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Ok" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
         }
       }
     },
@@ -166,14 +307,28 @@
         "operationId": "getApproval",
         "summary": "Get the person's answer",
         "description": "Where an ask stands while the person answers on Courier's page.",
-        "parameters": [{ "$ref": "#/components/parameters/ApprovalId" }],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ApprovalId"
+          }
+        ],
         "responses": {
           "200": {
             "description": "The ask.",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApprovalStatus" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalStatus"
+                }
+              }
+            }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
-          "404": { "$ref": "#/components/responses/NotFound" }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
         }
       }
     },
@@ -183,18 +338,38 @@
         "operationId": "recordApproval",
         "summary": "Record the person's answer from their chat app",
         "description": "Only for an answer the person picked in a dialog their chat app showed them (the model can't answer it). Never pass on an agent's own answer.",
-        "parameters": [{ "$ref": "#/components/parameters/ApprovalId" }],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ApprovalId"
+          }
+        ],
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Decide" } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Decide"
+              }
+            }
+          }
         },
         "responses": {
           "200": {
             "description": "The ask.",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApprovalStatus" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalStatus"
+                }
+              }
+            }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
-          "404": { "$ref": "#/components/responses/NotFound" }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
         }
       }
     },
@@ -206,15 +381,31 @@
         "description": "A line the person sees on their errand, such as a browse. Browse steps are kept to one per 10 minutes.",
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Step" } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Step"
+              }
+            }
+          }
         },
         "responses": {
           "200": {
             "description": "Added, or skipped.",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Ok" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
-          "404": { "$ref": "#/components/responses/NotFound" }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
         }
       }
     },
@@ -226,15 +417,31 @@
         "description": "Each step of a delivery, in order. A step at or before the last one sent is skipped. Carries no personal data.",
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Parcel" } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Parcel"
+              }
+            }
+          }
         },
         "responses": {
           "200": {
             "description": "Told, or skipped.",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Ok" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
-          "404": { "$ref": "#/components/responses/NotFound" }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
         }
       }
     },
@@ -246,15 +453,31 @@
         "description": "A refund in full or in part, or a decline. A repeat of the same decision is skipped. A refund doesn't raise what the errand may still spend.",
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Return" } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Return"
+              }
+            }
+          }
         },
         "responses": {
           "200": {
             "description": "Told, or skipped.",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Ok" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                }
+              }
+            }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
-          "404": { "$ref": "#/components/responses/NotFound" }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
         }
       }
     },
@@ -266,15 +489,31 @@
         "description": "Suspends the errand at once and claims its bond, if it has one.",
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Report" } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Report"
+              }
+            }
+          }
         },
         "responses": {
           "200": {
             "description": "Suspended.",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ReportResult" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportResult"
+                }
+              }
+            }
           },
-          "401": { "$ref": "#/components/responses/Unauthorized" },
-          "404": { "$ref": "#/components/responses/NotFound" }
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
         }
       }
     }
@@ -294,49 +533,82 @@
         "in": "path",
         "required": true,
         "description": "The errand's ID, from the courier's token (`visa.id`).",
-        "schema": { "type": "string" }
+        "schema": {
+          "type": "string"
+        }
       },
       "ConnectionId": {
         "name": "connectionId",
         "in": "path",
         "required": true,
         "description": "From the courier's token (`connection.id`).",
-        "schema": { "type": "string" }
+        "schema": {
+          "type": "string"
+        }
       },
       "ApprovalId": {
         "name": "approvalId",
         "in": "path",
         "required": true,
         "description": "From a spend decision that asked the person.",
-        "schema": { "type": "string" }
+        "schema": {
+          "type": "string"
+        }
       }
     },
     "responses": {
       "Unauthorized": {
         "description": "Missing or wrong shop key.",
-        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
       },
       "NotFound": {
         "description": "No such errand, connection, hold or ask.",
-        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
       },
       "Conflict": {
         "description": "Not possible in the current state.",
-        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
       }
     },
     "schemas": {
       "Error": {
         "type": "object",
         "required": ["error"],
-        "properties": { "error": { "type": "string" } }
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        }
       },
       "Ok": {
         "type": "object",
         "required": ["ok"],
         "properties": {
-          "ok": { "type": "boolean" },
-          "skipped": { "type": "boolean", "description": "Nothing changed: it was already recorded." }
+          "ok": {
+            "type": "boolean"
+          },
+          "skipped": {
+            "type": "boolean",
+            "description": "Nothing changed: it was already recorded."
+          }
         }
       },
       "ErrandStatus": {
@@ -348,10 +620,20 @@
         "required": ["amountCents", "status"],
         "description": "Money the person put down so the courier could act without asking.",
         "properties": {
-          "amountCents": { "type": "integer" },
-          "orderId": { "type": "string" },
-          "authorizationId": { "type": "string", "nullable": true },
-          "status": { "type": "string", "enum": ["pending", "authorized", "voided", "captured", "failed"] }
+          "amountCents": {
+            "type": "integer"
+          },
+          "orderId": {
+            "type": "string"
+          },
+          "authorizationId": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "authorized", "voided", "captured", "failed"]
+          }
         }
       },
       "Errand": {
@@ -367,23 +649,55 @@
           "expiresAt"
         ],
         "properties": {
-          "id": { "type": "string" },
-          "status": { "$ref": "#/components/schemas/ErrandStatus" },
-          "resource": { "type": "string", "description": "The shop the errand is for." },
-          "spentCents": { "type": "integer" },
-          "spendLimitCents": { "type": "integer" },
-          "perPurchaseLimitCents": { "type": "integer" },
-          "remainingCents": { "type": "integer" },
-          "expiresAt": { "type": "string", "format": "date-time" },
-          "bond": { "type": "object", "allOf": [{ "$ref": "#/components/schemas/Bond" }], "nullable": true }
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ErrandStatus"
+          },
+          "resource": {
+            "type": "string",
+            "description": "The shop the errand is for."
+          },
+          "spentCents": {
+            "type": "integer"
+          },
+          "spendLimitCents": {
+            "type": "integer"
+          },
+          "perPurchaseLimitCents": {
+            "type": "integer"
+          },
+          "remainingCents": {
+            "type": "integer"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "bond": {
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Bond"
+              }
+            ],
+            "nullable": true
+          }
         }
       },
       "Connection": {
         "type": "object",
         "required": ["status", "agent"],
         "properties": {
-          "status": { "type": "string", "enum": ["active", "revoked"] },
-          "agent": { "type": "string", "description": "The courier's name." },
+          "status": {
+            "type": "string",
+            "enum": ["active", "revoked"]
+          },
+          "agent": {
+            "type": "string",
+            "description": "The courier's name."
+          },
           "ticketToken": {
             "type": "string",
             "nullable": true,
@@ -394,10 +708,23 @@
       "TicketRequest": {
         "type": "object",
         "properties": {
-          "purpose": { "type": "string", "maxLength": 160, "description": "What the agent says the errand is for." },
-          "maxPerItem": { "type": "number", "description": "Suggested per-purchase limit, in whole dollars." },
-          "maxTotal": { "type": "number", "description": "Suggested budget, in whole dollars." },
-          "price": { "type": "number", "description": "What the agent wants to buy costs, in whole dollars." },
+          "purpose": {
+            "type": "string",
+            "maxLength": 160,
+            "description": "What the agent says the errand is for."
+          },
+          "maxPerItem": {
+            "type": "number",
+            "description": "Suggested per-purchase limit, in whole dollars."
+          },
+          "maxTotal": {
+            "type": "number",
+            "description": "Suggested budget, in whole dollars."
+          },
+          "price": {
+            "type": "number",
+            "description": "What the agent wants to buy costs, in whole dollars."
+          },
           "budgetFromPerson": {
             "type": "integer",
             "minimum": 1,
@@ -409,32 +736,75 @@
       "TicketResult": {
         "type": "object",
         "properties": {
-          "url": { "type": "string", "description": "Send the person here to set the budget." },
-          "issued": { "type": "boolean", "description": "The errand is already open." }
+          "url": {
+            "type": "string",
+            "description": "Send the person here to set the budget."
+          },
+          "issued": {
+            "type": "boolean",
+            "description": "The errand is already open."
+          }
         }
       },
       "SpendItem": {
         "type": "object",
         "required": ["title", "category", "priceCents"],
         "properties": {
-          "title": { "type": "string" },
-          "category": { "type": "string" },
-          "priceCents": { "type": "integer", "minimum": 0 },
-          "quantity": { "type": "integer", "minimum": 1, "default": 1 }
+          "title": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "priceCents": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1
+          }
         }
       },
       "SpendCheck": {
         "type": "object",
         "required": ["visaId", "sub", "resource", "action", "items", "totalCents"],
         "properties": {
-          "visaId": { "type": "string" },
-          "sub": { "type": "string", "description": "The token's subject: the person's pseudonym at this shop." },
-          "resource": { "type": "string", "description": "This shop's resource URL (the token's audience)." },
-          "action": { "type": "string", "enum": ["reserve", "checkout"] },
-          "items": { "type": "array", "minItems": 1, "items": { "$ref": "#/components/schemas/SpendItem" } },
-          "totalCents": { "type": "integer", "minimum": 1 },
-          "agentNote": { "type": "string", "description": "The agent's own words. Untrusted: Courier only weighs it." },
-          "approvalId": { "type": "string", "description": "From an earlier decision that asked the person." }
+          "visaId": {
+            "type": "string"
+          },
+          "sub": {
+            "type": "string",
+            "description": "The token's subject: the person's pseudonym at this shop."
+          },
+          "resource": {
+            "type": "string",
+            "description": "This shop's resource URL (the token's audience)."
+          },
+          "action": {
+            "type": "string",
+            "enum": ["reserve", "checkout"]
+          },
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/SpendItem"
+            }
+          },
+          "totalCents": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "agentNote": {
+            "type": "string",
+            "description": "The agent's own words. Untrusted: Courier only weighs it."
+          },
+          "approvalId": {
+            "type": "string",
+            "description": "From an earlier decision that asked the person."
+          }
         }
       },
       "IntentCheck": {
@@ -442,19 +812,34 @@
         "required": ["model", "reason"],
         "description": "Who decided: the limits in code, a model checking fit, or the person.",
         "properties": {
-          "model": { "type": "string" },
-          "reason": { "type": "string" },
-          "probability": { "type": "number" },
-          "latencyMs": { "type": "integer" },
-          "decision": { "type": "string" }
+          "model": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "probability": {
+            "type": "number"
+          },
+          "latencyMs": {
+            "type": "integer"
+          },
+          "decision": {
+            "type": "string"
+          }
         }
       },
       "SpendDecision": {
         "type": "object",
         "required": ["decision", "reason"],
         "properties": {
-          "decision": { "type": "string", "enum": ["approve", "ask_human", "deny"] },
-          "reason": { "type": "string" },
+          "decision": {
+            "type": "string",
+            "enum": ["approve", "ask_human", "deny"]
+          },
+          "reason": {
+            "type": "string"
+          },
           "code": {
             "type": "string",
             "description": "Why it was denied.",
@@ -476,155 +861,299 @@
             "nullable": true,
             "description": "The budget held for this checkout, for 30 minutes."
           },
-          "approvalId": { "type": "string" },
-          "approvalUrl": { "type": "string", "description": "Where the person answers." },
-          "intent": { "$ref": "#/components/schemas/IntentCheck" },
-          "remainingCents": { "type": "integer" },
+          "approvalId": {
+            "type": "string"
+          },
+          "approvalUrl": {
+            "type": "string",
+            "description": "Where the person answers."
+          },
+          "intent": {
+            "$ref": "#/components/schemas/IntentCheck"
+          },
+          "remainingCents": {
+            "type": "integer"
+          },
           "autopay": {
             "type": "boolean",
             "description": "The errand has saved PayPal: charge it with chargeSavedPaypal."
           },
-          "model": { "type": "string" },
-          "modelCalled": { "type": "boolean" }
+          "model": {
+            "type": "string"
+          },
+          "modelCalled": {
+            "type": "boolean"
+          }
         }
       },
       "ChargeItem": {
         "type": "object",
         "required": ["name", "unitCents", "quantity"],
         "properties": {
-          "name": { "type": "string" },
-          "unitCents": { "type": "integer" },
-          "quantity": { "type": "integer" },
-          "sku": { "type": "string" }
+          "name": {
+            "type": "string"
+          },
+          "unitCents": {
+            "type": "integer"
+          },
+          "quantity": {
+            "type": "integer"
+          },
+          "sku": {
+            "type": "string"
+          }
         }
       },
       "Charge": {
         "type": "object",
         "required": ["visaId", "holdId", "description", "brandName"],
         "properties": {
-          "visaId": { "type": "string" },
-          "holdId": { "type": "string" },
-          "description": { "type": "string" },
-          "brandName": { "type": "string", "description": "The shop's name on the PayPal receipt." },
-          "items": { "type": "array", "items": { "$ref": "#/components/schemas/ChargeItem" } }
+          "visaId": {
+            "type": "string"
+          },
+          "holdId": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "brandName": {
+            "type": "string",
+            "description": "The shop's name on the PayPal receipt."
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChargeItem"
+            }
+          }
         }
       },
       "ChargeResult": {
         "type": "object",
         "required": ["orderId", "status"],
         "properties": {
-          "orderId": { "type": "string", "description": "The PayPal order." },
-          "status": { "type": "string" },
-          "captureId": { "type": "string", "nullable": true }
+          "orderId": {
+            "type": "string",
+            "description": "The PayPal order."
+          },
+          "status": {
+            "type": "string"
+          },
+          "captureId": {
+            "type": "string",
+            "nullable": true
+          }
         }
       },
       "Commit": {
         "type": "object",
         "required": ["visaId", "holdId", "orderId", "amountCents", "summary"],
         "properties": {
-          "visaId": { "type": "string" },
-          "holdId": { "type": "string" },
-          "orderId": { "type": "string" },
-          "amountCents": { "type": "integer" },
-          "summary": { "type": "string", "description": "One line for the errand, e.g. \"Bought a slipmat\"." },
-          "paidWith": { "type": "string", "enum": ["paypal_page", "saved_paypal"] },
-          "merchantName": { "type": "string" }
+          "visaId": {
+            "type": "string"
+          },
+          "holdId": {
+            "type": "string"
+          },
+          "orderId": {
+            "type": "string"
+          },
+          "amountCents": {
+            "type": "integer"
+          },
+          "summary": {
+            "type": "string",
+            "description": "One line for the errand, e.g. \"Bought a slipmat\"."
+          },
+          "paidWith": {
+            "type": "string",
+            "enum": ["paypal_page", "saved_paypal"]
+          },
+          "merchantName": {
+            "type": "string"
+          }
         }
       },
       "CommitResult": {
         "type": "object",
         "required": ["ok", "spentCents", "remainingCents"],
         "properties": {
-          "ok": { "type": "boolean" },
-          "spentCents": { "type": "integer" },
-          "remainingCents": { "type": "integer" }
+          "ok": {
+            "type": "boolean"
+          },
+          "spentCents": {
+            "type": "integer"
+          },
+          "remainingCents": {
+            "type": "integer"
+          }
         }
       },
       "Release": {
         "type": "object",
         "required": ["holdId"],
-        "properties": { "holdId": { "type": "string" } }
+        "properties": {
+          "holdId": {
+            "type": "string"
+          }
+        }
       },
       "ApprovalStatus": {
         "type": "object",
         "required": ["status"],
-        "properties": { "status": { "type": "string", "enum": ["pending", "approved", "denied"] } }
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["pending", "approved", "denied"]
+          }
+        }
       },
       "Decide": {
         "type": "object",
         "required": ["visaId", "decision"],
         "properties": {
-          "visaId": { "type": "string" },
-          "decision": { "type": "string", "enum": ["approved", "denied"] }
+          "visaId": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string",
+            "enum": ["approved", "denied"]
+          }
         }
       },
       "Step": {
         "type": "object",
         "required": ["visaId", "kind", "title"],
         "properties": {
-          "visaId": { "type": "string" },
-          "kind": { "type": "string", "description": "e.g. browse, reserve, shipping." },
-          "title": { "type": "string" },
-          "detail": { "type": "string" },
-          "merchantName": { "type": "string" }
+          "visaId": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "description": "e.g. browse, reserve, shipping."
+          },
+          "title": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "merchantName": {
+            "type": "string"
+          }
         }
       },
       "Parcel": {
         "type": "object",
         "required": ["visaId", "orderId", "stage", "labels"],
         "properties": {
-          "visaId": { "type": "string" },
-          "orderId": { "type": "string" },
-          "merchantName": { "type": "string" },
-          "carrierName": { "type": "string" },
-          "trackingNumber": { "type": "string" },
-          "stage": { "type": "integer", "minimum": 0, "description": "Index into labels." },
+          "visaId": {
+            "type": "string"
+          },
+          "orderId": {
+            "type": "string"
+          },
+          "merchantName": {
+            "type": "string"
+          },
+          "carrierName": {
+            "type": "string"
+          },
+          "trackingNumber": {
+            "type": "string"
+          },
+          "stage": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Index into labels."
+          },
           "labels": {
             "type": "array",
             "minItems": 1,
             "maxItems": 6,
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "description": "Every step of this delivery, e.g. Shipped, Out for delivery, Delivered."
           },
-          "expectedAt": { "type": "string" },
+          "expectedAt": {
+            "type": "string"
+          },
           "paypal": {
             "type": "string",
             "nullable": true,
             "description": "Which PayPal took the tracking number (Sandbox or Simulated), if any."
           },
-          "simulated": { "type": "boolean" }
+          "simulated": {
+            "type": "boolean"
+          }
         }
       },
       "Return": {
         "type": "object",
         "required": ["visaId", "orderId", "decision"],
         "properties": {
-          "visaId": { "type": "string" },
-          "orderId": { "type": "string" },
-          "merchantName": { "type": "string" },
-          "decision": { "type": "string", "enum": ["full", "partial", "decline"] },
-          "amountCents": { "type": "integer", "minimum": 0 },
-          "note": { "type": "string", "maxLength": 255 },
-          "by": { "type": "string", "enum": ["clerk", "owner"] },
-          "paypal": { "type": "string", "description": "Which PayPal refunded it (Sandbox or Simulated)." }
+          "visaId": {
+            "type": "string"
+          },
+          "orderId": {
+            "type": "string"
+          },
+          "merchantName": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string",
+            "enum": ["full", "partial", "decline"]
+          },
+          "amountCents": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "by": {
+            "type": "string",
+            "enum": ["clerk", "owner"]
+          },
+          "paypal": {
+            "type": "string",
+            "description": "Which PayPal refunded it (Sandbox or Simulated)."
+          }
         }
       },
       "Report": {
         "type": "object",
         "required": ["visaId", "reason"],
         "properties": {
-          "visaId": { "type": "string" },
-          "reason": { "type": "string" },
-          "evidence": { "type": "object", "additionalProperties": true }
+          "visaId": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "object",
+            "additionalProperties": true
+          }
         }
       },
       "ReportResult": {
         "type": "object",
         "required": ["ok", "status", "bondOutcome"],
         "properties": {
-          "ok": { "type": "boolean" },
-          "status": { "$ref": "#/components/schemas/ErrandStatus" },
-          "bondOutcome": { "type": "string" }
+          "ok": {
+            "type": "boolean"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ErrandStatus"
+          },
+          "bondOutcome": {
+            "type": "string"
+          }
         }
       }
     }
