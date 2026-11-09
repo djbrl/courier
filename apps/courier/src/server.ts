@@ -46,6 +46,8 @@ import {
   courierForClient,
   DEMO_CLIENT_PREFIX,
   DEMO_PEOPLE,
+  docSlugs,
+  docsPage,
   errorPage,
   forShopsPage,
   installPage,
@@ -157,9 +159,17 @@ app.get("/for-shops", (req, res) => {
 app.get("/install", (req, res) => {
   res.send(installPage(currentHuman(req)));
 });
-/* Older links and metadata point here. */
+/* Developers: the Courier Shops SDK, one page per topic. */
+app.get(["/docs", "/docs/:slug"], (req, res, next) => {
+  const slug = String((req.params as { slug?: string }).slug ?? "");
+  if (!docSlugs.has(slug)) {
+    next();
+    return;
+  }
+  res.send(docsPage(currentHuman(req), slug));
+});
 app.get("/developers", (_req, res) => {
-  res.redirect(301, "/for-shops#install");
+  res.redirect(301, "/docs");
 });
 
 app.get("/healthz", (_req, res) => {

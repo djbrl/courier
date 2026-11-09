@@ -1,5 +1,6 @@
 export * from "./app.ts";
 export * from "./consent.ts";
+export * from "./docs.ts";
 export * from "./errand-room.ts";
 export * from "./for-shops.ts";
 export * from "./landing.ts";

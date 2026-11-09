@@ -197,7 +197,7 @@ ${claim(".84", "await paypal.capture(order); // as you do today")}</div>
     ${ep("Signing keys", `${issuer}/jwks.json`)}
     ${ep("Example resource metadata", `${issuer}/.well-known/oauth-protected-resource/mcp`)}
   </ul>
-  <p>Then ask Courier before every purchase with the <a class="link" href="https://github.com/Djbrl/courier/tree/main/sdk">Courier Shops SDK</a> for TypeScript or Python, made with APIMatic. Our demo shops run on&nbsp;it.</p>
+  <p>Then ask Courier before every purchase with the <a class="link" href="https://github.com/Djbrl/courier/tree/main/sdk">Courier Shops SDK</a> for TypeScript or Python, made with APIMatic. <a class="link" href="/docs">Read the docs</a>. Our demo shops run on&nbsp;it.</p>
   <p class="fx-fine">The <code>sub</code> differs for every shop, so two shops can never match up a shopper. Think it can be fooled? <a class="link" href="/bots">Release the bots</a>.</p>
 </section>
 
@@ -208,7 +208,7 @@ ${claim(".84", "await paypal.capture(order); // as you do today")}</div>
 </main>
 <footer><div class="s-fw">
   <span class="logo"><svg><use href="#mk"/></svg>Courier</span>
-  <nav aria-label="Footer"><a href="/">How it works</a><a href="/for-shops">For shops</a><a href="/install">Install</a><a href="${store}">The shops</a></nav>
+  <nav aria-label="Footer"><a href="/">How it works</a><a href="/for-shops">For shops</a><a href="/install">Install</a><a href="/docs">Developers</a><a href="${store}">The shops</a></nav>
   <span class="ppl">Powered by ${PP}</span>
   <small>Sandbox demo.</small>
 </div></footer>`;

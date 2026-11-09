@@ -113,7 +113,7 @@ export function navLinks(human: Human | null, here = ""): RawHtml {
   const name = firstName(human);
   const link = (href: string, label: string) =>
     html`<a class="hide-sm" href="${href}" ${href === here ? raw('aria-current="page"') : ""}>${label}</a>`;
-  return html`${link("/for-shops", "For shops")}${link("/install", "Install the MCP")}
+  return html`${link("/for-shops", "For shops")}${link("/docs", "Developers")}${link("/install", "Install the MCP")}
       ${
         human
           ? html`<a class="who" href="/app">${avatar()}${name ?? "My Courier"}</a>`

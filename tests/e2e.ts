@@ -1350,7 +1350,13 @@ await step(
     assert.match(await install.text(), /Install Courier in your/);
     const old = await fetch(`${flow.courier}/developers`, { redirect: "manual" });
     assert.equal(old.status, 301);
-    assert.equal(old.headers.get("location"), "/for-shops#install");
+    assert.equal(old.headers.get("location"), "/docs");
+    for (const page of ["", "/installation", "/quickstart", "/guides", "/templates", "/reference"]) {
+      const doc = await fetch(`${flow.courier}/docs${page}`);
+      assert.equal(doc.status, 200, `docs${page}`);
+      assert.match(await doc.text(), /APIMatic/);
+    }
+    assert.equal((await fetch(`${flow.courier}/docs/nowhere`)).status, 404);
   },
 );
 

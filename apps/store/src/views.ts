@@ -34,7 +34,11 @@ const NOT_REAL = "Demo shops with made-up names and products, not affiliated wit
 
 function storeNav(view: "shop" | "merchant", shop?: Shop): RawHtml {
   return html`<header class="cnav jr-nav">
-    <a class="jr" href="${shop ? `/${shop.slug}` : "/"}">${shop ? shopLogo(shop, "sm") : LOGO}<div><b>${shop?.name ?? "Courier shops"}</b><small>${shop?.sells ?? "Shops that welcome couriers"}</small></div></a>
+    ${
+      shop
+        ? html`<a class="jr" href="/${shop.slug}">${shopLogo(shop, "sm")}<div><b>${shop.name}</b><small>${shop.sells}</small></div></a>`
+        : html`<a class="jr jr-home" href="/">${LOGO}<span class="jr-tag">Shops</span></a>`
+    }
     <nav>
       ${
         // A shopper on a phone still needs a way back to the other shops, so this link stays when the nav folds.
@@ -43,6 +47,7 @@ function storeNav(view: "shop" | "merchant", shop?: Shop): RawHtml {
           : html`<a class="hide-sm" href="/" ${view === "shop" ? raw('aria-current="page"') : ""}>All shops</a>`
       }
       ${view === "merchant" ? html`<a class="hide-sm" href="/merchant" aria-current="page">Shop desk</a>` : ""}
+      ${shop ? "" : html`<a class="hide-sm" href="/desk/sign-in">For shop owners</a><a class="welcome" href="${config.courier.url}">Get a courier</a>`}
       ${shop ? html`<a class="welcome" href="${config.courier.url}">${LOGO}<span>couriers welcome</span></a>` : ""}
     </nav>
   </header>`;
@@ -69,12 +74,18 @@ export function shopGrid(): string {
   return storePage(
     "All shops",
     "shop",
-    html`<main class="jr-main shops-main">
-      <h1 class="big">Send your courier to any of these.</h1>
-      <p class="lead">Ask Claude for what you want. Your courier shops with a verified ID and the budget you give it.</p>
-      <nav class="shopg" aria-label="Shops">${SHOPS.map(
-        (s) => html`<a class="shopg-t" href="/${s.slug}">${shopLogo(s)}<b>${s.name}</b><small>${s.sells}</small></a>`,
-      )}</nav>
+    html`<main class="sx">
+      <header class="sx-h">
+        <h1>Shops that welcome couriers</h1>
+        <p>${SHOPS.length} shops. Ask Claude for something and your courier shops here with a verified ID and your budget.</p>
+      </header>
+      <ul class="sx-grid" aria-label="Shops">${SHOPS.map(
+        (s) =>
+          html`<li><a class="sx-c" href="/${s.slug}" style="--tile:${s.tile}">
+            <span class="sx-ph">${BANNERS.has(s.slug) ? html`<img src="/assets/banners/${s.slug}.jpg" alt="" loading="lazy">` : ""}</span>
+            <span class="sx-id">${shopLogo(s, "sm")}<span><b>${s.name}</b><small>${s.sells}</small></span></span>
+          </a></li>`,
+      )}</ul>
       ${ownerLine("/desk/sign-in", "Run one of these shops? Open its desk")}
       <p class="fine">${NOT_REAL}</p>
     </main>`,
