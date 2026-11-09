@@ -10217,3 +10217,244 @@ html:has(body.app-page) {
     gap: 12px;
   }
 }
+
+/* ---------- MCP: what the connector does for you, then how to add it ---------- */
+.mc {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px var(--gut) 80px;
+}
+.mc-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: clamp(28px, 5vw, 72px);
+  align-items: center;
+  padding: clamp(24px, 6vh, 64px) 0 clamp(40px, 8vh, 80px);
+}
+.mc-kick {
+  display: inline-block;
+  margin-bottom: 14px;
+  padding: 5px 12px;
+  border-radius: 99px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+.mc-copy .lead {
+  margin-top: 16px;
+  max-width: 32em;
+}
+.mc-url {
+  margin: 24px 0 16px;
+  max-width: 34em;
+}
+.mc-url .code {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mc-works {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 22px;
+}
+.mc-works li {
+  padding: 6px 13px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.mc-chat {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: #f6f4ef;
+  box-shadow: 0 30px 70px -24px rgba(20, 20, 20, 0.3);
+}
+.mc-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 52px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--line);
+  font-weight: 700;
+}
+.mc-bar small {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mute);
+}
+.mc-msgs {
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  font-size: 15.5px;
+  line-height: 1.4;
+}
+.mc-you {
+  justify-self: end;
+  max-width: 82%;
+  padding: 10px 16px;
+  border-radius: 16px;
+  background: #e9e5dc;
+}
+.mc-tool {
+  display: flex;
+  gap: 6px;
+}
+.mc-tool code {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+}
+.mc-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+}
+.mc-card span {
+  display: grid;
+}
+.mc-card small {
+  color: var(--mute);
+  font-size: 13px;
+}
+.mc-face {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: #3d3af5;
+}
+.mc-sec {
+  padding: clamp(40px, 7vh, 72px) 0 0;
+}
+.mc-sec h2 {
+  font-family: "Archivo", sans-serif;
+  font-size: clamp(28px, 3.2vw, 44px);
+  font-style: italic;
+  font-weight: 900;
+  font-stretch: 120%;
+  letter-spacing: -0.035em;
+}
+.mc-sub {
+  margin-top: 8px;
+  color: var(--soft);
+  font-size: 17px;
+}
+.mc-tools {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 26px;
+}
+.mc-tg {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+.mc-tg h3 {
+  font-size: 18px;
+}
+.mc-tg > p {
+  margin: 4px 0 14px;
+  color: var(--soft);
+  font-size: 14.5px;
+}
+.mc-tg ul {
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+.mc-tg li {
+  display: grid;
+  gap: 2px;
+  font-size: 13.5px;
+  color: var(--soft);
+}
+.mc-tg code {
+  justify-self: start;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 12.5px;
+}
+.mc-prompts {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 24px;
+}
+.mc-prompts li {
+  padding: 18px 20px;
+  border-radius: 18px;
+  background: #f6f4ef;
+  font-size: 16.5px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.mc-safe ul {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(18px, 3vw, 36px);
+  margin-top: 24px;
+}
+.mc-safe li {
+  display: grid;
+  gap: 6px;
+  padding-top: 14px;
+  border-top: 2px solid var(--ink);
+  color: var(--soft);
+  font-size: 15.5px;
+  line-height: 1.45;
+}
+.mc-safe b {
+  color: var(--ink);
+  font-size: 17.5px;
+}
+.mc-setup .in {
+  max-width: 760px;
+  margin: 20px 0 0;
+  padding: 0;
+}
+.mc-end {
+  display: grid;
+  justify-items: center;
+  gap: 24px;
+  margin-top: clamp(56px, 10vh, 100px);
+  padding: clamp(40px, 7vh, 72px) 24px;
+  border-radius: 28px;
+  background: var(--hivis);
+  text-align: center;
+}
+@media (max-width: 860px) {
+  .mc-hero,
+  .mc-safe ul {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .mc-tools {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .mc-prompts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 520px) {
+  .mc-tools {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

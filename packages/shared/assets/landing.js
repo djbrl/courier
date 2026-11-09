@@ -333,8 +333,6 @@
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const { globe, halftone, mini, img } = window.courierGlobe;
-  /* The same shops the app has, sent with the page. */
-  const SHOPS = JSON.parse(document.getElementById("shops-data").textContent);
   const CK =
     '<span class="ck"><svg viewBox="0 0 12 12"><path d="M2.5 6.2 5 8.6l4.6-5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
   const PP = '<span class="pp"><span class="a">Pay</span><span class="b">Pal</span></span>';
@@ -353,39 +351,6 @@
   const pic = (n) => `<span class="s-pt" aria-hidden="true">${img(n)}</span>`;
   $$("[data-pt]").forEach((e) => (e.outerHTML = pic(e.dataset.pt)));
   $$("#group .s-them > b").forEach((b) => b.insertAdjacentHTML("afterbegin", pic(b.textContent)));
-
-  /* An uneven cluster: lopsided outline, nudged positions, mixed sizes, and shops popping up at random. The seed keeps it the same on every load. */
-  let seed = 11;
-  const rnd = () => {
-    seed = (seed * 16807) % 2147483647;
-    return (seed - 1) / 2147483646;
-  };
-  const cells = [];
-  for (let row = -4; row <= 4; row++)
-    for (let col = -5; col <= 5; col++) {
-      const x = (col + (row & 1) / 2) * 1.3,
-        y = row * 1.12,
-        a = Math.atan2(y, x);
-      cells.push({ x, y, score: Math.hypot(x, y * 1.25) * (1 + 0.14 * Math.sin(a * 3 + 0.8) + 0.3 * rnd()) });
-    }
-  cells.sort((a, b) => a.score - b.score);
-  const spots = cells.slice(0, SHOPS.length).map((c, i) => ({
-    x: i ? c.x + (rnd() - 0.5) * 0.14 : 0,
-    y: i ? c.y + (rnd() - 0.5) * 0.14 : 0,
-    z: i ? 0.76 + rnd() * 0.3 : 1.08,
-    order: rnd(),
-  }));
-  const queue = [...spots].sort((a, b) => a.order - b.order);
-  queue.forEach((c, i) => (c.at = 0.07 + (i / (queue.length - 1)) * 0.68 + (i ? (rnd() - 0.5) * 0.025 : 0)));
-  const reach = (k) => (2 * Math.max(...spots.map((c) => Math.abs(c[k]) + c.z / 2))).toFixed(3);
-  const apps = document.getElementById("apps");
-  apps.style.setProperty("--fx", reach("x"));
-  apps.style.setProperty("--fy", reach("y"));
-  apps.innerHTML = SHOPS.map((s, i) => {
-    const c = spots[i];
-    return `<div class="s-app${i ? "" : " pick"}" title="${s.name}" style="--t:${s.tile};--x:${c.x.toFixed(3)};--y:${c.y.toFixed(3)};--z:${c.z.toFixed(3)}"><svg viewBox="0 0 64 64" aria-hidden="true">${s.mark}</svg>${i ? "" : `<span>${s.name}</span>`}</div>`;
-  }).join("");
-  const lit = $$(".s-app", apps).map((n, i) => [n, spots[i].at]);
 
   const hang = document.getElementById("hang");
   const nav = document.getElementById("nav");
@@ -446,10 +411,6 @@
       if (t.el.id === "why") {
         globe.setKnown(p >= 0.52);
         t.el.classList.toggle("wait", p < 0.52);
-      }
-      if (t.el.id === "shops") {
-        for (const [n, at] of lit) n.classList.toggle("lit", p >= at);
-        apps.classList.toggle("focus", p >= 0.86);
       }
     }
     const moved = Math.max(-90, Math.min(90, scrollY - lastY));

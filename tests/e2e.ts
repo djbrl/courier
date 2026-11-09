@@ -1323,17 +1323,17 @@ await step("Twenty shops through one connector, each browsable with no errand an
 });
 
 await step(
-  "The public pages: the landing shows the same shops, the badge back says what is shared and withheld, For shops and Install",
+  "The public pages: the landing shows the same shops, the badge back says what is shared and withheld, the shop side, and the MCP page",
   async () => {
     const { shops } = structured(await tool("list_shops"));
     const landing = await (await fetch(`${flow.courier}/`)).text();
-    const data = landing.match(/<script type="application\/json" id="shops-data">(.*?)<\/script>/s);
-    assert.ok(data, "the landing gets its shops from the app");
-    const shown = JSON.parse(data[1]!) as { slug: string }[];
-    assert.deepEqual(shown.map((s) => s.slug).sort(), shops.map((s: any) => s.shop).sort());
+    const strip = landing.match(/<div class="s-mq" >(.*?)<\/div>/s);
+    assert.ok(strip, "the landing shows the partner shops in a strip");
+    const shown = [...strip[1]!.matchAll(/href="[^"]*\/([a-z0-9-]+)"/g)].map((m) => m[1]);
+    assert.deepEqual(shown.sort(), shops.map((s: any) => s.shop).sort(), "the same shops the app has");
     assert.match(landing, /<h3>Shared<\/h3>/);
     assert.match(landing, /<h3>Withheld<\/h3><p>Your personal data<\/p>/, "the back says personal data stays back");
-    for (const href of ["/#for-shops", "/docs", "/install", "/start", "/start?as=shop"])
+    for (const href of ["/docs", "/install", "/start", "/start?as=shop"])
       assert.ok(landing.includes(`href="${href}"`), href);
     assert.match(landing, /id="for-shops"/, "the shop side is part of the landing page");
 
@@ -1344,7 +1344,9 @@ await step(
     assert.match(asShop, /class="ob2-opt on" href="[^"]*\/desk\/sign-in"/, "the chooser picks out the shop side");
     const install = await fetch(`${flow.courier}/install`);
     assert.equal(install.status, 200);
-    assert.match(await install.text(), /Install Courier in your/);
+    const mcp = await install.text();
+    assert.match(mcp, /Let your agent do the/);
+    assert.ok(mcp.includes('id="setup"'), "the MCP page still says how to add it");
     const old = await fetch(`${flow.courier}/developers`, { redirect: "manual" });
     assert.equal(old.status, 301);
     assert.equal(old.headers.get("location"), "/docs");

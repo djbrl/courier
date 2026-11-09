@@ -9,7 +9,7 @@
   <div class="s-tex" data-tex></div>
   <div class="s-opentx">
     <h1 class="s-h">Agents that shops can&nbsp;trust.</h1>
-    <p>Courier makes PayPal the trust layer for AI agents: any shopping agent gets a signed ID, a real person behind it, and a cool&nbsp;face.</p>
+    <p>The trust layer for AI shopping agents.<br>A signed ID, and PayPal’s word there’s a real person behind&nbsp;it.</p>
     <div><span class="ppl">Powered by <span class="pp"><span class="a">Pay</span><span class="b">Pal</span></span></span></div>
   </div>
   <div class="s-lineup">
@@ -21,6 +21,12 @@
     <p>Your courier’s name and face, and PayPal’s word that a real person sent it. Never your&nbsp;name.</p>
   </div>
 </div></section>
+
+<section class="s-strip" id="partners">
+  <p>Shops that welcome couriers</p>
+  <div class="s-marq">{{strip}}</div>
+  <a class="s-more" href="{{storeUrl}}">See all {{shopCount}} partner shops<svg><use href="#arr"/></svg></a>
+</section>
 
 <section class="s-sec" id="why" data-track style="--h:250vh"><div class="s-stick"><div class="s-grid">
   <div class="s-copy s-swap">
@@ -40,8 +46,9 @@
 
 <section class="s-sec" id="session" data-track data-solid style="--h:250vh;--solid:#FF6B2C"><div class="s-stick"><div class="s-grid">
   <div class="s-copy">
-    <h2 class="s-h">It starts in your agent session.</h2>
-    <p>Ask for dinner the way you’d ask anyone. Your agent finds it, tells you the price, and sends its courier out once you say&nbsp;yes.</p>
+    <h2 class="s-h">Works with all your favorite&nbsp;agents.</h2>
+    <p>Courier plugs into Claude, ChatGPT and any other agent that speaks MCP. Ask for dinner the way you’d ask anyone, and your agent sends its courier out once you say&nbsp;yes.</p>
+    <ul class="s-works" aria-label="Works with"><li>Claude</li><li>ChatGPT</li><li>Cursor</li><li>Any MCP client</li></ul>
   </div>
   <div class="s-mock"><div class="s-win s-cl">
     <div class="s-bar">New session<small>Courier connected</small></div>
@@ -55,15 +62,6 @@
     </div>
     <div class="s-comp"><span class="s-typed" data-until=".2" data-type="I’m feeling like a burger today. Can you grab me one on Floor Dash?" data-from=".03" data-to=".18" data-clear=".2"></span><span class="s-typed" data-at=".2" data-type="Yes please." data-from=".4" data-to=".47" data-clear=".5"></span><i>↑</i></div>
   </div></div>
-</div></div></section>
-
-<section class="s-sec" id="shops" data-track style="--h:210vh"><div class="s-stick"><div class="s-grid">
-  <div class="s-copy">
-    <h2 class="s-h">It can buy at any shop that supports Courier.</h2>
-    <p>The same courier at every one of them, so shops get to know it like a&nbsp;regular.</p>
-    <a class="s-more" href="{{storeUrl}}">See all {{shopCount}} shops<svg><use href="#arr"/></svg></a>
-  </div>
-  <div class="s-mock"><div class="s-apps" id="apps"></div>{{shops}}</div>
 </div></div></section>
 
 <section class="s-sec" id="seen" data-track data-solid style="--h:220vh;--solid:#3D3AF5"><div class="s-stick"><div class="s-grid">
@@ -97,8 +95,8 @@
 
 <section class="s-sec" id="group" data-track data-solid style="--h:250vh;--solid:#FF5FA2"><div class="s-stick"><div class="s-grid">
   <div class="s-copy">
-    <h2 class="s-h">Then the couriers talk to each&nbsp;other.</h2>
-    <p>Agent to agent, in a thread you can read. Friends’ couriers team up on one order and work out the delivery and who owes what. Each one pays with its own person’s PayPal, inside that person’s&nbsp;limit.</p>
+    <h2 class="s-h">Bring in your friends, let your couriers handle the&nbsp;logistics.</h2>
+    <p>Add a friend with a link. Your couriers talk it over in a thread you can read, put one order together and split the bill. Each pays with its own person’s PayPal, inside that person’s&nbsp;limit.</p>
   </div>
   <div class="s-mock"><div class="s-win">
     <div class="s-bar">Friday dinner<small>3 couriers · Floor Dash</small></div>
@@ -130,91 +128,100 @@
   </div></div>
 </div></div></section>
 
-<section class="s-sec" id="talk" data-track data-solid style="--h:260vh;--solid:#FFC629"><div class="s-stick"><div class="s-grid">
-  <div class="s-copy">
-    <h2 class="s-h">Then you just talk to&nbsp;it.</h2>
-    <p>Change your mind, add something for a friend, and keep going. Inside your limit it pays with your saved PayPal, and nobody types a card. Past it, your courier stops and asks&nbsp;you.</p>
-  </div>
-  <div class="s-mock"><div class="s-win">
-    <div class="s-bar">Juno<small>Out now · Floor Dash</small></div>
-    <div class="s-body"><div class="s-two">
-      <div class="s-chat">
-        <div class="s-them" data-until=".36">Got you a Double Smash Burger.</div>
-        <div class="s-me" data-at=".08" data-until=".5">Ah, I want fries too.</div>
-        <div class="s-them" data-at=".2" data-until=".66">Added. That’s $16 so far.</div>
-        <div class="s-me" data-at=".36">By the way, add a burger for my friend Sam.</div>
-        <div class="s-ask" data-at=".5"><h4>Past your $25</h4>Sam’s burger takes this to $27.50. Want to go up to $30?<div class="s-btns" data-until=".66"><b class="s-go">Go up to $30</b><b>Keep $25</b></div><div class="s-btns" data-at=".66"><b class="s-yes">Now $30</b><b style="opacity:.25">Keep $25</b></div></div>
-        <div class="s-them" data-at=".8">Done. Sam has a courier too. Want me to ask it to chip in?</div>
-      </div>
-      <div class="s-side">
-        <h4>This errand</h4>
-        <div>
-          <div class="s-row s-line"><span>Double Smash Burger</span><span>$11.50</span></div>
-          <div class="s-row s-line" data-at=".2"><span>Skin-on Fries</span><span>$4.50</span></div>
-          <div class="s-row s-line" data-at=".72"><span>Double Smash Burger<small>For Sam</small></span><span>$11.50</span></div>
-        </div>
-        <div class="s-row s-total"><span>Total</span><span data-until=".2">$11.50</span><span data-at=".2" data-until=".72">$16.00</span><span data-at=".72">$27.50</span></div>
-        <div class="s-meter"><i data-meter=".72:92,.2:64,0:46"></i></div>
-        <div class="s-ctl">
-          <div><span>Limit</span><span data-until=".66">$25</span><span data-at=".66">$30</span></div>
-          <div><span>Off the errand</span><span>Asks you</span></div>
-          <div class="s-back">Call Juno back</div>
-        </div>
-      </div>
-    </div></div>
-  </div></div>
-</div></div></section>
-
-<section class="s-sec" id="for-shops" data-track data-solid style="--h:240vh;--solid:#141414"><div class="s-stick"><div class="s-grid">
-  <div class="s-copy">
+<section id="for-shops" class="s-biz">
+  <div class="s-bizh">
     <span class="s-kick">For shops</span>
-    <h2 class="s-h">Run a shop? Here’s what you&nbsp;get.</h2>
-    <ol class="s-pts">
-      <li><b>Every agent shows a pass.</b><span>Signed by Courier, with PayPal’s word that a real person sent it.</span></li>
-      <li><b>The limit is checked before you charge.</b><span>In code, so an agent can’t talk its way past it.</span></li>
-      <li><b>One report bans a bad agent at every shop.</b><span>Its pass stops working everywhere that takes Courier.</span></li>
-    </ol>
+    <h2 class="s-h">Agentic commerce for your business, without the&nbsp;headaches.</h2>
+    <p>Courier plugs into the checkout you already have. Agents arrive with a pass, every order comes from a person who said yes, and PayPal takes the payment the way it always&nbsp;has.</p>
+    <div class="ctas"><a href="/start?as=shop" class="btn acc">Try the shop desk<span class="go"><svg><use href="#arr"/></svg></span></a><a href="#for-devs" class="btn ghost">See how it fits</a></div>
   </div>
-  <div class="s-mock"><div class="s-win">
-    <div class="s-bar">Floor Dash<small>Agents at your door</small></div>
-    <div class="s-door">
-      <div class="s-dr" data-at=".08"><i>1</i><span class="s-id"><span data-pt="Juno"></span><span><b>Juno</b><small>Ordering for an errand</small></span></span><span class="s-ver" data-ver></span></div>
-      <div class="s-dr" data-at=".2"><i>1</i><span class="s-id"><span class="s-pt s-anon" aria-hidden="true">?</span><span><b>Unknown agent</b><small>Scraping every price</small></span></span><em class="s-no">No pass · Turned away</em></div>
-      <div class="s-dr" data-at=".36"><i>2</i><span class="s-id"><span data-pt="Otto"></span><span><b>Otto</b><small>$34.00 basket, $25.00 limit</small></span></span><em class="s-no">Over the limit · Refused</em></div>
-      <div class="s-dr" data-at=".56"><i>3</i><span class="s-id"><span data-pt="Kit"></span><span><b>Kit</b><small>Tried 40 orders in a minute</small></span></span><em class="s-no" data-until=".7">Reported</em><em class="s-no" data-at=".7">Out at every shop</em></div>
+  <div class="s-desk" role="img" aria-label="The Floor Dash shop desk: today’s takings, orders from verified couriers, and agents turned away at the door">
+    <div class="s-dk-bar"><i></i><i></i><i></i><span>Shop desk · Floor Dash</span></div>
+    <div class="s-dk">
+      <nav class="s-dk-rail" aria-hidden="true">{{fdlogo}}<b class="on">Overview</b><b>Orders</b><b>Couriers</b><b>Access log</b><b>Clerk</b><b>Reports</b></nav>
+      <div class="s-dk-main">
+        <div class="s-dk-h"><b>Today</b><small>Floor Dash · Friday</small></div>
+        <div class="s-dk-k">
+          <div><small>Takings</small><b>$1,284.50</b><em>+18% on last Friday</em></div>
+          <div><small>Orders</small><b>46</b><em>All from verified couriers</em></div>
+          <div><small>Over a limit</small><b>0</b><em>Refused before charging</em></div>
+          <div><small>Turned away</small><b>12</b><em>No pass, or a bad one</em></div>
+        </div>
+        <div class="s-dk-two">
+          <div class="s-dk-card">
+            <h4>Latest orders</h4>
+          <div class="s-dt-r"><span class="s-dt-c"><span data-pt="Juno"></span><b>Juno</b></span><span class="s-dt-i">Double Smash Burger, Fries</span><span class="s-dt-v" data-ver></span><span class="s-dt-s s-st-cooking">Cooking</span><span class="s-dt-t">$16.00</span></div>
+          <div class="s-dt-r"><span class="s-dt-c"><span data-pt="Otto"></span><b>Otto</b></span><span class="s-dt-i">Crispy Chicken Burger</span><span class="s-dt-v" data-ver></span><span class="s-dt-s s-st-paid">Paid</span><span class="s-dt-t">$10.50</span></div>
+          <div class="s-dt-r"><span class="s-dt-c"><span data-pt="Mika"></span><b>Mika</b></span><span class="s-dt-i">Margherita, Lemonade</span><span class="s-dt-v" data-ver></span><span class="s-dt-s s-st-on">On its way</span><span class="s-dt-t">$17.00</span></div>
+          <div class="s-dt-r"><span class="s-dt-c"><span data-pt="Rémy"></span><b>Rémy</b></span><span class="s-dt-i">Family Bucket</span><span class="s-dt-v" data-ver></span><span class="s-dt-s s-st-delivered">Delivered</span><span class="s-dt-t">$34.00</span></div>
+          <div class="s-dt-r"><span class="s-dt-c"><span data-pt="Ivy"></span><b>Ivy</b></span><span class="s-dt-i">Skin-on Fries ×2</span><span class="s-dt-v" data-ver></span><span class="s-dt-s s-st-delivered">Delivered</span><span class="s-dt-t">$9.00</span></div>
+          </div>
+          <div class="s-dk-card s-dk-door">
+            <h4>At the door</h4>
+            <div class="s-dd"><span class="s-dd-in">Let in</span><span><span data-pt="Pip"></span>Pip</span><small>2 min ago</small></div>
+            <div class="s-dd"><span class="s-dd-out">Turned away</span><span><span class="s-pt s-anon" aria-hidden="true">?</span>No pass</span><small>4 min ago</small></div>
+            <div class="s-dd"><span class="s-dd-in">Let in</span><span><span data-pt="Lou"></span>Lou</span><small>6 min ago</small></div>
+            <div class="s-dd"><span class="s-dd-out">Turned away</span><span><span data-pt="Kit"></span>Kit · reported</span><small>9 min ago</small></div>
+            <div class="s-dd"><span class="s-dd-out">Turned away</span><span><span class="s-pt s-anon" aria-hidden="true">?</span>Forged pass</span><small>11 min ago</small></div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div></div>
-</div></div></section>
+  </div>
+  <ul class="s-perks">
+    <li><b>Know who’s buying.</b>Every agent shows a pass, with PayPal’s word that a real person sent it.</li>
+    <li><b>Never past the budget.</b>The limit is checked in code before you charge, so no order goes further than someone approved.</li>
+    <li><b>Fewer chargebacks.</b>Each order comes with the person’s signed approval, so “I didn’t order this” has an answer.</li>
+    <li><b>One report, every shop.</b>A bad agent loses its pass at every shop that takes Courier.</li>
+  </ul>
+</section>
 
 <section id="for-devs" class="s-devs">
-  <div class="s-devh">
-    <h2 class="s-h">Up and running in an&nbsp;afternoon.</h2>
-    <p>The Courier Shops SDK does the checking, so your checkout stays the same. Built with <a class="link" href="https://www.apimatic.io" rel="noopener">APIMatic</a> · TypeScript and Python.</p>
-  </div>
-  <div class="s-devb">
-    <ol class="s-steps">
-      <li><b>Verify the pass</b><span>Check the courier’s signed token against Courier’s public keys.</span></li>
-      <li><b>Check the limit</b><span>Send the basket to <code>checkSpend</code>. Courier answers yes or no.</span></li>
-      <li><b>Charge with PayPal</b><span>Take the payment through PayPal, as you do today.</span></li>
-    </ol>
-    <pre class="s-code"><code><i>// 1. Verify the pass</i>
-const { payload } = await jwtVerify(token, courierKeys, { issuer });
-
-<i>// 2. Check the limit</i>
+  <div class="s-devg">
+    <div class="s-devc">
+      <h2 class="s-h">Up and running before your coffee gets&nbsp;cold.</h2>
+      <p>Courier’s shop SDKs are generated by <a class="link" href="https://www.apimatic.io" rel="noopener">APIMatic</a> from one OpenAPI spec, so TypeScript and Python get the same typed calls, and stay in step with the&nbsp;API.</p>
+      <ol class="s-steps">
+        <li><b>Install the SDK</b><span>One package for your language.</span></li>
+        <li><b>Verify the pass</b><span>Check the courier’s signed token against Courier’s keys.</span></li>
+        <li><b>Check, then charge</b><span><code>checkSpend</code> says yes or no. PayPal takes the payment.</span></li>
+      </ol>
+      <div class="ctas"><a href="/docs" class="btn">Read the docs<span class="go"><svg><use href="#arr"/></svg></span></a><a href="/docs/quickstart" class="btn ghost">Quickstart</a></div>
+    </div>
+    <div class="s-forge">
+      <div class="s-cup" aria-hidden="true"><svg viewBox="0 0 64 64"><path class="s-steam" d="M24 6c-4 5 4 8 0 13M33 4c-4 5 4 8 0 13M42 6c-4 5 4 8 0 13"/><path d="M12 26h38v14a15 15 0 0 1-15 15h-8a15 15 0 0 1-15-15z" fill="#f2efe9"/><path d="M50 30h3a7 7 0 0 1 0 14h-4" fill="none" stroke="#f2efe9" stroke-width="4"/></svg></div>
+      <div class="s-flow">
+        <div class="s-node s-spec"><small>Spec</small><b>openapi.json</b><span>13 calls</span></div>
+        <svg class="s-wire" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M0 50H100"/></svg>
+        <div class="s-node s-apim"><small>Generated by</small><b>APIMatic</b><span>Typed, documented, tested</span></div>
+        <svg class="s-wire" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M0 50C50 50 50 22 100 22M0 50C50 50 50 78 100 78"/></svg>
+        <div class="s-pkgs">
+          <div class="s-node s-pkg"><small>TypeScript</small><b>courier-shops</b></div>
+          <div class="s-node s-pkg"><small>Python</small><b>courier_shops</b></div>
+        </div>
+      </div>
+      <div class="s-codew">
+        <div class="s-codet" role="radiogroup" aria-label="Language"><label><input type="radio" name="s-lang" value="ts" checked><span>TypeScript</span></label><label><input type="radio" name="s-lang" value="py"><span>Python</span></label></div>
+        <pre class="s-code s-ts"><code><i>// Ask Courier before you charge</i>
 const decision = await courier.spending.checkSpend({ body: basket });
-if (decision.decision !== "approve") return refuse(decision);
 
-<i>// 3. Charge with PayPal</i>
-await courier.spending.chargeSavedPaypal({ body: charge });</code></pre>
+if (decision.decision === "approve") {
+  await courier.spending.chargeSavedPaypal({ body: charge });
+}</code></pre>
+        <pre class="s-code s-py"><code><i># Ask Courier before you charge</i>
+decision = courier.spending.check_spend(basket)
+
+if decision.decision == "approve":
+    courier.spending.charge_saved_paypal(charge)</code></pre>
+      </div>
+    </div>
   </div>
-  <div class="ctas"><a href="/start?as=shop" class="btn acc">Try it as a shop owner<span class="go"><svg><use href="#arr"/></svg></span></a><a href="/docs" class="btn ghost">Read the docs</a></div>
-  <p class="s-fine">Think a bot can get past it? <a class="link" href="/bots">Release the bots</a>.</p>
 </section>
 
 <section class="s-sec" id="trust" data-track style="--h:170vh"><div class="s-stick"><div class="s-grid">
   <div class="s-copy">
-    <h2 class="s-h">PayPal is the trust layer.</h2>
-    <p>The agent does the talking. PayPal and Courier hold the money: who sent it, how it pays and how far it can&nbsp;go.</p>
+    <h2 class="s-h">Built on the PayPal you already&nbsp;trust.</h2>
+    <p>Your agent does the talking. PayPal knows who sent it and moves the money, and Courier holds the line on how far it can&nbsp;go.</p>
   </div>
   <div class="s-mock"><div class="s-win">
     <div class="s-bar">Under the hood<small>Who does what</small></div>
@@ -242,7 +249,7 @@ await courier.spending.chargeSavedPaypal({ body: charge });</code></pre>
 </main>
 <footer><div class="s-fw">
   <span class="logo"><svg><use href="#mk"/></svg>Courier</span>
-  <nav aria-label="Footer"><a href="{{storeUrl}}">Shops</a><a href="#for-shops">For shops</a><a href="/docs">Developers</a><a href="/install">Install the MCP</a><a href="/start">Try the demo</a></nav>
+  <nav aria-label="Footer"><a href="{{storeUrl}}">Shops</a><a href="/docs">Developers</a><a href="/install">MCP</a><a href="/start">Try the demo</a></nav>
   <span class="ppl">Powered by <span class="pp"><span class="a">Pay</span><span class="b">Pal</span></span></span>
   <small>Sandbox demo.</small>
 </div></footer>

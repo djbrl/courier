@@ -738,71 +738,6 @@ body {
   display: none;
 }
 
-/* the shops pop up in their own places, in no particular order */
-#shops .s-mock {
-  height: min(56cqh, 470px);
-}
-.s-apps {
-  position: relative;
-  height: 100%;
-  container-type: size;
-}
-.s-app {
-  --u: min(100cqw / var(--fx), 100cqh / var(--fy));
-  --s: calc(var(--u) * var(--z));
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: var(--s);
-  height: var(--s);
-  margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
-  opacity: 0;
-  transform: translate(calc(var(--x) * var(--u)), calc(var(--y) * var(--u))) scale(0.2);
-  transition:
-    opacity 0.4s var(--ease),
-    transform 0.7s var(--pop),
-    filter 0.6s var(--ease);
-}
-.s-app.lit {
-  opacity: 1;
-  transform: translate(calc(var(--x) * var(--u)), calc(var(--y) * var(--u))) scale(1);
-}
-.s-app svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: 24%;
-  background: var(--t);
-  box-shadow: 0 10px 24px rgba(20, 20, 20, 0.16);
-}
-.s-app span {
-  position: absolute;
-  left: 50%;
-  top: 100%;
-  translate: -50% 10px;
-  padding: 5px 12px;
-  border-radius: 99px;
-  background: var(--ink);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 700;
-  white-space: nowrap;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-.s-apps.focus .s-app:not(.pick) {
-  opacity: 0.16;
-  filter: saturate(0.4);
-}
-.s-apps.focus .pick {
-  z-index: 2;
-  transform: scale(1.3);
-}
-.s-apps.focus .pick span {
-  opacity: 1;
-  scale: 0.77;
-}
-
 /* what the shop sees */
 .s-dash {
   position: relative;
@@ -972,9 +907,6 @@ body {
 }
 [data-solid]:not(.wait) .s-mock::before {
   opacity: 1;
-}
-#shops .s-mock::before {
-  inset: -12cqh -3.5cqw;
 }
 /* The globe is see-through, so it floats on the page with no tile behind it. */
 #why .s-mock::before {
@@ -1282,8 +1214,7 @@ footer .ppl {
 }
 
 @media (max-width: 860px) {
-  .s-mock::before,
-  #shops .s-mock::before {
+  .s-mock::before {
     inset: -12px -10px -12px 18px;
     border-radius: 26px;
   }
@@ -1395,16 +1326,6 @@ footer .ppl {
   }
   .globe {
     width: min(100%, 42cqh);
-  }
-  #shops .s-mock {
-    flex: 1 1 0;
-    height: auto;
-    display: grid;
-    place-items: center;
-  }
-  .s-apps {
-    width: 100%;
-    height: min(100%, 86cqw);
   }
   .s-nums > div {
     padding: 8px 14px;
@@ -1537,16 +1458,78 @@ footer .ppl {
   }
 }
 
-/* Partner shops: the way to the whole list. */
+/* Partner shops: one quiet line of them under the hero, and the way to the whole list. */
+.s-strip {
+  display: grid;
+  justify-items: center;
+  gap: 22px;
+  padding: clamp(48px, 9vh, 96px) 0 clamp(56px, 10vh, 110px);
+  overflow: hidden;
+}
+.s-strip > p {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--mute);
+}
+.s-marq {
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+.s-mq {
+  flex: none;
+  display: flex;
+  gap: 44px;
+  padding-right: 44px;
+  animation: s-marq 70s linear infinite;
+}
+.s-marq:hover .s-mq {
+  animation-play-state: paused;
+}
+@keyframes s-marq {
+  to {
+    transform: translateX(-100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .s-mq {
+    animation: none;
+  }
+}
+.s-sh {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #8a8b90;
+  font-family: "Archivo", sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+.s-sh .slogo {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  filter: grayscale(1) contrast(0.9) opacity(0.55);
+  transition: filter 0.2s;
+}
+.s-sh:hover {
+  color: var(--ink);
+}
+.s-sh:hover .slogo {
+  filter: none;
+}
 .s-more {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-top: 22px;
-  font-size: 17px;
-  font-weight: 700;
-  border-bottom: 2px solid currentColor;
   padding-bottom: 2px;
+  border-bottom: 2px solid currentColor;
+  font-size: 16px;
+  font-weight: 700;
 }
 .s-more svg {
   width: 15px;
@@ -1557,10 +1540,26 @@ footer .ppl {
   transform: translateX(3px);
 }
 
-/* For shops: three promises on the left, the door they keep on the right. */
+/* Agents it works with: names only, never their marks. */
+.s-works {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 22px;
+}
+.s-works li {
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  font-size: 14.5px;
+  font-weight: 700;
+}
+
+/* For shops: the one screen that leaves the grid. The words sit over the desk itself, which tips up into view. */
 .s-kick {
   display: inline-block;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   padding: 5px 12px;
   border-radius: 99px;
   background: var(--ink);
@@ -1569,237 +1568,596 @@ footer .ppl {
   font-weight: 700;
   letter-spacing: 0.02em;
 }
-.s-pts {
-  list-style: none;
-  counter-reset: pt;
-  display: grid;
-  gap: 14px;
-  margin-top: 24px;
-  max-width: 30em;
+.s-biz {
+  padding: clamp(90px, 14vh, 160px) var(--gut) clamp(60px, 9vh, 100px);
+  background: linear-gradient(#fff, #f4f1ea 38%, #f4f1ea 78%, #fff);
 }
-.s-pts li {
-  counter-increment: pt;
-  display: grid;
-  grid-template-columns: 30px minmax(0, 1fr);
-  column-gap: 12px;
-  font-size: clamp(15px, 1.2cqw, 18px);
-  line-height: 1.35;
+.s-bizh {
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
 }
-.s-pts li::before {
-  content: counter(pt);
-  grid-row: 1 / 3;
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: var(--hivis);
-  font-weight: 800;
-  font-size: 14px;
+.s-bizh h2 {
+  font-size: clamp(36px, 5vw, 76px);
 }
-.s-pts b {
-  font-size: 1.08em;
+.s-bizh p {
+  max-width: 36em;
+  margin: 22px auto 0;
+  font-size: clamp(17px, 1.4vw, 21px);
+  font-weight: 500;
+  line-height: 1.4;
 }
-.s-pts span {
-  color: var(--soft);
+.s-bizh .ctas {
+  justify-content: center;
+  margin-top: 30px;
 }
-#for-shops .s-mock {
-  display: grid;
-  align-items: center;
+.s-desk {
+  max-width: 1240px;
+  margin: clamp(44px, 7vh, 80px) auto 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: #fff;
+  box-shadow:
+    0 50px 100px -30px rgba(20, 20, 20, 0.35),
+    0 20px 40px -20px rgba(20, 20, 20, 0.2);
+  transform-origin: 50% 0;
+  transform: perspective(1800px) rotateX(calc((1 - var(--e, 1)) * 18deg)) scale(calc(0.94 + var(--e, 1) * 0.06));
 }
-#for-shops .s-win {
-  height: auto;
-}
-.s-door {
-  display: grid;
-  gap: 10px;
-  padding: 18px;
-}
-.s-dr {
+.s-dk-bar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  border: 1px solid var(--line);
-  border-radius: 16px;
+  gap: 7px;
+  height: 42px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--line);
+  background: #faf9f6;
 }
-.s-dr > i {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
+.s-dk-bar i {
+  width: 11px;
+  height: 11px;
   border-radius: 50%;
-  background: var(--paper);
-  font-style: normal;
-  font-size: 12px;
-  font-weight: 800;
+  background: #e2dfd8;
 }
-.s-dr .s-id {
-  flex: 1;
-  min-width: 0;
-}
-.s-dr .s-id small {
-  display: block;
+.s-dk-bar span {
+  margin: 0 auto;
+  padding-right: 50px;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--mute);
-  font-size: 13.5px;
 }
-.s-dr .s-ver {
-  margin: 0;
+.s-dk {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+}
+.s-dk-rail {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: 18px 12px;
+  border-right: 1px solid var(--line);
+  background: #faf9f6;
+}
+.s-dk-rail .slogo {
+  width: 38px;
+  height: 38px;
+  margin: 0 0 14px 8px;
+  border-radius: 10px;
+}
+.s-dk-rail b {
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--soft);
+}
+.s-dk-rail b.on {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(20, 20, 20, 0.1);
+}
+.s-dk-main {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  padding: 22px 26px 26px;
+}
+.s-dk-h {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.s-dk-h b {
+  font-size: 22px;
+}
+.s-dk-h small {
+  font-size: 14px;
+  color: var(--mute);
+}
+.s-dk-k {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.s-dk-k > div {
+  display: grid;
+  gap: 2px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.s-dk-k small {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mute);
+}
+.s-dk-k b {
+  font-size: 26px;
+  letter-spacing: -0.02em;
+}
+.s-dk-k em {
+  font-style: normal;
+  font-size: 12.5px;
+  color: var(--soft);
+}
+.s-dk-two {
+  display: grid;
+  grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
+  gap: 12px;
+}
+.s-dk-card {
+  padding: 14px 16px 6px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.s-dk-card h4 {
+  margin-bottom: 6px;
+  font-size: 15px;
+}
+.s-dt-r {
+  display: grid;
+  grid-template-columns: 7.5em minmax(0, 1fr) auto 6.5em 4.5em;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+}
+.s-dt-c,
+.s-dd > span:nth-child(2) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.s-dk .s-pt {
+  width: 26px;
+  height: 26px;
+  flex: none;
+}
+.s-dt-i {
+  overflow: hidden;
+  color: var(--soft);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.s-dt-v {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.s-dt-v .ck {
+  margin-right: 4px;
+}
+.s-dt-s {
+  justify-self: start;
+  padding: 3px 9px;
+  border-radius: 99px;
+  background: var(--paper);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.s-st-cooking {
+  background: #fff3d6;
+  color: #8a5a00;
+}
+.s-st-on {
+  background: #e6ecff;
+  color: #2a3fb0;
+}
+.s-st-delivered {
+  background: #e3f5ea;
+  color: #1c6b3c;
+}
+.s-dt-t {
+  text-align: right;
+  font-weight: 700;
+}
+.s-dd {
+  display: grid;
+  grid-template-columns: 6.6em minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-top: 1px solid var(--line);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.s-dd small {
+  font-size: 12px;
+  color: var(--mute);
+}
+.s-dd-in,
+.s-dd-out {
+  justify-self: start;
+  padding: 3px 8px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #e3f5ea;
+  color: #1c6b3c;
+}
+.s-dd-out {
+  background: var(--paper);
+  color: var(--soft);
 }
 .s-anon {
   display: grid;
   place-items: center;
+  border-radius: 8px;
   background: var(--paper);
   color: var(--mute);
+  font-size: 13px;
   font-weight: 800;
 }
-.s-no {
-  flex: none;
-  padding: 5px 10px;
-  border-radius: 99px;
-  background: #fdecea;
-  color: #b42318;
-  font-style: normal;
-  font-size: 13px;
-  font-weight: 700;
+.s-perks {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(18px, 3vw, 40px);
+  max-width: 1240px;
+  margin: clamp(44px, 7vh, 72px) auto 0;
 }
-
-/* For developers: in the open, not a sticky screen, so it can be read at its own pace. */
-.s-devs {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: clamp(72px, 12vh, 130px) var(--gut) clamp(72px, 12vh, 120px);
-}
-.s-devh h2 {
-  font-size: clamp(32px, 4vw, 58px);
-}
-.s-devh p {
-  margin-top: 14px;
-  max-width: 40em;
-  font-size: clamp(16px, 1.3vw, 19px);
+.s-perks li {
+  display: grid;
+  gap: 6px;
+  padding-top: 16px;
+  border-top: 2px solid var(--ink);
+  font-size: 15.5px;
+  line-height: 1.45;
   color: var(--soft);
 }
-.s-devb {
+.s-perks b {
+  font-size: 18px;
+  color: var(--ink);
+}
+
+/* For developers: in the open, so it reads at its own pace. The picture is the pipeline: one spec, APIMatic, two SDKs. */
+.s-devs {
+  padding: clamp(80px, 12vh, 140px) var(--gut) clamp(80px, 12vh, 130px);
+}
+.s-devg {
   display: grid;
-  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
-  gap: clamp(24px, 4vw, 56px);
-  align-items: start;
-  margin: 36px 0 32px;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: clamp(32px, 5vw, 80px);
+  align-items: center;
+  max-width: 1360px;
+  margin: 0 auto;
+}
+.s-devc h2 {
+  font-size: clamp(34px, 4.2vw, 64px);
+}
+.s-devc > p {
+  margin-top: 18px;
+  max-width: 30em;
+  font-size: clamp(16px, 1.3vw, 19px);
+  font-weight: 500;
+  line-height: 1.42;
 }
 .s-steps {
   list-style: none;
   counter-reset: st;
   display: grid;
-  gap: 22px;
+  gap: 16px;
+  margin: 28px 0 30px;
 }
 .s-steps li {
   counter-increment: st;
-  display: grid;
-  gap: 4px;
-  padding-left: 46px;
   position: relative;
-  font-size: 16px;
+  display: grid;
+  gap: 2px;
+  padding-left: 44px;
+  font-size: 15.5px;
   line-height: 1.4;
 }
 .s-steps li::before {
   content: counter(st);
   position: absolute;
   left: 0;
-  top: -2px;
+  top: -1px;
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  background: var(--ink);
-  color: #fff;
-  font-weight: 800;
+  background: var(--hivis);
   font-size: 14px;
+  font-weight: 800;
 }
 .s-steps b {
-  font-size: 18px;
+  font-size: 17px;
 }
 .s-steps span {
   color: var(--soft);
 }
-.s-code {
-  margin: 0;
-  padding: 22px 24px;
-  overflow-x: auto;
-  border-radius: 20px;
+.s-forge {
+  position: relative;
+  display: grid;
+  gap: 18px;
+  padding: clamp(22px, 2.6vw, 36px);
+  border-radius: 28px;
   background: #141414;
   color: #f2efe9;
+  box-shadow: 0 30px 70px -20px rgba(20, 20, 20, 0.45);
+}
+/* The coffee, still hot. */
+.s-cup {
+  position: absolute;
+  top: -34px;
+  right: 28px;
+  width: 64px;
+  height: 64px;
+  padding: 6px;
+  border-radius: 18px;
+  background: var(--hivis);
+  box-shadow: 0 10px 24px rgba(20, 20, 20, 0.25);
+  transform: rotate(6deg);
+}
+.s-cup svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.s-cup path:not(.s-steam) {
+  fill: var(--ink);
+  stroke: var(--ink);
+}
+.s-cup path[fill="none"] {
+  fill: none;
+}
+.s-steam {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 18 30;
+  animation: s-steam 2.4s linear infinite;
+}
+@keyframes s-steam {
+  to {
+    stroke-dashoffset: -48;
+  }
+}
+.s-flow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(24px, 0.45fr) minmax(0, 1.15fr) minmax(24px, 0.45fr) minmax(0, 1fr);
+  align-items: center;
+  margin-top: 10px;
+}
+.s-node {
+  display: grid;
+  gap: 3px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  min-width: 0;
+}
+.s-node small {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+}
+.s-node b {
+  overflow: hidden;
+  font:
+    600 14.5px / 1.3 "JetBrains Mono",
+    monospace;
+  text-overflow: ellipsis;
+}
+.s-node span {
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.6);
+}
+.s-apim {
+  padding: 20px 18px;
+  border-color: var(--hivis);
+  background: rgba(214, 255, 61, 0.08);
+  box-shadow: 0 0 0 6px rgba(214, 255, 61, 0.07);
+}
+.s-apim b {
+  font-family: "Archivo", sans-serif;
+  font-size: clamp(20px, 2vw, 28px);
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--hivis);
+}
+.s-pkgs {
+  display: grid;
+  gap: 12px;
+}
+.s-wire {
+  width: 100%;
+  height: 120px;
+  overflow: visible;
+}
+.s-wire path {
+  fill: none;
+  stroke: var(--hivis);
+  stroke-width: 2;
+  stroke-dasharray: 5 6;
+  vector-effect: non-scaling-stroke;
+  animation: s-wire 1.2s linear infinite;
+}
+@keyframes s-wire {
+  to {
+    stroke-dashoffset: -11;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .s-wire path,
+  .s-steam {
+    animation: none;
+  }
+}
+.s-codew {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+}
+.s-codet {
+  display: flex;
+  gap: 4px;
+  padding: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.s-codet input {
+  position: absolute;
+  opacity: 0;
+}
+.s-codet span {
+  display: block;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+}
+.s-codet input:checked + span {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+.s-codet input:focus-visible + span {
+  outline: 2px solid var(--hivis);
+}
+.s-codew:has(input[value="py"]:checked) .s-ts,
+.s-codew:has(input[value="ts"]:checked) .s-py {
+  display: none;
+}
+.s-code {
+  margin: 0;
+  padding: 18px 20px;
+  overflow-x: auto;
   font:
     500 13.5px / 1.75 "JetBrains Mono",
     monospace;
 }
 .s-code i {
   font-style: normal;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.45);
 }
-.s-fine {
-  margin-top: 18px;
-  font-size: 15px;
-  color: var(--mute);
+
+@media (max-width: 860px) {
+  .s-sh {
+    font-size: 18px;
+  }
+  .s-sh .slogo {
+    width: 28px;
+    height: 28px;
+  }
+  .s-mq {
+    gap: 30px;
+    padding-right: 30px;
+  }
+  .s-works {
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .s-works li {
+    padding: 4px 10px;
+    font-size: 13px;
+  }
+  .s-dk {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+  }
+  .s-dk-rail,
+  .s-dk-door,
+  .s-dt-i,
+  .s-dt-v {
+    display: none;
+  }
+  .s-dk-main {
+    padding: 16px;
+    gap: 12px;
+  }
+  .s-dk-k {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .s-dk-k > div {
+    padding: 10px 12px;
+  }
+  .s-dk-k b {
+    font-size: 20px;
+  }
+  .s-dk-two {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .s-dt-r {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+  .s-perks {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+  .s-devg {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* On a phone the pipeline runs down the card: spec, APIMatic, then the two SDKs side by side. */
+  .s-flow {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .s-wire {
+    display: none;
+  }
+  .s-spec,
+  .s-apim {
+    position: relative;
+  }
+  .s-spec::after,
+  .s-apim::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    height: 16px;
+    border-left: 2px dashed var(--hivis);
+  }
+  .s-node {
+    padding: 10px 14px;
+    border-radius: 12px;
+  }
+  .s-node b {
+    font-size: 13px;
+  }
+  .s-pkgs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .s-code {
+    font-size: 12px;
+    padding: 14px;
+  }
+  .s-cup {
+    width: 52px;
+    height: 52px;
+    top: -26px;
+  }
 }
 #close .ppl {
   margin-top: 18px;
-}
-@media (max-width: 860px) {
-  .s-kick {
-    margin-bottom: 8px;
-  }
-  .s-pts {
-    gap: 6px;
-    margin-top: 12px;
-  }
-  .s-pts li {
-    grid-template-columns: 24px minmax(0, 1fr);
-    column-gap: 10px;
-    font-size: 14.5px;
-  }
-  .s-pts li::before {
-    width: 24px;
-    height: 24px;
-    font-size: 12px;
-  }
-  .s-pts span {
-    display: none;
-  }
-  #for-shops .s-mock {
-    align-items: start;
-  }
-  .s-door {
-    gap: 8px;
-    padding: 12px;
-  }
-  .s-dr {
-    flex-wrap: wrap;
-    gap: 8px 10px;
-    padding: 10px 12px;
-  }
-  .s-dr > i {
-    display: none;
-  }
-  .s-dr .s-id {
-    flex-basis: 60%;
-  }
-  .s-dr .s-ver,
-  .s-no {
-    font-size: 12px;
-  }
-  .s-devb {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .s-code {
-    font-size: 12.5px;
-    padding: 18px;
-  }
-  .s-more {
-    margin-top: 10px;
-    font-size: 15px;
-  }
 }
 @media (max-width: 760px) {
   /* Two doors side by side under the pass, so the words stay clear of it. */

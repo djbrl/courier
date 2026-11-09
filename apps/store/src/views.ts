@@ -37,7 +37,7 @@ function storeNav(view: "shop" | "merchant", shop?: Shop): RawHtml {
     ${
       shop
         ? html`<a class="jr" href="/${shop.slug}">${shopLogo(shop, "sm")}<div><b>${shop.name}</b><small>${shop.sells}</small></div></a>`
-        : html`<a class="jr jr-home" href="/">${LOGO}<span class="jr-tag">Shops</span></a>`
+        : html`<span class="jr jr-home"><a href="${config.courier.url}" aria-label="Courier home">${LOGO}</a><a class="jr-tag" href="/">Shops</a></span>`
     }
     <nav>
       ${
