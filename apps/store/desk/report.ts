@@ -72,29 +72,69 @@ const widgets: Record<string, any> = {
 
 const at = (xTrack: number, yTrack: number, xSpan: number, ySpan: number) => ({ xTrack, yTrack, xSpan, ySpan });
 
+// Gaps between the cards; the room inside each card is in desk.css.
+const layout = { widgetPadding: 10, pagePadding: 16 };
+// Refusals only: the door log also holds the couriers that were let in.
+const refusalsOnly = (id: string) => ({
+  widget: { [id]: [{ field: { id: "door.allowed" }, model: { operator: "isFalse" } }] },
+});
+
+/** One tab each, so a chart or a table gets the whole page instead of a corner of one. */
+export const REPORT_TABS = [
+  { id: "overview", label: "Overview" },
+  { id: "couriers", label: "Revenue by courier" },
+  { id: "orders", label: "Orders and payments" },
+  { id: "access", label: "Access log" },
+] as const;
+
 export const DEFAULT_REPORT: any = {
   pages: [
     {
-      id: "desk",
-      widgets,
+      id: "overview",
+      layout,
+      widgets: {
+        revenue: widgets.revenue,
+        orders: widgets.orders,
+        couriers: widgets.couriers,
+        refused: widgets.refused,
+        byCourier: widgets.byCourier,
+        refusals: widgets.refusals,
+      },
       widgetLayout: {
         revenue: at(0, 0, 6, 6),
         orders: at(6, 0, 6, 6),
         couriers: at(12, 0, 6, 6),
         refused: at(18, 0, 6, 6),
-        byCourier: at(0, 6, 14, 18),
-        refusals: at(14, 6, 10, 18),
-        cards: at(0, 24, 16, 18),
-        proof: at(16, 24, 8, 18),
-        door: at(0, 42, 24, 18),
-        recent: at(0, 60, 24, 22),
+        byCourier: at(0, 6, 14, 20),
+        refusals: at(14, 6, 10, 20),
       },
-      // Refusals only: the door log also holds the couriers that were let in.
-      filter: {
-        widget: { refusals: [{ field: { id: "door.allowed" }, model: { operator: "isFalse" } }] },
+      filter: refusalsOnly("refusals"),
+    },
+    {
+      id: "couriers",
+      layout,
+      widgets: { courierRevenue: widgets.byCourier, cards: widgets.cards },
+      widgetLayout: { courierRevenue: at(0, 0, 24, 22), cards: at(0, 22, 24, 20) },
+    },
+    {
+      id: "orders",
+      layout,
+      widgets: { proof: widgets.proof, paid: widgets.revenue, count: widgets.orders, recent: widgets.recent },
+      widgetLayout: {
+        proof: at(0, 0, 10, 20),
+        paid: at(10, 0, 14, 10),
+        count: at(10, 10, 14, 10),
+        recent: at(0, 20, 24, 30),
       },
     },
+    {
+      id: "access",
+      layout,
+      widgets: { turnedAway: widgets.refused, why: widgets.refusals, door: widgets.door },
+      widgetLayout: { turnedAway: at(0, 0, 8, 7), why: at(0, 7, 8, 20), door: at(8, 0, 16, 27) },
+      filter: refusalsOnly("why"),
+    },
   ],
-  selectedPageId: "desk",
+  selectedPageId: "overview",
   panels: { filters: { collapsed: true }, data: { collapsed: true }, edit: { collapsed: true } },
 };

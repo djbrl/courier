@@ -56,7 +56,7 @@ const theme = themeQuartz.withParams({
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
-  props: { className?: string; text?: string; title?: string; style?: string } = {},
+  props: { className?: string; text?: string; title?: string; style?: string; href?: string } = {},
   ...children: (Node | string | null | undefined)[]
 ): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
@@ -64,6 +64,8 @@ function el<K extends keyof HTMLElementTagNameMap>(
   if (props.text !== undefined) node.textContent = props.text;
   if (props.title) node.title = props.title;
   if (props.style) node.setAttribute("style", props.style);
+  // Links stay on the desk: a path on this site, never a scheme.
+  if (props.href?.startsWith("/") && !props.href.startsWith("//")) node.setAttribute("href", props.href);
   for (const child of children) if (child !== null && child !== undefined) node.append(child);
   return node;
 }
@@ -495,13 +497,13 @@ function doorGrid(rows: DoorRow[]) {
         isExternalFilterPresent: () => true,
         doesExternalFilterPass: (node) =>
           Boolean(node.data) &&
-          (showLetIn || !node.data!.allowed) &&
+          (doorShow === "all" || (doorShow === "in") === node.data!.allowed) &&
           (!reasonFilter || node.data!.reason === reasonFilter),
       },
     ),
   );
 }
-let showLetIn = false;
+let doorShow: "all" | "in" | "out" = "all";
 let reasonFilter = "";
 
 function couriersGrid(rows: CourierRow[]) {
@@ -660,11 +662,21 @@ function wireTools() {
       }),
     );
   }
-  const letIn = document.querySelector<HTMLInputElement>("[data-show-let-in]");
-  letIn?.addEventListener("change", () => {
-    showLetIn = letIn.checked;
+  // All, let in or turned away; the reasons only make sense for the last, so they show with it.
+  const reasons = document.querySelector<HTMLElement>("[data-reasons]");
+  const showDoor = (show: typeof doorShow) => {
+    doorShow = show;
+    for (const b of document.querySelectorAll<HTMLElement>("[data-door-show]"))
+      b.setAttribute("aria-pressed", String(b.dataset.doorShow === show));
+    if (reasons) reasons.hidden = show !== "out";
+    if (show !== "out") {
+      reasonFilter = "";
+      for (const c of document.querySelectorAll<HTMLElement>("[data-reason]")) c.setAttribute("aria-pressed", "false");
+    }
     grids.get("door")?.onFilterChanged();
-  });
+  };
+  for (const b of document.querySelectorAll<HTMLButtonElement>("[data-door-show]"))
+    b.addEventListener("click", () => showDoor(b.dataset.doorShow as typeof doorShow));
   for (const chip of document.querySelectorAll<HTMLButtonElement>("[data-reason]")) {
     chip.addEventListener("click", () => {
       reasonFilter = reasonFilter === chip.dataset.reason ? "" : chip.dataset.reason!;
@@ -685,6 +697,29 @@ interface ClerkReply {
   reply?: string;
   error?: string;
   actions?: { id: string; order_id: string; amount: string; note: string }[];
+  cards?: {
+    title: string;
+    rows: { id: string; title: string; meta: string; amount?: string; href?: string }[];
+    more?: { label: string; href: string };
+  }[];
+}
+
+/** The records the clerk read, as a card of rows that open each order on the desk. */
+function clerkCard(card: NonNullable<ClerkReply["cards"]>[number]) {
+  const rows = card.rows.map((r) => {
+    const inner = [
+      el("span", { className: "dk-cc-t" }, el("b", { text: r.title }), el("small", { text: r.meta })),
+      r.amount ? el("span", { className: "dk-cc-a", text: r.amount }) : null,
+    ].filter(Boolean) as Node[];
+    return el("li", {}, r.href ? el("a", { href: r.href }, ...inner) : el("span", {}, ...inner));
+  });
+  return el(
+    "li",
+    { className: "dk-msg them dk-cc" },
+    el("b", { className: "dk-cc-h", text: card.title }),
+    el("ul", {}, ...rows),
+    card.more ? el("a", { className: "dk-cc-more", href: card.more.href, text: `${card.more.label} →` }) : null,
+  );
 }
 
 function wireClerk() {
@@ -730,7 +765,9 @@ function wireClerk() {
       const out = (await res.json().catch(() => ({}))) as ClerkReply;
       const reply = out.reply ?? out.error ?? "The clerk couldn't answer that.";
       history.push({ role: "assistant", content: reply });
-      thinking.replaceWith(el("li", { className: "dk-msg them", text: reply }));
+      // Models like to bold things in Markdown; the chat shows plain text.
+      thinking.replaceWith(el("li", { className: "dk-msg them", text: reply.replace(/\*\*(.+?)\*\*/g, "$1") }));
+      for (const card of out.cards ?? []) chat.append(clerkCard(card));
       for (const a of out.actions ?? []) {
         chat.append(
           el(

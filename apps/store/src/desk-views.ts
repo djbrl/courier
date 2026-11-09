@@ -139,35 +139,35 @@ function needCard(n: NeedRow): RawHtml {
 }
 
 /** The first look around the desk, ending on the clerk. Says plainly which rows are made up. */
-function tourSteps(shop: Shop, desk: ShopDesk) {
+function tourSteps(desk: ShopDesk) {
   const sample = desk.orders.some((o) => o.sample);
   return [
     {
       target: "pulse",
-      title: `This is ${shop.name} today.`,
-      body: "Orders placed by couriers, AI agents shopping for real people, with what they paid, refunds and parcels on the road.",
+      title: "Today",
+      body: "Orders, payments, refunds and parcels for today.",
     },
     {
       target: "orders",
-      title: "Every order, with its proof.",
+      title: "Latest orders",
       body: sample
-        ? `Rows marked Sample are made up, so ${shop.name} doesn't start empty. Orders from your own errands in the demo land here too, for real. Open one for the errand, its limits and PayPal's check.`
-        : "Open one for the errand, its limits and PayPal's check.",
+        ? "Rows tagged Sample are demo data. Your own demo orders appear here too. Click a row to see its details."
+        : "Click a row to see its details.",
     },
     {
       target: "rail-access",
-      title: "Who got in, and who didn't.",
-      body: "Every agent that tried to shop here. No ID, a forged pass or an order over budget is turned away in code, before it reaches you.",
+      title: "Access log",
+      body: "Every agent request to the shop, and the ones Courier blocked.",
     },
     {
       target: "rail-reports",
-      title: "Build your own reports.",
-      body: "Chart your orders and couriers with AG Studio, or ask for a chart in words.",
+      title: "Reports",
+      body: "Charts of orders, couriers and access. Add your own.",
     },
     {
       target: "clerk",
-      title: "And ask the clerk.",
-      body: "It reads your orders, parcels and PayPal payments, and can propose a refund. Nothing moves until you confirm.",
+      title: "Clerk",
+      body: "Ask about orders, parcels or payments. It can propose a refund; you confirm it.",
       cta: { label: "Ask the clerk", href: "#clerk" },
     },
   ];
@@ -220,7 +220,7 @@ export function todayPage(shop: Shop, desk: ShopDesk, opts: { tour?: boolean } =
   </div></div>${
     opts.tour
       ? raw(
-          `<script type="application/json" id="tour">${JSON.stringify(tourSteps(shop, desk)).replace(/</g, "\\u003c")}</script>`,
+          `<script type="application/json" id="tour">${JSON.stringify(tourSteps(desk)).replace(/</g, "\\u003c")}</script>`,
         )
       : ""
   }`;
@@ -255,28 +255,32 @@ export function ordersPage(shop: Shop, desk: ShopDesk): string {
 
 export function doorPage(shop: Shop, desk: ShopDesk): string {
   const refused = desk.door.filter((d) => !d.allowed).length;
+  const seg = (show: string, label: string, n: number) =>
+    html`<button type="button" data-door-show="${show}" aria-pressed="${show === "all" ? "true" : "false"}">${label} <b>${n}</b></button>`;
   const main = html`<div class="pg pg-wide"><div class="pg-in">
     ${head(
       "Access log",
-      "Every agent that tried to shop here. Couriers with a valid ID got in; anything else was turned away, and here's why.",
+      "Every agent request to this shop. Couriers with a valid ID get in; Courier blocks the rest and says why.",
     )}
+    <div class="dk-tools">
+      <div class="dk-seg" role="group" aria-label="Show">${seg("all", "All", desk.door.length)}${seg("in", "Let in", desk.door.length - refused)}${seg("out", "Turned away", refused)}</div>
+      <input type="search" class="dk-filter" data-filter="door" placeholder="Find a courier or a reason" aria-label="Filter the access log">
+    </div>
     ${
       desk.reasons.length
-        ? html`<div class="dk-reasons">${desk.reasons.map(
+        ? html`<div class="dk-reasons" data-reasons hidden>${desk.reasons.map(
             (r) =>
-              html`<button type="button" class="dk-reason" data-reason="${r.reason}"><b>${r.count}</b><span>${r.reason}</span></button>`,
+              html`<button type="button" class="dk-reason" data-reason="${r.reason}"><span>${r.reason}</span><b>${r.count}</b></button>`,
           )}</div>`
         : ""
     }
-    <div class="dk-tools"><input type="search" class="dk-filter" data-filter="door" placeholder="Find a courier or a reason" aria-label="Filter the access log"><label class="dk-check"><input type="checkbox" data-show-let-in> Show couriers let in</label></div>
     ${
       desk.door.length
         ? html`<ul class="card dk-list" data-grid="door">${desk.door
-            .filter((d) => !d.allowed)
             .slice(0, 40)
             .map(
               (d) =>
-                html`<li>${who(d.face, d.pseudonym)}<span class="dk-li-m"><b>${d.reason}${d.sample ? html` <span class="dk-sample">Sample</span>` : ""}</b><small>${d.action} · ${d.detail}</small></span><time datetime="${d.at}">${d.ago}</time></li>`,
+                html`<li>${who(d.face, d.pseudonym)}<span class="dk-li-m"><b>${d.allowed ? "Let in" : d.reason}${d.sample ? html` <span class="dk-sample">Sample</span>` : ""}</b><small>${d.action} · ${d.detail}</small></span><time datetime="${d.at}">${d.ago}</time></li>`,
             )}</ul>${AG_CREDIT}`
         : html`<div class="card dk-empty"><b>No agent has tried to shop here yet.</b></div>`
     }

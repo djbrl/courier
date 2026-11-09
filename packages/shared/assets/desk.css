@@ -524,8 +524,8 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 38px;
-  padding: 0 14px 0 6px;
+  height: 36px;
+  padding: 0 6px 0 14px;
   border: 1px solid var(--line);
   border-radius: 99px;
   background: #fff;
@@ -539,8 +539,8 @@
   height: 26px;
   padding: 0 7px;
   border-radius: 99px;
-  background: #fde4e2;
-  color: var(--red);
+  background: #f2efe9;
+  color: var(--soft);
   font-size: 13px;
   line-height: 26px;
   text-align: center;
@@ -1071,6 +1071,8 @@ body.dk-in-page {
 /* ---------- sample rows, the table credit, and rows that open something ---------- */
 .dk-sample {
   display: inline-block;
+  /* Grid cells set a tall line height to centre their text; a chip keeps its own. */
+  line-height: 16px;
   margin-left: 6px;
   padding: 1px 7px;
   border: 1px dashed var(--mute);
@@ -1167,4 +1169,138 @@ body.dk-in-page {
   [data-grid]::after {
     animation: none;
   }
+}
+
+/* The access log's view switch: all requests, the ones let in, or the ones turned away. */
+.dk-seg {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 12px;
+  background: #f2efe9;
+}
+.dk-seg button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--soft);
+  cursor: pointer;
+}
+.dk-seg button b {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--mute);
+}
+.dk-seg button[aria-pressed="true"] {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.dk-reasons[hidden] {
+  display: none;
+}
+@media (max-width: 899px) {
+  .dk-seg {
+    display: none;
+  }
+}
+
+/* What the clerk read, as a card under its answer: each row opens the order. */
+.dk-cc {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding: 12px 6px 8px !important;
+  background: #fff !important;
+  border: 1px solid var(--line);
+}
+.dk-cc-h {
+  padding: 0 10px;
+  font-size: 13px;
+  color: var(--mute);
+}
+.dk-cc ul {
+  list-style: none;
+  display: grid;
+}
+.dk-cc li > a,
+.dk-cc li > span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  color: inherit;
+  text-decoration: none;
+}
+.dk-cc li > a:hover {
+  background: #f6f4ef;
+}
+.dk-cc-t {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.dk-cc-t b,
+.dk-cc-t small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dk-cc-t b {
+  font-size: 14px;
+}
+.dk-cc-t small {
+  font-size: 12.5px;
+  color: var(--mute);
+}
+.dk-cc-a {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.dk-cc-more {
+  padding: 4px 10px;
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--cobalt);
+}
+
+/* The report's tabs: one view each, so a chart gets the whole page. */
+.dk-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.dk-tabs button {
+  flex: none;
+  height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--soft);
+  cursor: pointer;
+}
+.dk-tabs button:hover {
+  background: #f2efe9;
+}
+.dk-tabs button[aria-selected="true"] {
+  background: var(--ink);
+  color: #fff;
+}
+/* Studio draws each widget's card with no inner padding, so titles and numbers sat on its edge. */
+.dk-studio .ag-studio-layout-widget-container {
+  padding: 14px 18px 16px;
 }

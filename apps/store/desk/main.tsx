@@ -7,11 +7,11 @@ import {
   studioTheme,
 } from "ag-studio";
 import { AgStudio, AgStudioProvider, createWidgets } from "ag-studio-react";
-import { StrictMode, useCallback, useEffect, useMemo, useState } from "react";
+import { StrictMode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { deskAdapter } from "./adapter.ts";
 import { type DeskJson, sourceKey, toStudioData } from "./data.ts";
-import { DEFAULT_REPORT } from "./report.ts";
+import { DEFAULT_REPORT, REPORT_TABS } from "./report.ts";
 import { deskWidgetTypes } from "./widgets.tsx";
 
 /* The desk's report builder (the Reports page). The server sends the frame and a boot record; this draws the rest. */
@@ -114,6 +114,13 @@ function Desk({ boot }: { boot: Boot }) {
   const [phone, setPhone] = useState(() => matchMedia(PHONE).matches);
   // Opens as a dashboard to read. Editing brings in the panels to build charts and the report assistant.
   const [editing, setEditing] = useState(false);
+  const [page, setPage] = useState<string>(DEFAULT_REPORT.selectedPageId);
+  const studio = useRef<any>(null);
+  const showPage = (id: string) => {
+    setPage(id);
+    const api = studio.current;
+    if (api) api.setState({ ...api.getState(), selectedPageId: id });
+  };
 
   useEffect(() => {
     const media = matchMedia(PHONE);
@@ -228,25 +235,36 @@ function Desk({ boot }: { boot: Boot }) {
 
   return (
     <>
-      {phone ? null : (
-        <div className="dk-studio-bar">
-          <span>
-            {editing
-              ? "Drag fields onto the page, or ask the assistant for a chart."
-              : "Your shop at a glance. Edit to add charts or ask for one in words."}
-          </span>
+      <div className="dk-studio-bar">
+        <div className="dk-tabs" role="tablist" aria-label="Report">
+          {REPORT_TABS.map((t) => (
+            <button key={t.id} type="button" role="tab" aria-selected={page === t.id} onClick={() => showPage(t.id)}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+        {phone ? null : (
           <button type="button" className={`btn sm ${editing ? "" : "ghost"}`} onClick={() => setEditing(!editing)}>
             {editing ? "Done" : "Edit report"}
           </button>
-        </div>
-      )}
+        )}
+      </div>
       <AgStudio<any>
         // Studio can't take a new source while running, so one arriving (refunds, say) starts it afresh.
         key={`${sourceKey(desk)}|${phone ? "phone" : "desk"}`}
         className="dk-studio"
         data={data as any}
         mode={!phone && editing ? "edit" : "view"}
-        initialState={DEFAULT_REPORT}
+        initialState={{ ...DEFAULT_REPORT, selectedPageId: page }}
+        onStudioReady={(e: any) => {
+          studio.current = e.api;
+        }}
+        onStateUpdated={(e: any) => {
+          const id = e.api?.getState?.().selectedPageId;
+          if (id && id !== page) setPage(id);
+        }}
+        // Reading needs no filters panel: the tabs choose what to see. Editing brings it back.
+        panels={{ view: {} } as any}
         widgets={widgets as any}
         theme={theme}
         layout={{ minWidth: 250 } as any}
