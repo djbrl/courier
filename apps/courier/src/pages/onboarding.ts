@@ -64,7 +64,7 @@ function stagePage(
   );
 }
 
-export function welcomePage(): string {
+export function welcomePage(asShop = false): string {
   return stagePage("Welcome", {
     left: html`<div class="ob2-body">
         <h1 class="ob2-h">Welcome to Courier.</h1>
@@ -72,7 +72,7 @@ export function welcomePage(): string {
         <p class="ob2-q">How do you want to try it?</p>
         <div class="ob2-pick">
           <a class="ob2-opt" href="/start/sign-in"><b>I’m shopping</b><small>Get a courier and send it on an errand.</small>${ARROW}</a>
-          <a class="ob2-opt" href="${config.store.url}/desk/sign-in"><b>I run a shop</b><small>See the couriers that buy from you, on the shop desk.</small>${ARROW}</a>
+          <a class="ob2-opt${asShop ? " on" : ""}" href="${config.store.url}/desk/sign-in"><b>I run a shop</b><small>See the couriers that buy from you, on the shop desk.</small>${ARROW}</a>
         </div>
       </div>`,
     card: idCard({ ...courierLook(null), idNo: "CR-0000-JU" }, null),

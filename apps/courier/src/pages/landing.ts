@@ -73,6 +73,7 @@ export function landingPage(human: Human | null): string {
   const body = landingTemplate
     .replaceAll("{{navLinks}}", () => String(navLinks(human)))
     .replaceAll("{{storeUrl}}", config.store.url)
+    .replaceAll("{{shopCount}}", String(SHOPS.length))
     .replaceAll("{{shops}}", () => {
       const shops = SHOPS.map(({ slug, name, tile, mark }) => ({ slug, name, tile, mark }));
       return `<script type="application/json" id="shops-data">${JSON.stringify(shops).replace(/</g, "\\u003c")}</script>`;

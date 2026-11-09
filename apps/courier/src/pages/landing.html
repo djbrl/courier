@@ -61,6 +61,7 @@
   <div class="s-copy">
     <h2 class="s-h">It can buy at any shop that supports Courier.</h2>
     <p>The same courier at every one of them, so shops get to know it like a&nbsp;regular.</p>
+    <a class="s-more" href="{{storeUrl}}">See all {{shopCount}} shops<svg><use href="#arr"/></svg></a>
   </div>
   <div class="s-mock"><div class="s-apps" id="apps"></div>{{shops}}</div>
 </div></div></section>
@@ -91,41 +92,6 @@
         </div>
       </div>
     </div>
-  </div></div>
-</div></div></section>
-
-<section class="s-sec" id="talk" data-track data-solid style="--h:260vh;--solid:#FFC629"><div class="s-stick"><div class="s-grid">
-  <div class="s-copy">
-    <h2 class="s-h">Then you just talk to&nbsp;it.</h2>
-    <p>Change your mind, add something for a friend, and keep going. Inside your limit it pays with your saved PayPal, and nobody types a card. Past it, your courier stops and asks&nbsp;you.</p>
-  </div>
-  <div class="s-mock"><div class="s-win">
-    <div class="s-bar">Juno<small>Out now · Floor Dash</small></div>
-    <div class="s-body"><div class="s-two">
-      <div class="s-chat">
-        <div class="s-them" data-until=".36">Got you a Double Smash Burger.</div>
-        <div class="s-me" data-at=".08" data-until=".5">Ah, I want fries too.</div>
-        <div class="s-them" data-at=".2" data-until=".66">Added. That’s $16 so far.</div>
-        <div class="s-me" data-at=".36">By the way, add a burger for my friend Sam.</div>
-        <div class="s-ask" data-at=".5"><h4>Past your $25</h4>Sam’s burger takes this to $27.50. Want to go up to $30?<div class="s-btns" data-until=".66"><b class="s-go">Go up to $30</b><b>Keep $25</b></div><div class="s-btns" data-at=".66"><b class="s-yes">Now $30</b><b style="opacity:.25">Keep $25</b></div></div>
-        <div class="s-them" data-at=".8">Done. Sam has a courier too. Want me to ask it to chip in?</div>
-      </div>
-      <div class="s-side">
-        <h4>This errand</h4>
-        <div>
-          <div class="s-row s-line"><span>Double Smash Burger</span><span>$11.50</span></div>
-          <div class="s-row s-line" data-at=".2"><span>Skin-on Fries</span><span>$4.50</span></div>
-          <div class="s-row s-line" data-at=".72"><span>Double Smash Burger<small>For Sam</small></span><span>$11.50</span></div>
-        </div>
-        <div class="s-row s-total"><span>Total</span><span data-until=".2">$11.50</span><span data-at=".2" data-until=".72">$16.00</span><span data-at=".72">$27.50</span></div>
-        <div class="s-meter"><i data-meter=".72:92,.2:64,0:46"></i></div>
-        <div class="s-ctl">
-          <div><span>Limit</span><span data-until=".66">$25</span><span data-at=".66">$30</span></div>
-          <div><span>Off the errand</span><span>Asks you</span></div>
-          <div class="s-back">Call Juno back</div>
-        </div>
-      </div>
-    </div></div>
   </div></div>
 </div></div></section>
 
@@ -164,6 +130,87 @@
   </div></div>
 </div></div></section>
 
+<section class="s-sec" id="talk" data-track data-solid style="--h:260vh;--solid:#FFC629"><div class="s-stick"><div class="s-grid">
+  <div class="s-copy">
+    <h2 class="s-h">Then you just talk to&nbsp;it.</h2>
+    <p>Change your mind, add something for a friend, and keep going. Inside your limit it pays with your saved PayPal, and nobody types a card. Past it, your courier stops and asks&nbsp;you.</p>
+  </div>
+  <div class="s-mock"><div class="s-win">
+    <div class="s-bar">Juno<small>Out now · Floor Dash</small></div>
+    <div class="s-body"><div class="s-two">
+      <div class="s-chat">
+        <div class="s-them" data-until=".36">Got you a Double Smash Burger.</div>
+        <div class="s-me" data-at=".08" data-until=".5">Ah, I want fries too.</div>
+        <div class="s-them" data-at=".2" data-until=".66">Added. That’s $16 so far.</div>
+        <div class="s-me" data-at=".36">By the way, add a burger for my friend Sam.</div>
+        <div class="s-ask" data-at=".5"><h4>Past your $25</h4>Sam’s burger takes this to $27.50. Want to go up to $30?<div class="s-btns" data-until=".66"><b class="s-go">Go up to $30</b><b>Keep $25</b></div><div class="s-btns" data-at=".66"><b class="s-yes">Now $30</b><b style="opacity:.25">Keep $25</b></div></div>
+        <div class="s-them" data-at=".8">Done. Sam has a courier too. Want me to ask it to chip in?</div>
+      </div>
+      <div class="s-side">
+        <h4>This errand</h4>
+        <div>
+          <div class="s-row s-line"><span>Double Smash Burger</span><span>$11.50</span></div>
+          <div class="s-row s-line" data-at=".2"><span>Skin-on Fries</span><span>$4.50</span></div>
+          <div class="s-row s-line" data-at=".72"><span>Double Smash Burger<small>For Sam</small></span><span>$11.50</span></div>
+        </div>
+        <div class="s-row s-total"><span>Total</span><span data-until=".2">$11.50</span><span data-at=".2" data-until=".72">$16.00</span><span data-at=".72">$27.50</span></div>
+        <div class="s-meter"><i data-meter=".72:92,.2:64,0:46"></i></div>
+        <div class="s-ctl">
+          <div><span>Limit</span><span data-until=".66">$25</span><span data-at=".66">$30</span></div>
+          <div><span>Off the errand</span><span>Asks you</span></div>
+          <div class="s-back">Call Juno back</div>
+        </div>
+      </div>
+    </div></div>
+  </div></div>
+</div></div></section>
+
+<section class="s-sec" id="for-shops" data-track data-solid style="--h:240vh;--solid:#141414"><div class="s-stick"><div class="s-grid">
+  <div class="s-copy">
+    <span class="s-kick">For shops</span>
+    <h2 class="s-h">Run a shop? Here’s what you&nbsp;get.</h2>
+    <ol class="s-pts">
+      <li><b>Every agent shows a pass.</b><span>Signed by Courier, with PayPal’s word that a real person sent it.</span></li>
+      <li><b>The limit is checked before you charge.</b><span>In code, so an agent can’t talk its way past it.</span></li>
+      <li><b>One report bans a bad agent at every shop.</b><span>Its pass stops working everywhere that takes Courier.</span></li>
+    </ol>
+  </div>
+  <div class="s-mock"><div class="s-win">
+    <div class="s-bar">Floor Dash<small>Agents at your door</small></div>
+    <div class="s-door">
+      <div class="s-dr" data-at=".08"><i>1</i><span class="s-id"><span data-pt="Juno"></span><span><b>Juno</b><small>Ordering for an errand</small></span></span><span class="s-ver" data-ver></span></div>
+      <div class="s-dr" data-at=".2"><i>1</i><span class="s-id"><span class="s-pt s-anon" aria-hidden="true">?</span><span><b>Unknown agent</b><small>Scraping every price</small></span></span><em class="s-no">No pass · Turned away</em></div>
+      <div class="s-dr" data-at=".36"><i>2</i><span class="s-id"><span data-pt="Otto"></span><span><b>Otto</b><small>$34.00 basket, $25.00 limit</small></span></span><em class="s-no">Over the limit · Refused</em></div>
+      <div class="s-dr" data-at=".56"><i>3</i><span class="s-id"><span data-pt="Kit"></span><span><b>Kit</b><small>Tried 40 orders in a minute</small></span></span><em class="s-no" data-until=".7">Reported</em><em class="s-no" data-at=".7">Out at every shop</em></div>
+    </div>
+  </div></div>
+</div></div></section>
+
+<section id="for-devs" class="s-devs">
+  <div class="s-devh">
+    <h2 class="s-h">Up and running in an&nbsp;afternoon.</h2>
+    <p>The Courier Shops SDK does the checking, so your checkout stays the same. Built with <a class="link" href="https://www.apimatic.io" rel="noopener">APIMatic</a> · TypeScript and Python.</p>
+  </div>
+  <div class="s-devb">
+    <ol class="s-steps">
+      <li><b>Verify the pass</b><span>Check the courier’s signed token against Courier’s public keys.</span></li>
+      <li><b>Check the limit</b><span>Send the basket to <code>checkSpend</code>. Courier answers yes or no.</span></li>
+      <li><b>Charge with PayPal</b><span>Take the payment through PayPal, as you do today.</span></li>
+    </ol>
+    <pre class="s-code"><code><i>// 1. Verify the pass</i>
+const { payload } = await jwtVerify(token, courierKeys, { issuer });
+
+<i>// 2. Check the limit</i>
+const decision = await courier.spending.checkSpend({ body: basket });
+if (decision.decision !== "approve") return refuse(decision);
+
+<i>// 3. Charge with PayPal</i>
+await courier.spending.chargeSavedPaypal({ body: charge });</code></pre>
+  </div>
+  <div class="ctas"><a href="/start?as=shop" class="btn acc">Try it as a shop owner<span class="go"><svg><use href="#arr"/></svg></span></a><a href="/docs" class="btn ghost">Read the docs</a></div>
+  <p class="s-fine">Think a bot can get past it? <a class="link" href="/bots">Release the bots</a>.</p>
+</section>
+
 <section class="s-sec" id="trust" data-track style="--h:170vh"><div class="s-stick"><div class="s-grid">
   <div class="s-copy">
     <h2 class="s-h">PayPal is the trust layer.</h2>
@@ -186,7 +233,8 @@
   <div class="s-duo">
     <div class="s-closetx">
       <h2 class="s-h">Now give your agent a&nbsp;badge.</h2>
-      <div class="ctas"><a href="/start" class="btn acc">Try the demo<span class="go"><svg><use href="#arr"/></svg></span></a><span class="ppl">Powered by <span class="pp"><span class="a">Pay</span><span class="b">Pal</span></span></span></div>
+      <div class="ctas"><a href="/start" class="btn acc">Get a courier<span class="go"><svg><use href="#arr"/></svg></span></a><a href="/start?as=shop" class="btn ghost">Try the shop desk</a></div>
+      <span class="ppl">Powered by <span class="pp"><span class="a">Pay</span><span class="b">Pal</span></span></span>
     </div>
   </div>
   <div class="s-hang" id="hang"><i class="s-cord"></i><div class="s-hit"><div class="s-flip" id="flip">{{pass}}</div></div></div>
@@ -194,7 +242,7 @@
 </main>
 <footer><div class="s-fw">
   <span class="logo"><svg><use href="#mk"/></svg>Courier</span>
-  <nav aria-label="Footer"><a href="#why">How it works</a><a href="/for-shops">For shops</a><a href="/install">Install</a><a href="{{storeUrl}}">The shops</a></nav>
+  <nav aria-label="Footer"><a href="{{storeUrl}}">Shops</a><a href="#for-shops">For shops</a><a href="/docs">Developers</a><a href="/install">Install the MCP</a><a href="/start">Try the demo</a></nav>
   <span class="ppl">Powered by <span class="pp"><span class="a">Pay</span><span class="b">Pal</span></span></span>
   <small>Sandbox demo.</small>
 </div></footer>

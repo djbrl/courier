@@ -49,7 +49,6 @@ import {
   docSlugs,
   docsPage,
   errorPage,
-  forShopsPage,
   installPage,
   landingPage,
   refusalPage,
@@ -104,7 +103,7 @@ const metadata = {
     provider,
     issuerUrl,
     scopesSupported: [...ALL_SCOPES],
-    serviceDocumentationUrl: new URL("/for-shops", issuerUrl),
+    serviceDocumentationUrl: new URL("/docs", issuerUrl),
   }),
   // RFC 8414: the issuer must exactly match the identifier clients use (no trailing slash), and the `iss` we send.
   issuer: config.courier.url,
@@ -128,7 +127,7 @@ app.use(
     provider,
     issuerUrl,
     scopesSupported: [...ALL_SCOPES],
-    serviceDocumentationUrl: new URL("/for-shops", issuerUrl),
+    serviceDocumentationUrl: new URL("/docs", issuerUrl),
     clientRegistrationOptions: { clientSecretExpirySeconds: 0 },
   }),
 );
@@ -153,8 +152,9 @@ app.get("/", (req, res) => {
   res.send(landingPage(currentHuman(req)));
 });
 
-app.get("/for-shops", (req, res) => {
-  res.send(forShopsPage(currentHuman(req)));
+// For shops is now a part of the landing page's story.
+app.get("/for-shops", (_req, res) => {
+  res.redirect(301, "/#for-shops");
 });
 app.get("/install", (req, res) => {
   res.send(installPage(currentHuman(req)));

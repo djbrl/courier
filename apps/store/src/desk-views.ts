@@ -67,7 +67,7 @@ function frame(shop: Shop, view: DeskView, desk: ShopDesk, main: RawHtml, script
     scripts,
     body: html`<div class="app">
       <aside class="rail dk-rail">
-        <a class="rail-logo" href="${config.courier.url}/for-shops" aria-label="Courier for shops">${LOGO}</a>
+        <a class="rail-logo" href="${config.courier.url}/#for-shops" aria-label="Courier for shops">${LOGO}</a>
         <button type="button" class="rail-menu" aria-expanded="false" aria-controls="rail-drawer" aria-label="Menu: ${LABEL[view]}">
           <span>${shop.name} · ${LABEL[view]}</span>${desk.counts.needs ? html`<i class="rail-dot" aria-hidden="true"></i>` : ""}<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5.5h14M3 10h14M3 14.5h14"/></svg>
         </button>
@@ -345,7 +345,7 @@ export function signInPage(shop: Shop, signedIn: Shop | undefined): string {
     bodyClass: "dk-in-page",
     styles: ["/assets/desk.css"],
     body: html`<main class="dk-in">
-      <a class="dk-in-logo" href="${config.courier.url}/for-shops" aria-label="Courier for shops">${LOGO}</a>
+      <a class="dk-in-logo" href="${config.courier.url}/#for-shops" aria-label="Courier for shops">${LOGO}</a>
       <section class="dk-in-card" aria-labelledby="dk-in-h">
         <span class="dk-in-tag">Shop desk</span>
         <h1 id="dk-in-h">Sign in to your shop.</h1>

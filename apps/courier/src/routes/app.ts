@@ -116,8 +116,14 @@ function connectingRequest(value: unknown): string | undefined {
 
 appRouter.get("/start", (req, res) => {
   const human = currentHuman(req);
+  const asShop = req.query.as === "shop";
   if (!human) {
-    res.send(welcomePage());
+    res.send(welcomePage(asShop));
+    return;
+  }
+  // Someone with a courier already has nothing to pick on the shopper's side, so the shop side goes straight to the desk.
+  if (asShop) {
+    res.redirect(302, `${config.store.url}/desk/sign-in`);
     return;
   }
   res.redirect(302, findCourier(human.id) ? "/app" : "/start/courier");

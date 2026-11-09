@@ -743,7 +743,7 @@ gatewayRouter.get(PRM_PATH, (_req, res) => {
     scopes_supported: [...ALL_SCOPES],
     bearer_methods_supported: ["header"],
     resource_name: "Courier",
-    resource_documentation: `${config.courier.url}/for-shops`,
+    resource_documentation: `${config.courier.url}/docs`,
   });
 });
 
