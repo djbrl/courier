@@ -8536,13 +8536,12 @@ html:has(body.ob2-page) {
 .shg-b b {
   font-size: 15px;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 .shg-b small {
-  overflow: hidden;
   font-size: 13px;
+  line-height: 1.3;
   color: var(--mute);
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 /* ---------- friends: each one in their courier's colour ---------- */
@@ -9166,4 +9165,278 @@ html:has(body.app-page) {
   margin: 8px 0 0;
   font-size: 11px;
   color: var(--mute);
+}
+
+/* ---------------- shops in the app, and the storefront (shop-desk pass) ---------------- */
+
+/* The all-shops grid: tiles sit at the top so a two-line subtitle and the chip don't push the logo around. */
+.shg-t {
+  align-items: flex-start;
+  color: inherit;
+}
+.shg-b {
+  gap: 2px;
+}
+.shg-chip {
+  justify-self: start;
+  margin-top: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--paper);
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--soft);
+}
+
+/* "Your shops": the few shops your couriers know, bigger than the grid and in the order you last used them. */
+.ysh {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+}
+.ysh-t {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #fff;
+  transition: border-color 0.15s;
+}
+.ysh-t:hover {
+  border-color: var(--ink);
+}
+.ysh-t .slogo {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+}
+.ysh-b {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.ysh-b b {
+  font-size: 16px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.ysh-b small {
+  font-size: 13.5px;
+  color: var(--mute);
+}
+.ysh-p {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  justify-self: start;
+  margin-top: 6px;
+  padding: 3px 10px 3px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cobalt), #fff 90%);
+  color: var(--cobalt);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.ysh-p i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.ysh-t .chev {
+  width: 18px;
+  height: 18px;
+  color: var(--mute);
+}
+
+/* One shop in the app: who it is, what it sees of you, then your history beside its promises. */
+.shp-id {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+}
+.shp-id .slogo {
+  flex: none;
+  width: 76px;
+  height: 76px;
+  border-radius: 21px;
+}
+.shp-id h1 {
+  overflow-wrap: anywhere;
+}
+.shp-pp {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 14px 20px;
+}
+.shp-pp-k {
+  font-size: 14px;
+  font-weight: 650;
+}
+.shp-pp code {
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--cobalt), #fff 90%);
+  color: var(--cobalt);
+  font:
+    600 14px "JetBrains Mono",
+    ui-monospace,
+    monospace;
+}
+.shp-pp p {
+  flex: 1 1 280px;
+  font-size: 14px;
+  color: var(--mute);
+}
+.shp-g {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  align-items: start;
+  gap: 26px;
+}
+.shp-main,
+.shp-side {
+  display: grid;
+  gap: 26px;
+  min-width: 0;
+}
+.shp-pol {
+  display: grid;
+  gap: 16px;
+}
+.shp-pol small {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--mute);
+}
+.shp-pol p {
+  font-size: 15px;
+  line-height: 1.45;
+}
+.shp-links .li-t b {
+  white-space: normal;
+}
+/* With the rail beside it, the side column only fits next to the history on a wide screen. */
+@media (max-width: 1180px) {
+  .shp-g {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 900px) {
+  .shp-h {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .shp-h > .btn {
+    align-self: flex-start;
+  }
+}
+@media (max-width: 560px) {
+  .shg {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .shg-t {
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+  }
+  .ysh {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .shp-id {
+    gap: 14px;
+  }
+  .shp-id .slogo {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+  }
+}
+
+/* The storefront: what a courier can count on, under the banner. */
+.sf-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 0;
+  margin: -6px 0 28px;
+  padding: 12px 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--soft);
+}
+.sf-strip {
+  gap: 6px 20px;
+}
+.sf-strip > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+.sf-strip > span::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tile, var(--cobalt));
+}
+.sf-strip b {
+  color: var(--ink);
+}
+.sf-strip .pp {
+  font-size: 14.5px;
+}
+.sf-own {
+  font-size: 14.5px;
+  font-weight: 600;
+}
+.shops-main .sf-own {
+  margin: 28px 0 10px;
+}
+.jr-nav nav > a.jr-all {
+  font-size: 15px;
+  white-space: nowrap;
+}
+.jr-all span {
+  display: none;
+}
+@media (max-width: 860px) {
+  .jr-all span {
+    display: inline;
+  }
+}
+/* On a phone the hero already names the shop, so the header keeps just its logo, the way back and Courier. */
+@media (max-width: 560px) {
+  .jr-nav:has(.jr-all) .jr > div {
+    display: none;
+  }
+}
+/* On a phone the banner keeps one piece of the shop's art instead of becoming a plain slab. */
+@media (max-width: 900px) {
+  .sf-peek {
+    display: flex;
+    right: 16px;
+    bottom: 14px;
+  }
+  .sf-peek .sf-cv {
+    width: 84px;
+    border-radius: 16px;
+  }
+  .sf-strip {
+    margin-top: 0;
+    font-size: 13.5px;
+  }
 }

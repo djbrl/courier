@@ -240,7 +240,7 @@ const callLog = new Map<string, number[]>();
 const reported = new Set<string>();
 const RATE_LIMIT = 40;
 
-async function rateLimited(claims: AgentClaims): Promise<CallToolResult | null> {
+async function rateLimited(claims: AgentClaims, shop: Shop): Promise<CallToolResult | null> {
   const now = Date.now();
   const owner = ownerId(claims);
   const calls = (callLog.get(owner) ?? []).filter((t) => now - t < 60_000);
@@ -264,6 +264,7 @@ async function rateLimited(claims: AgentClaims): Promise<CallToolResult | null> 
         outcome: "blocked",
         reason: `Agent reported for flooding · ${result.bondOutcome}`,
         status: 429,
+        shop: shop.slug,
         sub: claims.sub,
         visaId: claims.visa.id,
         agent: claims.visa.agent,
@@ -311,6 +312,7 @@ async function spendCheck(
       reason: decision.reason,
       code: decision.code ?? null,
       status: 403,
+      shop: shop.slug,
       sub: claims.sub,
       visaId: claims.visa.id,
       agent: claims.visa.agent,
@@ -611,7 +613,7 @@ export function createMcpServer(shop: Shop): McpServer {
     },
     async ({ query, max_price, category }, extra) => {
       const claims = auth(extra);
-      const limited = await rateLimited(claims);
+      const limited = await rateLimited(claims, shop);
       if (limited) return limited;
       const denied = requireScope(claims, "store:browse", shop);
       if (denied) return denied;
@@ -650,7 +652,7 @@ export function createMcpServer(shop: Shop): McpServer {
     },
     async ({ item_id }, extra) => {
       const claims = auth(extra);
-      const limited = await rateLimited(claims);
+      const limited = await rateLimited(claims, shop);
       if (limited) return limited;
       const denied = requireScope(claims, "store:browse", shop);
       if (denied) return denied;
@@ -680,7 +682,7 @@ export function createMcpServer(shop: Shop): McpServer {
     },
     async ({ item_id, approval_id, ticket_hint }, extra) => {
       const asked = auth(extra);
-      const limited = await rateLimited(asked);
+      const limited = await rateLimited(asked, shop);
       if (limited) return limited;
       const denied = requireScope(asked, "store:reserve", shop);
       if (denied) return denied;
@@ -746,7 +748,7 @@ export function createMcpServer(shop: Shop): McpServer {
     },
     async ({ item_ids, approval_id, note, ticket_hint, share }, extra) => {
       const asked = auth(extra);
-      const limited = await rateLimited(asked);
+      const limited = await rateLimited(asked, shop);
       if (limited) return limited;
       const denied = requireScope(asked, "store:buy", shop);
       if (denied) return denied;
@@ -1015,7 +1017,7 @@ export function createMcpServer(shop: Shop): McpServer {
     },
     async ({ order_id, reason }, extra) => {
       const claims = auth(extra);
-      const limited = await rateLimited(claims);
+      const limited = await rateLimited(claims, shop);
       if (limited) return limited;
       const order = db.get<Order>("orders", order_id);
       // The order has to be this person's, at this shop: their pseudonym here is the one it was bought under.

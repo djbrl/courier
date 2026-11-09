@@ -14,15 +14,38 @@ import { type DeskJson, sourceKey, toStudioData } from "./data.ts";
 import { DEFAULT_REPORT } from "./report.ts";
 import { deskWidgetTypes } from "./widgets.tsx";
 
-/* The shop desk: the store's one client-side page. The server sends the frame and a boot record; this draws the rest. */
+/* The desk's report builder (the Reports page). The server sends the frame and a boot record; this draws the rest. */
 
 interface Boot {
   api: string;
+  shop?: string;
   licenseKey: string | null;
   agent: { enabled: boolean; note: string };
 }
 
 if (process.env.NODE_ENV !== "production") enableStudioDevValidations();
+
+/*
+ * Studio formats numbers in the browser's language, so a French browser showed "$243,00" under a "$243.00" the rest of
+ * Courier prints. The shop's money is US dollars, so numbers here default to US English. Only this page loads this.
+ */
+{
+  const Native = Intl.NumberFormat;
+  // A plain function, so both `Intl.NumberFormat(…)` and `new Intl.NumberFormat(…)` work, as they do natively.
+  const usd = ((locales?: Intl.LocalesArgument, options?: Intl.NumberFormatOptions) =>
+    new Native(locales ?? "en-US", options)) as unknown as typeof Intl.NumberFormat;
+  Object.defineProperty(usd, "prototype", { value: Native.prototype });
+  Object.defineProperty(usd, "supportedLocalesOf", { value: Native.supportedLocalesOf });
+  Intl.NumberFormat = usd;
+  const toLocale = Number.prototype.toLocaleString;
+  Number.prototype.toLocaleString = function (
+    this: number,
+    locales?: Intl.LocalesArgument,
+    options?: Intl.NumberFormatOptions,
+  ) {
+    return toLocale.call(this, locales ?? "en-US", options);
+  };
+}
 
 const POLL_MS = 20_000;
 const PHONE = "(max-width: 700px)";
@@ -76,7 +99,7 @@ const CLERK = `You are the shop's clerk at its desk. The shopkeeper asks about t
 const PROMPT_STARTERS = [
   { label: "Revenue by courier this week", prompt: "Show revenue by courier this week." },
   { label: "Bots turned away", prompt: "Which bots got turned away and why?" },
-  { label: "Orders per shop", prompt: "Chart orders per shop." },
+  { label: "Orders by day", prompt: "Chart orders by day for the last two weeks." },
 ];
 
 function Desk({ boot }: { boot: Boot }) {

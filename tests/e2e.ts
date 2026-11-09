@@ -1677,11 +1677,18 @@ await step("Release the bots: every attack is blocked or flagged", async () => {
 });
 
 await step("The shop desk: one dashboard from pseudonymous data, with the door's noise left out", async () => {
-  const page = await (await fetch(`${STORE}/merchant`)).text();
-  assert.match(page, /<h1>Shop desk<\/h1>/);
+  const merchant = await fetch(`${STORE}/merchant`, { redirect: "manual" });
+  assert.equal(merchant.headers.get("location"), "/desk/juniper", "the old desk address leads to the new one");
+
+  const today = await (await fetch(`${STORE}/desk/juniper`)).text();
+  assert.match(today, /\/assets\/desk\/desk-ops\.js\?v=/, "the desk's tables are built by the dev script");
+  assert.doesNotMatch(today, /\/assets\/desk\/desk\.js/, "the report builder loads on Reports only");
+  assert.ok((await fetch(`${STORE}/assets/desk/desk-ops.js`)).ok);
+  assert.equal((await fetch(`${STORE}/desk/nowhere`)).status, 404);
+
+  const page = await (await fetch(`${STORE}/desk/juniper/reports`)).text();
   assert.match(page, /id="desk"/);
   assert.match(page, /\/assets\/desk\/desk\.js\?v=/, "the desk's bundle is built by the dev script");
-  assert.match(page, /href="\/merchant\/ledger"/, "the ledger stays one click away");
   const attr = page.match(/data-boot="([^"]*)"/)![1]!;
   const boot = JSON.parse(
     attr
@@ -1691,11 +1698,36 @@ await step("The shop desk: one dashboard from pseudonymous data, with the door's
       .replace(/&gt;/g, ">")
       .replace(/&amp;/g, "&"),
   );
+  assert.equal(boot.api, "/desk/juniper/api");
   assert.equal(boot.agent.enabled, false, "no key, no clerk");
   assert.match(boot.agent.note, /ANTHROPIC_API_KEY/);
   assert.ok((await fetch(`${STORE}/assets/desk/desk.js`)).ok);
 
-  const res = await fetch(`${STORE}/merchant/api/desk`);
+  const ops = await fetch(`${STORE}/desk/juniper/api`);
+  const opsBody = await ops.text();
+  const desk = JSON.parse(opsBody);
+  assert.ok(desk.orders.length > 0 && desk.couriers.length > 0, "the shop's orders and couriers");
+  for (const c of desk.couriers) assert.match(c.pseudonym, /^pp_/, "a courier is known by its pseudonym");
+  assert.doesNotMatch(opsBody, /SIMPAYER|@example|"email"|"human"/, "no person's name, email or PayPal id");
+
+  const act = (body: object) =>
+    fetch(`${STORE}/desk/juniper/api/act`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  assert.equal((await act({ act: "launch" })).status, 400, "only the desk's own actions");
+  assert.equal((await act({ act: "report", visaId: "visa_never_here" })).status, 404, "only couriers seen here");
+  assert.equal((await act({ act: "dismiss", need: "anything" })).status, 400);
+  const paid = desk.orders.find((o: any) => o.status === "Paid");
+  if (paid)
+    assert.equal(
+      (await act({ act: "cancel", orderId: paid.orderId })).status,
+      409,
+      "a paid order is refunded, never cancelled",
+    );
+
+  const res = await fetch(`${STORE}/desk/juniper/api/desk`);
   assert.equal(res.headers.get("cache-control"), "no-store");
   const body = await res.text();
   const { sources } = JSON.parse(body);
@@ -1727,7 +1759,7 @@ await step("The shop desk: one dashboard from pseudonymous data, with the door's
     "repeated browsing folds into one row",
   );
 
-  const llm = await fetch(`${STORE}/merchant/api/llm`, {
+  const llm = await fetch(`${STORE}/desk/juniper/api/llm`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ input: [] }),

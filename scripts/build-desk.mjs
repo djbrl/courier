@@ -1,4 +1,4 @@
-// Bundles the shop desk (apps/store/desk) into packages/shared/assets/desk/desk.js, which is not committed.
+// Bundles the shop desk (apps/store/desk) into packages/shared/assets/desk/, which is not committed.
 // Usage: node scripts/build-desk.mjs            (once)
 //        node scripts/build-desk.mjs --watch    (rebuild on change)
 // scripts/dev.mjs runs it, so `npm run dev`, `npm run demo` and `npm start` always serve a fresh bundle.
@@ -11,8 +11,12 @@ const watch = process.argv.includes("--watch");
 
 /** @type {import("esbuild").BuildOptions} */
 const options = {
-  entryPoints: [path.join(root, "apps/store/desk/main.tsx")],
-  outfile: path.join(root, "packages/shared/assets/desk/desk.js"),
+  // desk-ops.js: the desk's everyday pages (AG Grid). desk.js: the report builder (AG Studio), loaded on Reports only.
+  entryPoints: {
+    "desk-ops": path.join(root, "apps/store/desk/ops.ts"),
+    desk: path.join(root, "apps/store/desk/main.tsx"),
+  },
+  outdir: path.join(root, "packages/shared/assets/desk"),
   bundle: true,
   format: "iife",
   target: "es2022",

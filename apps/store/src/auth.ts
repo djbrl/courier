@@ -53,6 +53,8 @@ export interface RequestLogEntry {
   demo?: boolean;
   /** Courier's code for a refused spend (e.g. "spend_limit"), so the desk can group refusals by kind. */
   code?: string | null;
+  /** The shop whose door it was. Unset on entries logged before shops had their own desks. */
+  shop?: string;
 }
 
 /** Whether this ID's payments go to the PayPal simulator rather than the PayPal sandbox. Read from the signed claim
@@ -180,8 +182,10 @@ export const requireVisa =
     const header = req.header("authorization") ?? "";
     const match = header.match(/^Bearer\s+(.+)$/i);
     const source = describeSource(req);
+    // Every row says which shop's door it was, so each shop's desk shows only its own.
+    const log = (entry: Omit<RequestLogEntry, "id" | "at">) => logRequest({ ...entry, shop: shop.slug });
     if (!match) {
-      logRequest({ outcome: "blocked", reason: "No ID presented", status: 401, source });
+      log({ outcome: "blocked", reason: "No ID presented", status: 401, source });
       challenge(res, 401);
       return;
     }
@@ -198,7 +202,7 @@ export const requireVisa =
           : /signature|JWKS|no applicable key|kid/i.test(message)
             ? "Forged ID (bad signature)"
             : `Invalid token: ${message}`;
-      logRequest({ outcome: "blocked", reason, status: 401, source });
+      log({ outcome: "blocked", reason, status: 401, source });
       challenge(res, 401, "invalid_token", reason);
       return;
     }
@@ -208,7 +212,7 @@ export const requireVisa =
       const standing = await connectionStatus(token.connection.id);
       if (standing?.status !== "active") {
         const reason = `Connection ${standing?.status ?? "unknown"}`;
-        logRequest({
+        log({
           outcome: "blocked",
           reason,
           status: 401,
@@ -231,7 +235,7 @@ export const requireVisa =
       const status = await visaStatus(token.visa.id);
       if (status?.status !== "active") {
         const reason = `Visa ${status?.status ?? "unknown"}`;
-        logRequest({
+        log({
           outcome: "blocked",
           reason,
           status: 401,
@@ -258,7 +262,7 @@ export const requireVisa =
     (req as Request & { auth?: AuthInfo }).auth = auth;
     const method = typeof req.body?.method === "string" ? req.body.method : null;
     const tool = method === "tools/call" ? req.body?.params?.name : null;
-    logRequest({
+    log({
       outcome: "accepted",
       reason: tool ? `tools/call ${tool}` : (method ?? "request"),
       status: 200,

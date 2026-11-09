@@ -171,7 +171,8 @@ export function refusalKind(entry: Pick<RequestLogEntry, "reason" | "code">): st
   if (code === "intent_denied")
     return /inject|override|ignore|pre-?approved|instruction/i.test(reason) ? "Injection attempt" : "Off the errand";
   if (code === "human_denied") return "Person said no";
-  if (/^No ID/i.test(reason)) return "No ID";
+  // Older entries said "passport" for what's now called an ID.
+  if (/^No (ID|passport)/i.test(reason)) return "No ID";
   if (/forged|signature/i.test(reason)) return "Forged ID";
   if (/expired/i.test(reason)) return "Expired visa";
   if (/flood/i.test(reason)) return "Flooding";
@@ -319,8 +320,8 @@ const SAFE_KEYS = new Set([
   "totalCents",
 ]);
 
-function optionalSource(collection: string) {
-  return db.list<Record<string, unknown>>(collection, undefined, 5000).map((doc) => {
+function optionalSource(collection: string, keep: (row: { shop?: string }) => boolean) {
+  return db.list<Record<string, unknown>>(collection, keep, 5000).map((doc) => {
     const row: Record<string, string | number | boolean | null> = {};
     for (const [key, value] of Object.entries(doc)) {
       if (!SAFE_KEYS.has(key) || (value !== null && typeof value === "object")) continue;
@@ -338,10 +339,12 @@ function optionalSource(collection: string) {
 const TOP_COURIERS = 8;
 const OTHERS = "Everyone else";
 
-export function deskSnapshot(): Desk {
-  const raw = db.list<Order>("orders", undefined, 5000).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+/** The desk's data; with a shop, only that shop's orders, door and parcels (older rows without a shop were Juniper's). */
+export function deskSnapshot(shop?: string): Desk {
+  const mine = (row: { shop?: string }) => !shop || (row.shop ?? "juniper") === shop;
+  const raw = db.list<Order>("orders", mine, 5000).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const orders = raw.map(deskOrder);
-  const door = doorLog(db.list<RequestLogEntry>("requests", undefined, 3000));
+  const door = doorLog(db.list<RequestLogEntry>("requests", mine, 3000));
   const couriers = courierTotals(orders, door, raw);
   // Charts group by this field, so a shop with dozens of couriers still gets a readable chart.
   couriers.forEach((c, i) => {
@@ -356,7 +359,7 @@ export function deskSnapshot(): Desk {
     ["shipments", "shipments"],
     ["refunds", "returns"],
   ] as const) {
-    const rows = optionalSource(collection);
+    const rows = optionalSource(collection, mine);
     if (rows.length) sources[name] = rows;
   }
   return { generatedAt: new Date().toISOString(), sources };

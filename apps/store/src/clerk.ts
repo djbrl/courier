@@ -639,3 +639,21 @@ export async function confirmAction(
     },
   };
 }
+
+/* ---------------- the desk's buttons ---------------- */
+
+/** "Refund the rest" on the desk: a proposal like the clerk's own, which the owner then confirms. */
+export function proposeRefund(orderId: string, shop: string, note?: string) {
+  const made = propose(orderId, undefined, note ?? "We've refunded the rest of your order.", shop);
+  return "problem" in made ? made : actionView(made);
+}
+
+/** The owner turned a proposal down. Nothing moved, and nothing will. */
+export function declineAction(actionId: string, shop: string): boolean {
+  const action = db.get<ClerkAction>("clerk_actions", actionId);
+  if (action?.status !== "proposed") return false;
+  const order = db.get<Order>("orders", action.orderId);
+  if (!order || !inShop(shop)(order)) return false;
+  db.put<ClerkAction>("clerk_actions", action.id, { ...action, status: "refused" });
+  return true;
+}

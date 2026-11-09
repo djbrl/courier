@@ -2,6 +2,7 @@ import {
   avatarFor,
   COURIER_NAME_HINT,
   config,
+  findShop,
   isAvatar,
   isCourierColor,
   isCourierName,
@@ -23,6 +24,8 @@ import {
   type Human,
   listCouriers,
   newCourierId,
+  pairwiseSubject,
+  type Refund,
   remainingBudget,
   type Stamp,
   saveCourier,
@@ -44,6 +47,8 @@ import {
   peoplePage,
   runInvitePage,
   settingsPage,
+  shopMissingPage,
+  shopPage,
   shopsPage,
   signInStepPage,
   welcomePage,
@@ -290,6 +295,20 @@ appRouter.get("/app/errands", (req, res) => {
 appRouter.get("/app/shops", (req, res) => {
   const d = requireDesk(req, res);
   if (d) res.send(shopsPage(d));
+});
+
+appRouter.get("/app/shops/:slug", (req, res) => {
+  const d = requireDesk(req, res);
+  if (!d) return;
+  const shop = findShop(req.params.slug);
+  if (!shop) {
+    res.status(404).send(shopMissingPage(d));
+    return;
+  }
+  // The person's own pseudonym at this shop, so they can see exactly what the shop sees instead of their name.
+  const pseudonym = pairwiseSubject(d.human.id, shop.resource);
+  const refunds = db.list<Refund>("refunds", (r) => r.humanId === d.human.id, 200);
+  res.send(shopPage(d, shop, { pseudonym, refunds }));
 });
 
 appRouter.get("/app/people", (req, res) => {

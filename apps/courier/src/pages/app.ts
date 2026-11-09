@@ -1,5 +1,6 @@
 import {
   ARROW,
+  afterSaleOf,
   avatar,
   avatarFor,
   avatarPicker,
@@ -12,6 +13,7 @@ import {
   config,
   courierLayout,
   courierVars,
+  deliveryWords,
   html,
   idCard,
   LOGO,
@@ -19,17 +21,19 @@ import {
   money,
   PP,
   paypalFor,
+  policyChip,
   portrait,
   type RawHtml,
   raw,
   SHOPS,
+  type Shop,
   SIMULATED,
   shopLogo,
   timeAgo,
   VERIFIED,
   type Visa,
 } from "@courier/shared";
-import type { Approval, Connection, Courier, Delivery, Human, Stamp } from "../db.ts";
+import type { Approval, Connection, Courier, Delivery, Human, Refund, Stamp } from "../db.ts";
 import type { Friend } from "../friends.ts";
 import type { Contact } from "../people.ts";
 import { capFields } from "./consent.ts";
@@ -412,13 +416,70 @@ function errandDetail(d: Desk, v: VisaView): RawHtml {
 
 /* ---------------- shops ---------------- */
 
+/** What a purchase paid, from the amount at the end of its step (the shop reports it as "… · $12.50"). */
+function paidCents(s: Stamp): number {
+  if (s.kind !== "purchase") return 0;
+  const m = /\$(\d+(?:\.\d{1,2})?)$/.exec(s.detail);
+  return m ? Math.round(Number(m[1]) * 100) : 0;
+}
+
+const isMoving = (x: Delivery) => x.stage < x.labels.length - 1;
+
+/** A shop this person's couriers have been to: how often, what it cost, and a parcel still on its way. */
+interface ShopUse {
+  shop: Shop;
+  errands: Set<string>;
+  spentCents: number;
+  last: string;
+  parcel?: Delivery;
+}
+
+function shopUses(d: Desk): ShopUse[] {
+  const byName = new Map(SHOPS.map((s) => [s.name, s]));
+  const uses = new Map<string, ShopUse>();
+  const useOf = (name: string, at: string) => {
+    const shop = byName.get(name);
+    if (!shop) return undefined;
+    const u = uses.get(shop.slug) ?? { shop, errands: new Set<string>(), spentCents: 0, last: at };
+    if (at > u.last) u.last = at;
+    uses.set(shop.slug, u);
+    return u;
+  };
+  for (const st of d.stamps) {
+    const u = useOf(st.merchantName, st.at);
+    if (!u) continue;
+    u.errands.add(st.visaId);
+    u.spentCents += paidCents(st);
+  }
+  for (const x of d.deliveries) {
+    const u = useOf(x.merchantName, x.updatedAt);
+    if (u && isMoving(x) && !u.parcel) u.parcel = x;
+  }
+  return [...uses.values()].sort((a, b) => b.last.localeCompare(a.last));
+}
+
+const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+
 export function shopsPage(d: Desk): string {
-  const visits = new Map<string, number>();
-  for (const st of d.stamps) visits.set(st.merchantName, (visits.get(st.merchantName) ?? 0) + 1);
-  const body = html`<div class="shg">${SHOPS.map(
-    (s) =>
-      html`<a class="shg-t" href="${config.store.url}/${s.slug}" target="_blank" rel="noopener">${shopLogo(s)}<span class="shg-b"><b>${s.name}</b><small>${visits.has(s.name) ? `Visited ${visits.get(s.name)}×` : s.sells}</small></span></a>`,
-  )}</div>
+  const used = shopUses(d);
+  const yours = used.length
+    ? html`<section aria-label="Your shops">
+      <div class="pg-st"><h2>Your shops</h2><span class="fine">Where your couriers have been</span></div>
+      <div class="ysh">${used.map(
+        (u) => html`<a class="ysh-t" href="/app/shops/${u.shop.slug}">${shopLogo(u.shop)}
+          <span class="ysh-b"><b>${u.shop.name}</b><small>${plural(u.errands.size, "errand")} · ${u.spentCents ? `${short(u.spentCents)} spent` : "nothing bought yet"} · ${timeAgo(u.last)}</small>
+          ${u.parcel ? html`<span class="ysh-p"><i aria-hidden="true"></i>Parcel: ${u.parcel.labels[u.parcel.stage]}</span>` : ""}</span>${CHEVRON}</a>`,
+      )}</div>
+    </section>`
+    : "";
+  const body = html`${yours}
+    <section aria-label="All shops">
+      ${used.length ? html`<div class="pg-st"><h2>All shops</h2><span class="n">${SHOPS.length}</span></div>` : ""}
+      <div class="shg">${SHOPS.map(
+        (s) =>
+          html`<a class="shg-t" href="/app/shops/${s.slug}">${shopLogo(s)}<span class="shg-b"><b>${s.name}</b><small>${s.sells}</small><span class="shg-chip">${policyChip(afterSaleOf(s.slug))}</span></span></a>`,
+      )}</div>
+    </section>
     <p class="fine">Demo shops with made-up names and products, not affiliated with any real brand. No real money moves.</p>`;
   return shell(
     "Shops",
@@ -430,6 +491,116 @@ export function shopsPage(d: Desk): string {
       "",
       body,
       "pg-wide",
+    ),
+  );
+}
+
+/** Something to ask for at each shop, so "Send … here" opens the errand room with a real request. */
+const SHOP_IDEA: Record<string, string> = {
+  "floor-dash": "a burger and fries",
+  amazoo: "a good mystery novel",
+  beanbucks: "a latte and a croissant",
+  "lord-knight": "a skin for my knight",
+  mike: "a pair of running shoes",
+  ikeep: "a small bookcase",
+  juniper: "a jazz record",
+  walmore: "batteries and paper towels",
+  itsy: "a handmade mug",
+  gamestomp: "a spare controller",
+  sephoria: "a nice lip balm",
+  "best-bye": "a bluetooth speaker",
+  "wholesome-foods": "a bag of granola",
+  zaza: "a warm scarf",
+  petsmarty: "treats for my dog",
+  bookworm: "a poetry collection",
+  "home-despot": "a cordless drill",
+  airbedd: "a cabin for the weekend",
+  ticketmonster: "two tickets to a gig",
+  "trader-moes": "pasta and a good sauce",
+};
+
+/** Enough of the pseudonym to recognise it, the way people read a card number. */
+const shortSub = (sub: string) => `${sub.slice(0, 7)}…${sub.slice(-4)}`;
+
+/** One shop through Courier's eyes: what it sees of you, what it promises, and what your couriers did there. */
+export function shopPage(d: Desk, shop: Shop, opts: { pseudonym: string; refunds: Refund[] }): string {
+  const mine = d.couriers.find((c) => !c.revokedAt) ?? d.couriers[0]!;
+  const look = courierLook(d.human, mine);
+  const policy = afterSaleOf(shop.slug);
+  const say = `Get me ${SHOP_IDEA[shop.slug] ?? "something good"} from ${shop.name}.`;
+  const steps = d.stamps.filter((s) => s.merchantName === shop.name);
+  const here = new Set(steps.map((s) => s.visaId));
+  const errands = d.visas.filter((v) => here.has(v.id));
+  const parcels = d.deliveries
+    .filter((x) => x.merchantName === shop.name)
+    .sort((a, b) => Number(isMoving(b)) - Number(isMoving(a)) || b.updatedAt.localeCompare(a.updatedAt));
+  const refunds = opts.refunds.filter((r) => r.merchantName === shop.name).sort((a, b) => b.at.localeCompare(a.at));
+
+  const errandLine = (v: VisaView) => {
+    const l = lookForAgent(d.human, v.clientId, v.agentName);
+    const mineHere = steps.filter((s) => s.visaId === v.id);
+    const spent = mineHere.reduce((sum, s) => sum + paidCents(s), 0);
+    const last = mineHere[0];
+    return html`<a class="li cc ${isOut(v) ? "" : "off"}" style="${courierVars(l.color)}" href="/app/errands?e=${v.id}">
+      ${portrait(l)}<span class="li-t"><b>${v.intent || "Anything within the limits"}</b><small>${l.name}${last ? html` · ${last.title}` : ""} · ${isOut(v) ? "Out now" : timeAgo(last?.at ?? v.createdAt)}</small></span>
+      <span class="li-m">${spent ? html`<b>${short(spent)}</b><small>spent here</small>` : html`<small>Nothing bought</small>`}</span>${CHEVRON}</a>`;
+  };
+  const parcelLine = (x: Delivery) =>
+    html`<div class="li"><span class="dot ${isMoving(x) ? "" : "on"}"></span><span class="li-t"><b>${x.labels[x.stage]}</b><small>${x.carrierName} ${x.trackingNumber}${isMoving(x) && x.expectedAt ? ` · expected ${x.expectedAt}` : ""}</small></span>
+      <span class="st ${isMoving(x) ? "active" : ""}"><i></i>${isMoving(x) ? "On its way" : "Arrived"}</span></div>`;
+  const refundLine = (r: Refund) =>
+    html`<div class="li"><span class="dot ${r.decision === "decline" ? "no" : "on"}"></span><span class="li-t"><b>${r.decision === "decline" ? "Return declined" : r.decision === "full" ? "Refunded in full" : "Partly refunded"}</b><small>${r.note ? `“${r.note}” · ` : ""}${r.by === "owner" ? "the owner" : "the shop’s clerk"} · ${timeAgo(r.at)}</small></span>
+      <span class="li-m"><b>${r.amountCents ? short(r.amountCents) : "—"}</b><small>back to PayPal</small></span></div>`;
+
+  const history = errands.length || parcels.length || refunds.length;
+  const main = html`<div class="shp-main">
+      ${parcels.length ? html`<section><div class="pg-st"><h2>Parcels</h2><span class="n">${parcels.length}</span></div><div class="card list">${parcels.map(parcelLine)}</div></section>` : ""}
+      <section><div class="pg-st"><h2>Your history here</h2>${errands.length ? html`<span class="n">${errands.length}</span>` : ""}</div>
+        ${
+          errands.length
+            ? html`<div class="card list">${errands.map(errandLine)}</div>`
+            : html`<div class="card pad blank-card"><p>${history ? "No errands to show." : `None of your couriers have been to ${shop.name} yet. Send ${look.name} and everything it does here shows up on this page.`}</p></div>`
+        }
+      </section>
+      ${refunds.length ? html`<section><div class="pg-st"><h2>Returns</h2><span class="n">${refunds.length}</span></div><div class="card list">${refunds.map(refundLine)}</div></section>` : ""}
+    </div>`;
+  const side = html`<aside class="shp-side">
+      <section><div class="pg-st"><h2>Delivery and returns</h2></div>
+        <div class="card pad shp-pol">
+          <div><small>Delivery</small><p>${deliveryWords(policy)}</p></div>
+          <div><small>Returns</small><p>${policy.returns}</p></div>
+        </div>
+      </section>
+      <section class="card list shp-links">
+        <a class="li" href="${config.store.url}/${shop.slug}" target="_blank" rel="noopener"><span class="li-t"><b>Open the storefront ↗</b><small>What anyone sees at ${shop.name}</small></span></a>
+        <a class="li" href="${config.store.url}/desk/${shop.slug}" target="_blank" rel="noopener"><span class="li-t"><b>See this shop’s desk ↗</b><small>The owner’s side: orders, parcels and returns. Open to everyone in the demo.</small></span></a>
+      </section>
+    </aside>`;
+  const body = html`<div class="pg pg-wide"><div class="pg-in">
+    <a class="back fine" href="/app/shops">← All shops</a>
+    <header class="pg-h shp-h">
+      <div class="shp-id">${shopLogo(shop)}<div><h1 class="big">${shop.name}</h1><p>${shop.sells} · ${policyChip(policy)}</p></div></div>
+      <a class="btn sm" href="/errand?c=${mine.id}&say=${encodeURIComponent(say)}">Send ${look.name} here${ARROW}</a>
+    </header>
+    <div class="card shp-pp"><span class="shp-pp-k">Sees you as</span><code title="${opts.pseudonym}">${shortSub(opts.pseudonym)}</code>
+      <p>Each shop gets a different pseudonym and never your name, so shops can’t compare notes on you.</p></div>
+    <div class="shp-g">${main}${side}</div>
+  </div></div>`;
+  return shell(shop.name, d, "shops", body);
+}
+
+/** A shop address that doesn't match any shop, still inside the app. */
+export function shopMissingPage(d: Desk): string {
+  return shell(
+    "No such shop",
+    d,
+    "shops",
+    page(
+      "No shop here.",
+      "This address doesn’t match any of the shops. It may have moved, or the name is spelled differently.",
+      html`<a class="btn sm" href="/app/shops">All shops${ARROW}</a>`,
+      html`<div class="card pad blank-card"><p>Every shop your couriers can visit is on the Shops page.</p></div>`,
+      "pg-narrow",
     ),
   );
 }

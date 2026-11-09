@@ -1,7 +1,9 @@
 import {
+  afterSaleOf,
   config,
   courierLayout,
   courierVars,
+  deliveryShort,
   findShop,
   html,
   JUNIPER,
@@ -12,6 +14,7 @@ import {
   portrait,
   type RawHtml,
   raw,
+  returnsShort,
   SHOPS,
   type Shop,
   shopLogo,
@@ -31,8 +34,13 @@ function storeNav(view: "shop" | "merchant", shop?: Shop): RawHtml {
   return html`<header class="cnav jr-nav">
     <a class="jr" href="${shop ? `/${shop.slug}` : "/"}">${shop ? shopLogo(shop, "sm") : LOGO}<div><b>${shop?.name ?? "Courier shops"}</b><small>${shop?.sells ?? "Shops that welcome couriers"}</small></div></a>
     <nav>
-      <a class="hide-sm" href="/" ${view === "shop" && !shop ? raw('aria-current="page"') : ""}>All shops</a>
-      <a class="hide-sm" href="/merchant" ${view === "merchant" ? raw('aria-current="page"') : ""}>Shop desk</a>
+      ${
+        // A shopper on a phone still needs a way back to the other shops, so this link stays when the nav folds.
+        shop
+          ? html`<a class="jr-all" href="/"><span aria-hidden="true">←</span> All shops</a>`
+          : html`<a class="hide-sm" href="/" ${view === "shop" ? raw('aria-current="page"') : ""}>All shops</a>`
+      }
+      ${view === "merchant" ? html`<a class="hide-sm" href="/merchant" aria-current="page">Shop desk</a>` : ""}
       ${shop ? html`<a class="welcome" href="${config.courier.url}">${LOGO}<span>couriers welcome</span></a>` : ""}
     </nav>
   </header>`;
@@ -45,7 +53,7 @@ function storePage(
   opts: { scripts?: string[]; styles?: string[]; shop?: Shop } = {},
 ): string {
   return courierLayout({
-    title: `${title} · ${opts.shop?.name ?? "Courier shops"}`,
+    title: opts.shop && title !== opts.shop.name ? `${title} · ${opts.shop.name}` : `${title} · Courier shops`,
     nav: storeNav(view, opts.shop),
     body,
     bodyClass: `jr-page jr-${view}`,
@@ -65,8 +73,33 @@ export function shopGrid(): string {
       <nav class="shopg" aria-label="Shops">${SHOPS.map(
         (s) => html`<a class="shopg-t" href="/${s.slug}">${shopLogo(s)}<b>${s.name}</b><small>${s.sells}</small></a>`,
       )}</nav>
+      ${ownerLine("/desk/juniper", `Own a shop? See how ${JUNIPER.name} runs its desk`)}
       <p class="fine">${NOT_REAL}</p>
     </main>`,
+  );
+}
+
+/** The way into a shop's back office, kept out of the shopper's nav: it's for whoever runs the shop. */
+const ownerLine = (href: string, label: string) =>
+  html`<p class="sf-own"><a class="link" href="${href}">${label} →</a></p>`;
+
+/** What a courier can count on here, in one line under the banner. */
+function promiseStrip(shop: Shop): RawHtml {
+  const policy = afterSaleOf(shop.slug);
+  return html`<p class="sf-strip"><span><b>Couriers welcome</b></span><span>${returnsShort(policy)}</span><span>${deliveryShort(policy)}</span><span>Pays with ${PP}</span></p>`;
+}
+
+/** A styled page for an address that isn't a shop, an item or a receipt. */
+export function notFoundPage(): string {
+  return storePage(
+    "Not found",
+    "shop",
+    html`<main class="solo"><div class="solo-card">
+      <h1 class="big">No shop here.</h1>
+      <p class="lead">This address doesn’t match any of the shops. The name may be spelled differently.</p>
+      <div class="acts-row"><a class="btn" href="/">See all shops</a></div>
+      <p class="fine" style="margin-top:22px">${NOT_REAL}</p>
+    </div></main>`,
   );
 }
 
@@ -76,7 +109,6 @@ const labelFor = (category: string) => category[0]!.toUpperCase() + category.sli
 export function storefront(shop: Shop, items: Item[], category = ""): string {
   const categories = [...new Set(items.map((i) => i.category))];
   const shown = categories.filter((c) => !category || c === category);
-  const popular = category ? [] : [...items].sort((a, b) => b.priceCents - a.priceCents).slice(0, 3);
   const example = items[0] ? `Get me ${items[0].title} from ${shop.name}.` : `What does ${shop.name} have?`;
   const card = (i: Item) =>
     html`<li class="sf-i"><span class="sf-t"><b>${i.title}</b><span class="pr">${money(i.priceCents)}</span><small>${i.artist} · ${i.blurb}</small></span><span class="sf-cv">${itemArt(i, shop.slug)}</span></li>`;
@@ -87,10 +119,11 @@ export function storefront(shop: Shop, items: Item[], category = ""): string {
       <section class="sf-hero">
         <div class="sf-banner" aria-hidden="true"><div class="sf-peek">${items.slice(0, 3).map((i) => html`<span class="sf-cv">${itemArt(i, shop.slug)}</span>`)}</div></div>
         <div class="sf-id">${shopLogo(shop, "lg")}
-          <div><h1>${shop.name}</h1><p>${shop.sells}</p><p class="sf-meta"><span class="sf-open">Open now</span> · ${items.length} items · Pays with ${PP}</p></div>
+          <div><h1>${shop.name}</h1><p>${shop.sells}</p><p class="sf-meta"><span class="sf-open">Open now</span> · ${items.length} items</p></div>
           <p class="sf-ask"><small>Shopping with a courier? Ask:</small><span>“${example}”</span></p>
         </div>
       </section>
+      ${promiseStrip(shop)}
       <div class="sf-body">
         <nav class="sf-menu" aria-label="Menu">
           <small>Menu</small>
@@ -98,18 +131,11 @@ export function storefront(shop: Shop, items: Item[], category = ""): string {
           ${categories.map((c) => html`<a href="/${shop.slug}?c=${encodeURIComponent(c)}" ${c === category ? raw('aria-current="true"') : ""}>${labelFor(c)}</a>`)}
         </nav>
         <div class="sf-secs">
-          ${
-            popular.length
-              ? html`<section><h2>Popular</h2><ul class="sf-pop">${popular.map(
-                  (i) =>
-                    html`<li><span class="sf-cv">${itemArt(i, shop.slug)}</span><b>${i.title}</b><span class="pr">${money(i.priceCents)}</span></li>`,
-                )}</ul></section>`
-              : ""
-          }
           ${shown.map(
             (c) =>
               html`<section><h2>${labelFor(c)}</h2><ul class="sf-g">${items.filter((i) => i.category === c).map(card)}</ul></section>`,
           )}
+          ${ownerLine(`/desk/${shop.slug}`, `Own ${shop.name}? Open its desk`)}
           <p class="fine">${NOT_REAL}</p>
         </div>
       </div>

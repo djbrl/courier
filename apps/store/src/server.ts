@@ -1,48 +1,22 @@
 import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import {
-  config,
-  findShop,
-  internalFetch,
-  JUNIPER,
-  money,
-  paypal,
-  ROOT_DIR,
-  SHOPS,
-  type Shop,
-  SITE_ICONS,
-} from "@courier/shared";
+import { config, findShop, JUNIPER, paypal, ROOT_DIR, SHOPS, type Shop, SITE_ICONS } from "@courier/shared";
 import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import express from "express";
-import {
-  claimsOf,
-  forgetVisa,
-  logRequest,
-  ownerId,
-  PRM_PATH,
-  protectedResourceMetadata,
-  type RequestLogEntry,
-  requireVisa,
-} from "./auth.ts";
+import { claimsOf, ownerId, PRM_PATH, protectedResourceMetadata, type RequestLogEntry, requireVisa } from "./auth.ts";
 import { CATALOG, shelfOf } from "./catalog.ts";
-import { confirmAction, type OwnerMessage, ownerClerk } from "./clerk.ts";
+import { confirmAction, declineAction, type OwnerMessage, ownerClerk, proposeRefund } from "./clerk.ts";
 import { db, type Order } from "./db.ts";
 import { deskSnapshot } from "./desk.ts";
 import { deskAgentNote, deskAgentOn, deskTurn } from "./desk-agent.ts";
+import { dismiss, reportCourier, shopDesk } from "./desk-ops.ts";
+import { couriersPage, type DeskView, doorPage, ordersPage, reportsPage, todayPage } from "./desk-views.ts";
 import { cancelOrder, createMcpServer, settleOrder } from "./mcp.ts";
 import { startDeliveries } from "./shipping.ts";
-import {
-  type DeskBoot,
-  deskPage,
-  merchantDashboard,
-  paymentResult,
-  receiptPage,
-  shopGrid,
-  storefront,
-} from "./views.ts";
+import { merchantDashboard, notFoundPage, paymentResult, receiptPage, shopGrid, storefront } from "./views.ts";
 
 const app = express();
 app.set("trust proxy", "loopback");
@@ -204,23 +178,148 @@ app.get("/catalog.json", (_req, res) => {
 
 const DESK_BUNDLE = path.join(ROOT_DIR, "packages/shared/assets/desk/desk.js");
 
-app.get("/merchant", (_req, res) => {
-  const { orders, door, couriers } = deskSnapshot().sources;
-  const paid = orders.filter((o) => o.paid).reduce((s, o) => s + Math.round(o.amount * 100), 0);
-  const turnedAway = door.filter((d) => !d.allowed).length;
-  const summary = [
-    `${couriers.length} ${couriers.length === 1 ? "courier" : "couriers"}`,
-    `${orders.length} ${orders.length === 1 ? "order" : "orders"}`,
-    `${money(paid)} paid`,
-    `${turnedAway} turned away`,
-  ];
-  const boot: DeskBoot = {
-    api: "/merchant/api",
-    // A browser licence key is meant to ship to the browser. Without one the desk runs as AG Studio's evaluation.
-    licenseKey: process.env.AG_STUDIO_LICENSE_KEY?.trim() || null,
-    agent: { enabled: deskAgentOn(), note: deskAgentNote() },
-  };
-  res.send(deskPage(boot, fs.existsSync(DESK_BUNDLE) ? "/assets/desk/desk.js" : null, summary));
+/* ---------------- the shop desk: one shop's back office ---------------- */
+
+// The desk used to be one page for every shop. Now each shop has its own; the demo opens Juniper Records'.
+app.get("/merchant", (_req, res) => res.redirect(302, "/desk/juniper"));
+app.get("/desk", (req, res) => {
+  const shop = findShop(typeof req.query.shop === "string" ? req.query.shop : "") ?? JUNIPER;
+  res.redirect(302, `/desk/${shop.slug}`);
+});
+
+const DESK_PAGES = { today: todayPage, orders: ordersPage, door: doorPage, couriers: couriersPage } as const;
+
+app.get(["/desk/:slug", "/desk/:slug/:view"], (req, res, next) => {
+  const params = req.params as { slug: string; view?: string };
+  const shop = findShop(params.slug);
+  const view = (params.view ?? "today") as DeskView;
+  if (!shop || !(view in DESK_PAGES || view === "reports")) {
+    next();
+    return;
+  }
+  const desk = shopDesk(shop);
+  if (view === "reports") {
+    const boot = {
+      api: `/desk/${shop.slug}/api`,
+      shop: shop.slug,
+      // A browser licence key is meant to ship to the browser. Without one the builder runs as AG Studio's evaluation.
+      licenseKey: process.env.AG_STUDIO_LICENSE_KEY?.trim() || null,
+      agent: { enabled: deskAgentOn(), note: deskAgentNote() },
+    };
+    res.send(reportsPage(shop, desk, boot, fs.existsSync(DESK_BUNDLE) ? "/assets/desk/desk.js" : null));
+    return;
+  }
+  res.send(DESK_PAGES[view as keyof typeof DESK_PAGES](shop, desk));
+});
+
+app.get("/desk/:slug/api", (req, res, next) => {
+  const shop = findShop(req.params.slug);
+  if (!shop) {
+    next();
+    return;
+  }
+  res.set("Cache-Control", "no-store").json(shopDesk(shop));
+});
+
+/** The report builder's data, for this shop only. */
+app.get("/desk/:slug/api/desk", (req, res, next) => {
+  const shop = findShop(req.params.slug);
+  if (!shop) {
+    next();
+    return;
+  }
+  res.set("Cache-Control", "no-store").json(deskSnapshot(shop.slug));
+});
+app.post("/desk/:slug/api/llm", express.json({ limit: "2mb" }), deskTurn);
+
+/**
+ * The desk's buttons. Each is checked again here, whatever the page showed: a refund only through the clerk's checked
+ * path, a cancel only for this shop's unpaid order, a report only for a pass seen at this shop.
+ */
+app.post("/desk/:slug/api/act", express.json({ limit: "8kb" }), async (req, res) => {
+  const shop = findShop(req.params.slug);
+  if (!shop) {
+    res.status(404).json({ error: "No such shop." });
+    return;
+  }
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const str = (key: string) => (typeof body[key] === "string" ? (body[key] as string).slice(0, 200) : "");
+  const order = str("orderId") ? db.get<Order>("orders", str("orderId")) : undefined;
+  const ours = order && (order.shop ?? "juniper") === shop.slug ? order : undefined;
+  const fail = (status: number, error: string) => void res.status(status).json({ error });
+  switch (str("act")) {
+    case "confirm": {
+      const out = await confirmAction(str("actionId"), shop.slug).catch(() => ({
+        ok: false as const,
+        status: 500,
+        error: "The refund didn't go through.",
+      }));
+      if (!out.ok) return fail(out.status, out.error);
+      res.json({ ok: true, message: `Refunded $${out.refund.amount}. The courier sees it on its errand.` });
+      return;
+    }
+    case "decline":
+      if (!declineAction(str("actionId"), shop.slug)) return fail(404, "That proposal is gone.");
+      res.json({ ok: true, message: "Declined. Nothing was refunded." });
+      return;
+    case "cancel":
+      if (ours?.status !== "awaiting_approval") return fail(409, "Only an unpaid order at this shop can be cancelled.");
+      await cancelOrder(ours);
+      res.json({ ok: true, message: "Cancelled. The errand has its budget back." });
+      return;
+    case "refund_rest":
+    case "refund_all": {
+      if (!ours) return fail(404, "No such order at this shop.");
+      // Either way it's what's left of the payment; only the note to the customer differs.
+      const made = proposeRefund(
+        ours.id,
+        shop.slug,
+        ours.refundedCents ? "We've refunded the rest of your order." : "We've refunded your order in full.",
+      );
+      if ("problem" in made) return fail(409, made.problem);
+      dismiss(shop.slug, `return:${ours.id}`);
+      res.json({ ok: true, message: `The clerk proposes refunding $${made.amount}. Confirm it to send it.` });
+      return;
+    }
+    case "report": {
+      const visaId = str("visaId");
+      const here = (row: { shop?: string; visaId?: string | null }) =>
+        row.visaId === visaId && (row.shop ?? "juniper") === shop.slug;
+      const seen =
+        db.list<Order>("orders", here, 1).length > 0 || db.list<RequestLogEntry>("requests", here, 1).length > 0;
+      if (!visaId || !seen) return fail(404, "That courier hasn't been to this shop.");
+      const out = await reportCourier(visaId, shop, "desk");
+      if (!out.ok) return fail(502, "Courier didn't take the report. Try again.");
+      res.json({ ok: true, message: "Reported. Its pass is suspended at every shop." });
+      return;
+    }
+    case "ok":
+    case "dismiss": {
+      const need = str("need");
+      if (!/^(unpaid|return|door):/.test(need)) return fail(400, "Nothing to dismiss.");
+      dismiss(shop.slug, need);
+      res.json({ ok: true, message: "Done." });
+      return;
+    }
+    default:
+      fail(400, "Unknown action.");
+  }
+});
+
+/** The owner's clerk, for this shop alone. Its refunds are proposals that land in Needs you. */
+app.post("/desk/:slug/api/clerk", express.json({ limit: "64kb" }), async (req, res) => {
+  const shop = findShop(req.params.slug);
+  const messages = ownerMessages(req.body);
+  if (!shop || messages.at(-1)?.role !== "user") {
+    res.status(400).json({ error: "Send messages: [{role, content}], ending with the owner's." });
+    return;
+  }
+  try {
+    res.json(await ownerClerk(messages, shop.slug));
+  } catch (error) {
+    console.error("[clerk] owner chat failed", error);
+    res.status(500).json({ error: "The clerk couldn't answer that." });
+  }
 });
 
 app.get("/merchant/api/desk", (_req, res) => {
@@ -236,36 +335,15 @@ app.get("/merchant/ledger", (_req, res) => {
 });
 
 app.post("/merchant/report/:visaId", express.urlencoded({ extended: false }), async (req, res) => {
-  try {
-    const result = await internalFetch<{ bondOutcome: string }>(`${config.courier.url}/internal/report`, {
-      body: {
-        visaId: req.params.visaId,
-        reason: "Reported by the merchant from the dashboard",
-        evidence: { via: "merchant dashboard" },
-      },
-    });
-    forgetVisa(req.params.visaId);
-    logRequest({
-      outcome: "blocked",
-      reason: `Merchant reported visa · ${result.bondOutcome}`,
-      status: 403,
-      visaId: req.params.visaId,
-    });
-  } catch (error) {
-    console.warn("[store] report failed", (error as Error).message);
-  }
+  const order = db.list<Order>("orders", (o) => o.visaId === req.params.visaId, 1)[0];
+  await reportCourier(req.params.visaId, findShop(order?.shop) ?? JUNIPER, "ledger");
   res.redirect(303, "/merchant/ledger");
 });
 
-/**
- * The owner's clerk, for the merchant dashboard: it reads orders, parcels, returns and PayPal transactions, and can only
- * propose a refund. The owner confirms it with the second route, where the limits are checked again. `shop` scopes it to
- * one shop's orders.
- */
-app.post("/merchant/api/clerk", express.json({ limit: "64kb" }), async (req, res) => {
-  const raw = (req.body as { messages?: unknown })?.messages;
-  const shop = typeof req.body?.shop === "string" && findShop(req.body.shop) ? (req.body.shop as string) : undefined;
-  const messages = Array.isArray(raw)
+/** The last 30 turns of an owner's chat, as the clerk takes them. */
+function ownerMessages(body: unknown): OwnerMessage[] {
+  const raw = (body as { messages?: unknown })?.messages;
+  return Array.isArray(raw)
     ? raw
         .slice(-30)
         .filter(
@@ -277,6 +355,15 @@ app.post("/merchant/api/clerk", express.json({ limit: "64kb" }), async (req, res
         )
         .map((m) => ({ role: m.role, content: m.content.slice(0, 4000) }))
     : [];
+}
+
+/**
+ * The owner's clerk over HTTP: it reads orders, parcels, returns and PayPal transactions, and can only propose a refund.
+ * The owner confirms it with the second route, where the limits are checked again. `shop` scopes it to one shop.
+ */
+app.post("/merchant/api/clerk", express.json({ limit: "64kb" }), async (req, res) => {
+  const shop = typeof req.body?.shop === "string" && findShop(req.body.shop) ? (req.body.shop as string) : undefined;
+  const messages = ownerMessages(req.body);
   if (messages.at(-1)?.role !== "user") {
     res.status(400).json({ error: "Send messages: [{role, content}], ending with the owner's." });
     return;
@@ -381,6 +468,11 @@ app.get("/:slug", (req, res, next) => {
     return;
   }
   res.send(storefront(shop, shelfOf(shop.slug), typeof req.query.c === "string" ? req.query.c : ""));
+});
+
+// A page a person can read for any address nothing above answered; machines still get a 404 status.
+app.get("/{*rest}", (_req, res) => {
+  res.status(404).send(notFoundPage());
 });
 
 app.listen(config.store.port, config.bindHost, () => {

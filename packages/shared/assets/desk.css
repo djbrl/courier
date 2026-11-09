@@ -1,0 +1,770 @@
+/*
+ * The shop desk (/desk/:slug): a shop's back office in the app's frame. The rail, page titles and cards come from
+ * courier.css; this adds the desk's own parts and dresses AG Grid in the same type and hairlines.
+ */
+
+/* ---------- the rail: the shop, its pages, the clerk ---------- */
+.dk-shop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 4px 16px;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 0.12);
+}
+.dk-shop .slogo {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  flex: none;
+}
+.dk-shop b {
+  display: block;
+  font-size: 15px;
+  line-height: 1.15;
+}
+.dk-shop small {
+  font-size: 12.5px;
+  opacity: 0.75;
+}
+.dk-rail-f {
+  margin-top: auto;
+  display: grid;
+  gap: 8px;
+  padding: 0 4px;
+}
+.dk-rail-f > a {
+  padding: 6px 8px;
+  font-size: 14px;
+  color: #fff;
+  opacity: 0.85;
+}
+.dk-rail-f > a:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+.dk-clerk-open {
+  height: 42px;
+  border: 0;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.dk-clerk-open::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--hivis);
+  box-shadow: 0 0 0 2px var(--ink);
+  vertical-align: 1px;
+}
+.dk-switch {
+  display: grid;
+  gap: 4px;
+  padding: 10px 8px 0;
+  border-top: 1px solid rgb(255 255 255 / 0.2);
+  font-size: 12px;
+}
+.dk-switch label {
+  opacity: 0.75;
+}
+.dk-switch select {
+  height: 34px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 0.14);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+}
+.dk-switch option {
+  color: var(--ink);
+}
+
+/* ---------- a courier, as a face and a name ---------- */
+.dk-who {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  line-height: 1.2;
+}
+.dk-who .pt {
+  --s: 32px;
+  border-radius: 8px;
+}
+.dk-who .pt img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.dk-who .dk-noid {
+  display: grid;
+  place-items: center;
+  background: var(--paper);
+  color: var(--mute);
+  font-weight: 800;
+}
+.dk-who b {
+  display: block;
+  font-size: 14.5px;
+  font-weight: 700;
+}
+.dk-who small {
+  display: block;
+  max-width: 16ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font:
+    500 11.5px / 1.3 "JetBrains Mono",
+    monospace;
+  color: var(--mute);
+}
+
+/* ---------- pills: where an order is, how a courier stands ---------- */
+.dk-pill,
+.dk-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 99px;
+  background: var(--paper);
+  color: var(--soft);
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.dk-pill.s-ok {
+  background: #e3f4ea;
+  color: var(--green);
+}
+.dk-pill.s-done {
+  background: var(--ink);
+  color: #fff;
+}
+.dk-pill.s-move {
+  background: #ecebff;
+  color: var(--cobalt);
+}
+.dk-pill.s-wait {
+  background: #fff3d1;
+  color: #8a5a00;
+}
+.dk-pill.s-bad,
+.dk-pill.s-reported,
+.dk-pill.s-turned-away {
+  background: #fde4e2;
+  color: var(--red);
+}
+.dk-pill.s-refund {
+  background: #ffe6d8;
+  color: #b23f0a;
+}
+.dk-pill.s-good {
+  background: #e3f4ea;
+  color: var(--green);
+}
+.dk-pill.k-refund,
+.dk-need.k-refund .dk-tag {
+  background: var(--cobalt);
+  color: #fff;
+}
+.dk-pill.k-unpaid,
+.dk-need.k-unpaid .dk-tag {
+  background: #fff3d1;
+  color: #8a5a00;
+}
+.dk-pill.k-return,
+.dk-need.k-return .dk-tag {
+  background: #ffe6d8;
+  color: #b23f0a;
+}
+.dk-pill.k-suspicious,
+.dk-need.k-suspicious .dk-tag {
+  background: var(--red);
+  color: #fff;
+}
+
+.dk-acts {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.dk-acts .btn.sm {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 13.5px;
+}
+
+/* ---------- Today ---------- */
+.dk-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.dk-stat {
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+}
+.dk-stat b {
+  display: block;
+  font:
+    italic 900 34px / 1 "Archivo",
+    sans-serif;
+  letter-spacing: -0.03em;
+}
+.dk-stat span {
+  display: block;
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mute);
+}
+.dk-stat.hot {
+  border-color: var(--cobalt);
+  background: var(--cobalt);
+  color: #fff;
+}
+.dk-stat.hot span {
+  color: rgb(255 255 255 / 0.8);
+}
+.bump {
+  animation: dk-bump 0.6s var(--pop);
+}
+@keyframes dk-bump {
+  40% {
+    transform: scale(1.12);
+  }
+}
+
+.dk-needs {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-need {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+}
+.dk-need-h {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--mute);
+}
+.dk-need-b {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.dk-need-i {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+.dk-need p {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--soft);
+}
+
+.dk-empty {
+  padding: 22px 24px;
+}
+.dk-empty b {
+  font-size: 16px;
+}
+.dk-empty p {
+  margin: 4px 0 0;
+  color: var(--mute);
+  font-size: 14.5px;
+}
+.dk-empty.sm {
+  padding: 16px 18px;
+}
+
+.dk-two {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 26px;
+  align-items: start;
+}
+.dk-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-list > li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+}
+.dk-list > li:first-child {
+  border-top: 0;
+}
+.dk-li-m {
+  flex: 1;
+  min-width: 0;
+}
+.dk-li-m b {
+  display: block;
+  font-size: 14.5px;
+}
+.dk-li-m small {
+  display: block;
+  font-size: 13px;
+  color: var(--mute);
+}
+.dk-list time,
+.dk-list .pr {
+  flex: none;
+  font-size: 13px;
+  color: var(--mute);
+}
+.dk-list .pr {
+  font-weight: 700;
+  color: var(--ink);
+}
+.dk-count {
+  flex: none;
+  min-width: 36px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 10px;
+  background: #fde4e2;
+  color: var(--red);
+  font:
+    italic 900 18px / 32px "Archivo",
+    sans-serif;
+  text-align: center;
+}
+
+/* ---------- tools above a table ---------- */
+.dk-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: -12px;
+}
+.dk-filter {
+  flex: 1;
+  min-width: 220px;
+  max-width: 420px;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  font: inherit;
+  font-size: 15px;
+}
+.dk-filter:focus {
+  outline: 2px solid var(--cobalt);
+  outline-offset: 1px;
+}
+.dk-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14.5px;
+  color: var(--soft);
+}
+.dk-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dk-reason {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 14px 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  background: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dk-reason b {
+  min-width: 26px;
+  height: 26px;
+  padding: 0 7px;
+  border-radius: 99px;
+  background: #fde4e2;
+  color: var(--red);
+  font-size: 13px;
+  line-height: 26px;
+  text-align: center;
+}
+.dk-reason[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+
+/* ---------- AG Grid, in Courier's clothes ---------- */
+.dk-grid {
+  width: 100%;
+}
+.dk-grid .ag-cell {
+  display: flex;
+  align-items: center;
+}
+.dk-grid .dk-wrap {
+  line-height: 1.4;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  word-break: normal;
+}
+.dk-grid .ag-header-cell-text {
+  text-transform: none;
+}
+.dk-grid .ag-row-selected .ag-cell {
+  font-weight: 600;
+}
+.dk-grid .ag-row {
+  cursor: default;
+}
+.dk-grid-orders .ag-row {
+  cursor: pointer;
+}
+.dk-mono {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  color: var(--mute);
+}
+.dk-none {
+  font-size: 15px;
+  color: var(--mute);
+}
+
+/* ---------- one order's proof ---------- */
+.dk-detail {
+  display: grid;
+  gap: 16px;
+  padding: 20px 22px;
+}
+.dk-detail[hidden] {
+  display: none;
+}
+.dk-detail-h {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.dk-detail-h > span:nth-child(2) {
+  flex: 1;
+  min-width: 200px;
+}
+.dk-detail-h b {
+  display: block;
+  font-size: 17px;
+}
+.dk-detail-h small {
+  color: var(--mute);
+}
+.dk-facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px 18px;
+  margin: 0;
+  font-size: 14.5px;
+}
+.dk-facts dt {
+  color: var(--mute);
+  font-weight: 600;
+}
+.dk-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.dk-facts code {
+  font-size: 12.5px;
+}
+.dk-steps {
+  display: flex;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-steps li {
+  flex: 1;
+  padding-top: 8px;
+  border-top: 4px solid var(--line);
+  font-size: 13px;
+  color: var(--mute);
+}
+.dk-steps li.done {
+  border-color: var(--cobalt);
+  color: var(--ink);
+  font-weight: 600;
+}
+.dk-parcel small,
+.dk-return p {
+  color: var(--mute);
+  font-size: 14px;
+}
+.dk-return {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--paper);
+}
+.dk-return p {
+  margin: 4px 0 0;
+}
+
+/* ---------- the clerk ---------- */
+.dk-clerk {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 40;
+  width: min(420px, calc(100vw - 24px));
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.18);
+}
+.dk-clerk[hidden] {
+  display: none;
+}
+.dk-clerk header {
+  display: flex;
+  gap: 12px;
+  padding: 18px 18px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.dk-clerk header b {
+  display: block;
+  font:
+    italic 900 22px / 1.1 "Archivo",
+    sans-serif;
+}
+.dk-clerk header small {
+  display: block;
+  margin-top: 4px;
+  font-size: 13.5px;
+  color: var(--mute);
+}
+.dk-x {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--paper);
+  font-size: 20px;
+  cursor: pointer;
+}
+.dk-chat {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 16px 18px;
+  list-style: none;
+}
+.dk-msg {
+  max-width: 88%;
+  padding: 10px 13px;
+  border-radius: 14px;
+  font-size: 14.5px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+.dk-msg.them {
+  align-self: flex-start;
+  background: var(--paper);
+}
+.dk-msg.me {
+  align-self: flex-end;
+  background: var(--cobalt);
+  color: #fff;
+}
+.dk-msg.wait {
+  color: var(--mute);
+}
+.dk-prop {
+  display: grid;
+  gap: 8px;
+  white-space: normal;
+  border: 1px solid var(--cobalt);
+  background: #fff !important;
+}
+.dk-prop small {
+  color: var(--mute);
+}
+.dk-starters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 18px 10px;
+}
+.dk-starters button {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.dk-starters button:hover {
+  border-color: var(--ink);
+}
+.dk-ask {
+  display: flex;
+  gap: 8px;
+  padding: 12px 14px 14px;
+  border-top: 1px solid var(--line);
+}
+.dk-ask input {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font: inherit;
+  font-size: 15px;
+}
+
+/* ---------- toasts ---------- */
+.dk-toasts {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  z-index: 60;
+  display: grid;
+  gap: 8px;
+  transform: translateX(-50%);
+}
+.dk-toast {
+  padding: 12px 18px;
+  border-radius: 12px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 14.5px;
+  font-weight: 600;
+  box-shadow: 0 12px 30px rgb(0 0 0 / 0.2);
+  transition:
+    opacity 0.4s,
+    transform 0.4s;
+}
+.dk-toast.bad {
+  background: var(--red);
+}
+.dk-toast.out {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* ---------- Reports: the builder gets the page's height, and nothing else scrolls inside it ---------- */
+.dk-reports .dk-root {
+  height: max(620px, calc(100svh - 190px));
+}
+
+/* ---------- smaller screens ---------- */
+@media (max-width: 1180px) {
+  .dk-two {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 900px) {
+  .dk-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dk-stat b {
+    font-size: 28px;
+  }
+  .dk-shop {
+    margin: 4px 0 4px;
+  }
+  .dk-rail-f {
+    padding: 0;
+  }
+  .dk-tools {
+    margin-bottom: 0;
+  }
+  .dk-list > li {
+    flex-wrap: wrap;
+  }
+  .dk-list > li .dk-li-m {
+    flex-basis: 60%;
+  }
+  .dk-reports .dk-root {
+    height: calc(100svh - 160px);
+    min-height: 520px;
+  }
+  .dk-clerk {
+    top: auto;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    width: auto;
+    height: min(78svh, 640px);
+  }
+}
+
+/* Two lines in one cell: a label and a quieter note under it. */
+.dk-stack {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+  line-height: 1.3;
+}
+.dk-stack small {
+  font-size: 12.5px;
+  color: var(--mute);
+}
+.dk-stack b {
+  font-weight: 600;
+}
+
+/* A button waiting for its second click. */
+.dk-acts .btn.armed,
+.dk-detail .btn.armed {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: #fff;
+}

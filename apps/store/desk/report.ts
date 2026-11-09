@@ -34,15 +34,6 @@ const widgets: Record<string, any> = {
   },
   cards: { type: "courier-cards", dataMapping: {}, format: title("Top couriers") },
   proof: { type: "paypal-proof", dataMapping: {}, format: title("Latest payment") },
-  byShop: {
-    type: "column-chart-grouped",
-    dataMapping: {
-      categoryKey: [{ id: "orders.shop" }],
-      valueKey: [{ id: "orders.orderId", aggregation: "count" }],
-    },
-    sort: [{ field: { id: "orders.orderId", aggregation: "count" }, direction: "desc" }],
-    format: title("Orders per shop"),
-  },
   door: {
     type: "grid",
     dataMapping: {
@@ -95,8 +86,7 @@ export const DEFAULT_REPORT: any = {
         refusals: at(14, 6, 10, 18),
         cards: at(0, 24, 16, 18),
         proof: at(16, 24, 8, 18),
-        byShop: at(0, 42, 10, 18),
-        door: at(10, 42, 14, 18),
+        door: at(0, 42, 24, 18),
         recent: at(0, 60, 24, 22),
       },
       // Refusals only: the door log also holds the couriers that were let in.
