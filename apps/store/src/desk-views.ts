@@ -118,7 +118,7 @@ function clerkDrawer(shop: Shop): RawHtml {
 const head = (title: string, sub: unknown, action?: unknown) =>
   html`<header class="pg-h"><div><h1 class="big">${title}</h1>${sub ? html`<p>${sub}</p>` : ""}</div>${action ?? ""}</header>`;
 
-const section = (title: string, extra: unknown, body: RawHtml, id?: string) =>
+const section = (title: unknown, extra: unknown, body: RawHtml, id?: string) =>
   html`<section ${id ? raw(`id="${id}"`) : ""}><div class="pg-st"><h2>${title}</h2>${extra ?? ""}</div>${body}</section>`;
 
 /* ---------------- Today ---------------- */
@@ -134,33 +134,42 @@ function needCard(n: NeedRow): RawHtml {
 
 export function todayPage(shop: Shop, desk: ShopDesk): string {
   const { counts } = desk;
-  // A number in the headline, kept current by the desk's script; its noun follows it into the plural.
-  const n = (key: keyof ShopDesk["counts"], one?: string, many?: string) => {
-    const value = counts[key];
-    const word =
-      one && many
-        ? html` <span data-plural="${key}" data-one="${one}" data-many="${many}">${value === 1 ? one : many}</span>`
-        : "";
-    return html`<b data-count="${key}">${value}</b>${word}`;
-  };
+  const top = Math.max(1, ...desk.week.map((d) => d.cents));
+  const bars = desk.week.map(
+    (d, i) =>
+      html`<li class="${i === desk.week.length - 1 ? "now" : ""}" title="${d.day}: ${d.amount}"><i style="--h:${Math.max(4, Math.round((d.cents / top) * 100))}%"></i><span>${i === desk.week.length - 1 ? "Today" : d.day.slice(0, 1)}</span></li>`,
+  );
+  const mini = (key: keyof ShopDesk["counts"], label: string, to: string) =>
+    html`<li><a href="${to}"><span>${label}</span><b data-count="${key}">${counts[key]}</b></a></li>`;
   const needs = desk.needs.length
     ? html`<ul class="dk-needs" data-grid="needs">${desk.needs.map(needCard)}</ul>`
     : html`<div class="card dk-empty" data-grid="needs"><b>Nothing needs you.</b><p>Couriers are shopping inside their limits. Refunds the clerk proposes, orders nobody paid and couriers that tried to trick the shop land here.</p></div>`;
   const parcels = desk.parcels.filter((p) => !p.delivered);
   const main = html`<div class="pg pg-wide"><div class="pg-in">
-    <header class="pg-h dk-today-h">
-      <div><span class="dk-kicker">Today at the shop</span><h1 class="big">${shop.name}</h1></div>
-      <a class="btn sm ghost" href="${config.courier.url}/bots">Send some bots ↗</a>
-    </header>
-    <p class="dk-lede">
-      <a href="#needs" class="dk-l-needs ${counts.needs ? "hot" : ""}">${n("needs", "thing needs", "things need")} you</a>.
-      Couriers paid <a href="${href(shop, "orders")}">${n("paidToday")}</a> today across
-      <a href="${href(shop, "orders")}">${n("ordersToday", "order", "orders")}</a>,
-      <a href="#parcels">${n("parcels", "parcel is", "parcels are")}</a> on the road, and the door turned away
-      <a href="${href(shop, "door")}">${n("turnedAwayToday", "bot", "bots")}</a>.
-    </p>
-    <p class="fine dk-lede-f">Every courier here shows a verified ID, never the person's name.</p>
-    ${section("Needs you", html`<span class="fine">Each button is checked again in code before anything moves.</span>`, needs, "needs")}
+    ${head(
+      shop.name,
+      "Every courier here shows a verified ID, never the person's name.",
+      html`<a class="btn sm ghost" href="${config.courier.url}/bots">Send some bots ↗</a>`,
+    )}
+    <section class="card dk-pulse" aria-label="Today">
+      <div class="dk-hero">
+        <span class="dk-k">Paid by couriers today</span>
+        <b class="dk-big" data-count="paidToday">${counts.paidToday}</b>
+        <span class="dk-sub"><b data-count="paidWeek">${counts.paidWeek}</b> over the last 7 days</span>
+        <ol class="dk-bars" aria-hidden="true">${bars}</ol>
+      </div>
+      <ul class="dk-mini">
+        ${mini("ordersToday", "Orders today", href(shop, "orders"))}
+        ${mini("parcels", "Parcels on the road", "#parcels")}
+        ${mini("turnedAwayToday", "Turned away today", href(shop, "door"))}
+      </ul>
+    </section>
+    ${section(
+      html`Needs you <span class="dk-badge" data-count="needs" ${counts.needs ? "" : raw("hidden")}>${counts.needs}</span>`,
+      html`<span class="fine">Each button is checked again in code before anything moves.</span>`,
+      needs,
+      "needs",
+    )}
     <div class="dk-two">
       ${section(
         "On their way",

@@ -540,15 +540,11 @@ function couriersGrid(rows: CourierRow[]) {
 /* ---------------- the page's plain parts ---------------- */
 
 function updateCounts(desk: ShopDesk) {
-  for (const node of document.querySelectorAll<HTMLElement>("[data-plural]")) {
-    const count = desk.counts[node.dataset.plural as keyof ShopDesk["counts"]];
-    node.textContent = (count === 1 ? node.dataset.one : node.dataset.many) ?? "";
-  }
-  document.querySelector(".dk-l-needs")?.classList.toggle("hot", desk.counts.needs > 0);
   for (const node of document.querySelectorAll<HTMLElement>("[data-count]")) {
     const key = node.dataset.count as keyof ShopDesk["counts"];
     const value = String(desk.counts[key] ?? "");
-    if (node.closest(".rail") && key === "needs") {
+    // The needs badges (rail and section title) hide at zero rather than show a 0.
+    if (key === "needs" && (node.closest(".rail") || node.classList.contains("dk-badge"))) {
       node.hidden = desk.counts.needs === 0;
       node.textContent = value;
       continue;

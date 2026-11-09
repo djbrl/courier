@@ -184,7 +184,16 @@ export interface CourierRow {
 export interface ShopDesk {
   shop: { slug: string; name: string; sells: string; tile: string };
   generatedAt: string;
-  counts: { needs: number; paidToday: string; ordersToday: number; turnedAwayToday: number; parcels: number };
+  counts: {
+    needs: number;
+    paidToday: string;
+    paidWeek: string;
+    ordersToday: number;
+    turnedAwayToday: number;
+    parcels: number;
+  };
+  /** What couriers paid on each of the last seven days, oldest first, for the trend under today's total. */
+  week: { day: string; cents: number; amount: string }[];
   needs: NeedRow[];
   orders: OrderRow[];
   parcels: ParcelRow[];
@@ -487,6 +496,20 @@ export function shopDesk(shop: Shop): ShopDesk {
 
   const today = (iso: string) => now - Date.parse(iso) < DAY_MS;
   const policy = afterSaleOf(shop.slug);
+  const paid = raw.filter((o) => o.status === "paid");
+  const week = Array.from({ length: 7 }, (_, i) => {
+    const start = new Date(now);
+    start.setHours(0, 0, 0, 0);
+    start.setDate(start.getDate() - (6 - i));
+    const from = start.getTime();
+    const cents = paid
+      .filter((o) => {
+        const at = Date.parse(o.paidAt ?? o.createdAt);
+        return at >= from && at < from + DAY_MS;
+      })
+      .reduce((sum, o) => sum + o.totalCents, 0);
+    return { day: start.toLocaleDateString("en-US", { weekday: "short" }), cents, amount: money(cents) };
+  });
   return {
     shop: { slug: shop.slug, name: shop.name, sells: shop.sells, tile: shop.tile },
     generatedAt: new Date().toISOString(),
@@ -495,10 +518,12 @@ export function shopDesk(shop: Shop): ShopDesk {
       paidToday: money(
         raw.filter((o) => o.status === "paid" && today(o.paidAt ?? o.createdAt)).reduce((s, o) => s + o.totalCents, 0),
       ),
+      paidWeek: money(week.reduce((sum, d) => sum + d.cents, 0)),
       ordersToday: raw.filter((o) => today(o.createdAt)).length,
       turnedAwayToday: door.filter((d) => !d.allowed && today(d.at)).length,
       parcels: parcels.filter((p) => !p.delivered).length,
     },
+    week,
     needs,
     orders,
     parcels,
