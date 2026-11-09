@@ -1,6 +1,7 @@
 import { randomInt } from "node:crypto";
-import { config, findShop, internalFetch, JUNIPER, MONEY } from "@courier/shared";
+import { config, findShop, JUNIPER, MONEY } from "@courier/shared";
 import { afterSaleOf } from "./catalog.ts";
+import { courierApi } from "./courier-api.ts";
 import { db, type Order, type Shipment, STAGES } from "./db.ts";
 import { toolkitFor } from "./toolkit.ts";
 
@@ -43,8 +44,8 @@ const CARRIER_NAMES: Record<string, string> = { USPS: "USPS", UPS: "UPS", FEDEX:
 
 /** What Courier is told about a parcel. No personal data: the order, the carrier, the step. */
 async function tell(s: Shipment, stage: number): Promise<void> {
-  await internalFetch(`${config.courier.url}/internal/shipments`, {
-    body: {
+  await courierApi
+    .updateParcel({
       visaId: s.visaId,
       orderId: s.orderId,
       merchantName: (findShop(s.shop) ?? JUNIPER).name,
@@ -55,8 +56,8 @@ async function tell(s: Shipment, stage: number): Promise<void> {
       expectedAt: expectedAt(s),
       paypal: s.paypal && "status" in s.paypal ? MONEY[s.paypal.mode as keyof typeof MONEY]?.name : null,
       simulated: Boolean(s.simulated),
-    },
-  }).catch((e) => console.warn("[shipping] couldn't tell Courier", (e as Error).message));
+    })
+    .catch((e) => console.warn("[shipping] couldn't tell Courier", (e as Error).message));
 }
 
 /**

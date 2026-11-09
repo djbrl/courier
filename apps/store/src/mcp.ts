@@ -2,7 +2,6 @@ import {
   CALL_BACK_MS,
   config,
   findShop,
-  internalFetch,
   JUNIPER,
   MONEY,
   mcpIcons,
@@ -35,6 +34,7 @@ import {
 } from "./auth.ts";
 import { afterSaleOf, findItem, type Item, searchCatalog, shelfOf } from "./catalog.ts";
 import { deliveryView, requestReturn } from "./clerk.ts";
+import { courierApi, type SpendDecision } from "./courier-api.ts";
 import { db, type Group, type Order, type Reservation } from "./db.ts";
 import { ownsOrder } from "./limits.ts";
 import { ship } from "./shipping.ts";
@@ -142,10 +142,13 @@ async function getTicket(
   const agent = agentName(claims);
   const price = Math.ceil(items.reduce((sum, i) => sum + i.priceCents, 0) / 100);
   const askCourier = (extra: object) =>
-    internalFetch<{ url?: string; issued?: boolean }>(
-      `${config.courier.url}/internal/connections/${claims.connection!.id}/ticket`,
-      { body: { purpose: hint?.purpose, maxPerItem: hint?.max_per_item, maxTotal: hint?.max_total, price, ...extra } },
-    );
+    courierApi.requestTicket(claims.connection!.id, {
+      purpose: hint?.purpose,
+      maxPerItem: hint?.max_per_item,
+      maxTotal: hint?.max_total,
+      price,
+      ...extra,
+    });
   const caps = server.server.getClientCapabilities()?.elicitation as { form?: object; url?: object } | undefined;
   console.log(`[store] budget needed; client dialogs: ${caps ? Object.keys(caps).join(",") || "form" : "none"}`);
   const suggested = Math.min(500, hint?.max_total ?? Math.max(price, 60));
@@ -229,9 +232,7 @@ function requireScope(claims: AgentClaims, scope: string, shop: Shop): CallToolR
 }
 
 function stamp(visaId: string, shop: Shop, kind: string, title: string, detail = ""): void {
-  void internalFetch(`${config.courier.url}/internal/stamps`, {
-    body: { visaId, kind, title, detail, merchantName: shop.name },
-  }).catch(() => {});
+  void courierApi.addStep({ visaId, kind, title, detail, merchantName: shop.name }).catch(() => {});
 }
 
 /* ---------------- abuse detection: per-visa rate limit ---------------- */
@@ -252,12 +253,10 @@ async function rateLimited(claims: AgentClaims, shop: Shop): Promise<CallToolRes
   if (!reported.has(claims.visa.id)) {
     reported.add(claims.visa.id);
     try {
-      const result = await internalFetch<{ bondOutcome: string }>(`${config.courier.url}/internal/report`, {
-        body: {
-          visaId: claims.visa.id,
-          reason: `Request flood: ${calls.length} tool calls in 60 seconds`,
-          evidence: { calls: calls.length, window: "60s", sub: claims.sub, agent: claims.visa.agent },
-        },
+      const result = await courierApi.reportCourier({
+        visaId: claims.visa.id,
+        reason: `Request flood: ${calls.length} tool calls in 60 seconds`,
+        evidence: { calls: calls.length, window: "60s", sub: claims.sub, agent: claims.visa.agent },
       });
       forgetVisa(claims.visa.id);
       logRequest({
@@ -282,19 +281,6 @@ async function rateLimited(claims: AgentClaims, shop: Shop): Promise<CallToolRes
 }
 
 /* ---------------- spend authority ---------------- */
-
-interface SpendDecision {
-  decision: "approve" | "ask_human" | "deny";
-  reason: string;
-  code?: string;
-  holdId?: string | null;
-  approvalId?: string;
-  approvalUrl?: string;
-  intent?: { model: string; probability: number; reason: string; latencyMs: number } | null;
-  remainingCents?: number;
-  /** The errand has saved PayPal: Courier can charge this checkout straight away. */
-  autopay?: boolean;
-}
 
 async function spendCheck(
   shop: Shop,
@@ -329,22 +315,20 @@ function askCourier(
   approvalId?: string,
   note?: string,
 ) {
-  return internalFetch<SpendDecision>(`${config.courier.url}/internal/spend/check`, {
-    body: {
-      visaId: claims.visa.id,
-      sub: claims.sub,
-      resource: shop.resource,
-      action,
-      items: items.map((i) => ({
-        title: `${i.title} (${i.artist})`,
-        category: `${i.category} ${i.genre}`,
-        priceCents: i.priceCents,
-        quantity: 1,
-      })),
-      totalCents: items.reduce((s, i) => s + i.priceCents, 0),
-      approvalId,
-      agentNote: note,
-    },
+  return courierApi.checkSpend({
+    visaId: claims.visa.id,
+    sub: claims.sub,
+    resource: shop.resource,
+    action,
+    items: items.map((i) => ({
+      title: `${i.title} (${i.artist})`,
+      category: `${i.category} ${i.genre}`,
+      priceCents: i.priceCents,
+      quantity: 1,
+    })),
+    totalCents: items.reduce((s, i) => s + i.priceCents, 0),
+    approvalId,
+    agentNote: note,
   });
 }
 
@@ -413,12 +397,7 @@ async function askInChat(
       // decline or cancel falls back to the approval link instead of being read as the person's "no".
       if (answer.action !== "accept" || (answer.content?.answer !== YES && answer.content?.answer !== NO)) return null;
       const verdict = answer.content.answer === YES ? "approved" : "denied";
-      const out = await internalFetch<{ status: "approved" | "denied" }>(
-        `${config.courier.url}/internal/approvals/${decision.approvalId}/decide`,
-        {
-          body: { visaId: claims.visa.id, decision: verdict },
-        },
-      );
+      const out = await courierApi.recordApproval(decision.approvalId!, { visaId: claims.visa.id, decision: verdict });
       return out.status;
     }
     const opened = await server.server.elicitInput(
@@ -429,9 +408,7 @@ async function askInChat(
     // They opened Courier's page; wait for their answer there.
     const until = Date.now() + ASK_TIMEOUT_MS;
     while (Date.now() < until) {
-      const { status } = await internalFetch<{ status: string }>(
-        `${config.courier.url}/internal/approvals/${decision.approvalId}`,
-      );
+      const { status } = await courierApi.getApproval(decision.approvalId!);
       if (status === "approved" || status === "denied") return status;
       await new Promise((r) => setTimeout(r, 1500));
     }
@@ -533,18 +510,13 @@ export function createMcpServer(shop: Shop): McpServer {
       if (!held || held.expires < Date.now() || held.connectionId !== claims.connection?.id) {
         return text("That budget form has expired.", { error: "invalid_pass" }, true);
       }
-      const ticket = await internalFetch<{ url?: string; issued?: boolean }>(
-        `${config.courier.url}/internal/connections/${held.connectionId}/ticket`,
-        {
-          body: {
-            purpose: held.hint?.purpose,
-            maxPerItem: held.hint?.max_per_item,
-            maxTotal: held.hint?.max_total,
-            price: held.price,
-            budgetFromPerson: budget,
-          },
-        },
-      );
+      const ticket = await courierApi.requestTicket(held.connectionId, {
+        purpose: held.hint?.purpose,
+        maxPerItem: held.hint?.max_per_item,
+        maxTotal: held.hint?.max_total,
+        price: held.price,
+        budgetFromPerson: budget,
+      });
       return text(ticket.issued ? "The budget is set." : "One PayPal approval left.", {
         issued: Boolean(ticket.issued),
         url: ticket.url,
@@ -796,21 +768,18 @@ export function createMcpServer(shop: Shop): McpServer {
       // Saved PayPal: Courier charges it right away, no PayPal page.
       let savedFailed = false;
       if (decision.autopay) {
-        const charged = await internalFetch<{ orderId: string; status: string; captureId: string | null }>(
-          `${config.courier.url}/internal/spend/charge`,
-          {
-            body: {
-              visaId: claims.visa.id,
-              holdId: decision.holdId,
-              description,
-              brandName: shop.name,
-              items: lines,
-            },
-          },
-        ).catch((e) => {
-          console.warn("[store] saved PayPal charge failed", e.message);
-          return null;
-        });
+        const charged = await courierApi
+          .chargeSavedPaypal({
+            visaId: claims.visa.id,
+            holdId: decision.holdId!,
+            description,
+            brandName: shop.name,
+            items: lines,
+          })
+          .catch((e) => {
+            console.warn("[store] saved PayPal charge failed", e.message);
+            return null;
+          });
         if (charged?.status === "COMPLETED") {
           const paid: Order = {
             id: charged.orderId,
@@ -1054,9 +1023,7 @@ export function createMcpServer(shop: Shop): McpServer {
 /** Calls off an order nobody has paid, and gives its budget back. */
 export async function cancelOrder(order: Order): Promise<Order> {
   const cancelled = db.put<Order>("orders", order.id, { ...order, status: "cancelled" });
-  await internalFetch(`${config.courier.url}/internal/spend/release`, { body: { holdId: order.holdId } }).catch(
-    () => {},
-  );
+  await courierApi.releaseHold(order.holdId).catch(() => {});
   return cancelled;
 }
 
@@ -1164,8 +1131,8 @@ async function fulfil(order: Order): Promise<void> {
     if (item) item.stock = Math.max(0, item.stock - line.quantity);
   }
   // Idempotent on Courier side (one commit per hold).
-  await internalFetch(`${config.courier.url}/internal/spend/commit`, {
-    body: {
+  await courierApi
+    .commitSpend({
       visaId: order.visaId,
       holdId: order.holdId,
       orderId: order.id,
@@ -1173,8 +1140,8 @@ async function fulfil(order: Order): Promise<void> {
       summary: `Bought ${order.items.map((i) => i.title).join(", ")}`,
       paidWith: order.paidWith,
       merchantName: (findShop(order.shop) ?? JUNIPER).name,
-    },
-  }).catch((e) => console.warn("[store] commit failed", e.message));
+    })
+    .catch((e) => console.warn("[store] commit failed", e.message));
   // After the commit, so the errand shows the purchase before the parcel. The buyer doesn't wait for PayPal's tracker.
   if (ships) void shipOut(order).catch((e) => console.warn("[store] shipping failed", (e as Error).message));
 }

@@ -23,7 +23,11 @@
     "format": "biome check --write .",
     "check": "npm run lint && npm run typecheck && npm test",
     "preflight": "tsx scripts/preflight.ts",
-    "keys": "tsx scripts/gen-signing-key.ts"
+    "keys": "tsx scripts/gen-signing-key.ts",
+    "sdk:validate": "npx -y @apimatic/cli@2.2.0 api validate -i sdk",
+    "sdk": "npm run sdk:typescript && npm run sdk:python",
+    "sdk:typescript": "npx -y @apimatic/cli@2.2.0 sdk generate -i sdk -l typescript -d sdk/typescript -f",
+    "sdk:python": "npx -y @apimatic/cli@2.2.0 sdk generate -i sdk -l python -d sdk/python -f"
   },
   "engines": {
     "node": ">=24"

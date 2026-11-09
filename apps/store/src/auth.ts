@@ -2,7 +2,6 @@ import {
   ALL_SCOPES,
   type ConnectionTokenClaims,
   config,
-  internalFetch,
   JUNIPER,
   newId,
   paypalFor,
@@ -12,6 +11,7 @@ import {
 import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
 import type { NextFunction, Request, Response } from "express";
 import { createRemoteJWKSet, jwtVerify } from "jose";
+import { courierApi } from "./courier-api.ts";
 import { db } from "./db.ts";
 
 /**
@@ -83,7 +83,7 @@ export async function visaStatus(visaId: string, fresh = false): Promise<VisaSta
   const cached = statusCache.get(visaId);
   if (!fresh && cached && Date.now() - cached.at < 3000) return cached.value;
   try {
-    const value = await internalFetch<VisaStatus>(`${config.courier.url}/internal/visas/${encodeURIComponent(visaId)}`);
+    const value = await courierApi.getErrand(visaId);
     statusCache.set(visaId, { value, at: Date.now() });
     return value;
   } catch {
@@ -120,9 +120,7 @@ async function connectionStatus(id: string): Promise<ConnectionStatus | null> {
   const cached = connectionCache.get(id);
   if (cached && Date.now() - cached.at < 3000) return cached.value;
   try {
-    const value = await internalFetch<ConnectionStatus>(
-      `${config.courier.url}/internal/connections/${encodeURIComponent(id)}`,
-    );
+    const value = await courierApi.getConnection(id);
     connectionCache.set(id, { value, at: Date.now() });
     return value;
   } catch {

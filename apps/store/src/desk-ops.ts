@@ -1,7 +1,8 @@
-import { afterSaleOf, avatarFor, COURIER_COLORS, config, internalFetch, money, type Shop } from "@courier/shared";
+import { afterSaleOf, avatarFor, COURIER_COLORS, money, type Shop } from "@courier/shared";
 import type { RequestLogEntry } from "./auth.ts";
 import { forgetVisa, logRequest } from "./auth.ts";
 import { deliveryView } from "./clerk.ts";
+import { courierApi } from "./courier-api.ts";
 import { type ClerkAction, db, type Order, type ReturnRecord, type Shipment } from "./db.ts";
 import { colorFor, type DeskDoorEntry, doorLog, shortPseudonym } from "./desk.ts";
 
@@ -58,8 +59,10 @@ export async function reportCourier(
   via: string,
 ): Promise<{ ok: boolean; outcome?: string }> {
   try {
-    const result = await internalFetch<{ bondOutcome: string }>(`${config.courier.url}/internal/report`, {
-      body: { visaId, reason: `Reported by ${shop.name} from its ${via}`, evidence: { via, shop: shop.slug } },
+    const result = await courierApi.reportCourier({
+      visaId,
+      reason: `Reported by ${shop.name} from its ${via}`,
+      evidence: { via, shop: shop.slug },
     });
     forgetVisa(visaId);
     db.put<Reported>("desk_reports", visaId, { id: visaId, shop: shop.slug, at: new Date().toISOString() });

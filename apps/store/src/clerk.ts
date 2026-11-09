@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { config, findShop, internalFetch, JUNIPER, MONEY, money, newId, paypal } from "@courier/shared";
+import { config, findShop, JUNIPER, MONEY, money, newId, paypal } from "@courier/shared";
 import { type AfterSale, afterSaleOf } from "./catalog.ts";
+import { courierApi } from "./courier-api.ts";
 import { type ClerkAction, db, type Order, type ReturnRecord, type Shipment } from "./db.ts";
 import { checkRefundArgs, refundRoom } from "./limits.ts";
 import { stageLabels, stageOf } from "./shipping.ts";
@@ -85,8 +86,8 @@ async function refundDone(
   });
   if (saved.amountCents > 0)
     db.put<Order>("orders", order.id, { ...order, refundedCents: (order.refundedCents ?? 0) + saved.amountCents });
-  await internalFetch(`${config.courier.url}/internal/returns`, {
-    body: {
+  await courierApi
+    .updateReturn({
       visaId: order.visaId,
       orderId: order.id,
       merchantName: shopOf(order).name,
@@ -95,8 +96,8 @@ async function refundDone(
       note: saved.note,
       by: saved.by,
       paypal: MONEY[mode as keyof typeof MONEY]?.name ?? mode,
-    },
-  }).catch((e) => console.warn("[clerk] couldn't tell Courier", (e as Error).message));
+    })
+    .catch((e) => console.warn("[clerk] couldn't tell Courier", (e as Error).message));
   return saved;
 }
 
