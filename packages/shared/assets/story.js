@@ -12,8 +12,9 @@
     types: $$("[data-type]", el),
     meters: $$("[data-meter]", el).map((n) => [n, n.dataset.meter.split(",").map((s) => s.split(":").map(Number))]),
   }));
-  /* Back to the top in one go, rather than scrolling back through every screen. */
+  /* On the home page, back to the top in one go. Anywhere else the logo leads home, like any site's. */
   nav?.querySelector(".logo")?.addEventListener("click", (e) => {
+    if (location.pathname !== "/") return;
     e.preventDefault();
     scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
   });
