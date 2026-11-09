@@ -31,9 +31,12 @@ if (process.env.NODE_ENV !== "production") enableStudioDevValidations();
  */
 {
   const Native = Intl.NumberFormat;
-  // A plain function, so both `Intl.NumberFormat(…)` and `new Intl.NumberFormat(…)` work, as they do natively.
-  const usd = ((locales?: Intl.LocalesArgument, options?: Intl.NumberFormatOptions) =>
-    new Native(locales ?? "en-US", options)) as unknown as typeof Intl.NumberFormat;
+  // A function declaration, not an arrow (which the formatter would turn a function expression into): Studio calls
+  // `new Intl.NumberFormat(…)`, and an arrow can't be called with `new`.
+  function UsNumberFormat(locales?: Intl.LocalesArgument, options?: Intl.NumberFormatOptions) {
+    return new Native(locales ?? "en-US", options);
+  }
+  const usd = UsNumberFormat as unknown as typeof Intl.NumberFormat;
   Object.defineProperty(usd, "prototype", { value: Native.prototype });
   Object.defineProperty(usd, "supportedLocalesOf", { value: Native.supportedLocalesOf });
   Intl.NumberFormat = usd;

@@ -134,27 +134,33 @@ function needCard(n: NeedRow): RawHtml {
 
 export function todayPage(shop: Shop, desk: ShopDesk): string {
   const { counts } = desk;
-  const stat = (key: string, n: string | number, label: string, hot = false) =>
-    html`<div class="dk-stat ${hot ? "hot" : ""}"><b data-count="${key}">${n}</b><span>${label}</span></div>`;
+  // A number in the headline, kept current by the desk's script; its noun follows it into the plural.
+  const n = (key: keyof ShopDesk["counts"], one?: string, many?: string) => {
+    const value = counts[key];
+    const word =
+      one && many
+        ? html` <span data-plural="${key}" data-one="${one}" data-many="${many}">${value === 1 ? one : many}</span>`
+        : "";
+    return html`<b data-count="${key}">${value}</b>${word}`;
+  };
   const needs = desk.needs.length
     ? html`<ul class="dk-needs" data-grid="needs">${desk.needs.map(needCard)}</ul>`
     : html`<div class="card dk-empty" data-grid="needs"><b>Nothing needs you.</b><p>Couriers are shopping inside their limits. Refunds the clerk proposes, orders nobody paid and couriers that tried to trick the shop land here.</p></div>`;
   const parcels = desk.parcels.filter((p) => !p.delivered);
   const main = html`<div class="pg pg-wide"><div class="pg-in">
-    ${head(
-      shop.name,
-      desk.counts.needs
-        ? `${desk.counts.needs} ${desk.counts.needs === 1 ? "thing needs" : "things need"} you. Every courier here shows a verified ID, never the person's name.`
-        : "Nothing needs you. Every courier here shows a verified ID, never the person's name.",
-      html`<a class="btn sm ghost" href="${config.courier.url}/bots">Send some bots ↗</a>`,
-    )}
-    <div class="dk-stats">
-      ${stat("needs", counts.needs, "Need you", counts.needs > 0)}
-      ${stat("paidToday", counts.paidToday, "Paid by couriers today")}
-      ${stat("parcels", counts.parcels, "Parcels on their way")}
-      ${stat("turnedAwayToday", counts.turnedAwayToday, "Turned away today")}
-    </div>
-    ${section("Needs you", html`<span class="fine">Each button is checked again in code before anything moves.</span>`, needs)}
+    <header class="pg-h dk-today-h">
+      <div><span class="dk-kicker">Today at the shop</span><h1 class="big">${shop.name}</h1></div>
+      <a class="btn sm ghost" href="${config.courier.url}/bots">Send some bots ↗</a>
+    </header>
+    <p class="dk-lede">
+      <a href="#needs" class="dk-l-needs ${counts.needs ? "hot" : ""}">${n("needs", "thing needs", "things need")} you</a>.
+      Couriers paid <a href="${href(shop, "orders")}">${n("paidToday")}</a> today across
+      <a href="${href(shop, "orders")}">${n("ordersToday", "order", "orders")}</a>,
+      <a href="#parcels">${n("parcels", "parcel is", "parcels are")}</a> on the road, and the door turned away
+      <a href="${href(shop, "door")}">${n("turnedAwayToday", "bot", "bots")}</a>.
+    </p>
+    <p class="fine dk-lede-f">Every courier here shows a verified ID, never the person's name.</p>
+    ${section("Needs you", html`<span class="fine">Each button is checked again in code before anything moves.</span>`, needs, "needs")}
     <div class="dk-two">
       ${section(
         "On their way",
@@ -167,6 +173,7 @@ export function todayPage(shop: Shop, desk: ShopDesk): string {
                   html`<li>${who(p.courier)}<span class="dk-li-m"><b>${p.item}</b><small>${p.carrier} · ${p.tracking}</small></span><span class="dk-pill">${p.step}</span></li>`,
               )}</ul>`
           : html`<div class="card dk-empty sm"><p>No parcels on the road. ${desk.policy.delivery}.</p></div>`,
+        "parcels",
       )}
       ${section(
         "Turned away, and why",
