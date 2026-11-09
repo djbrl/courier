@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import {
   afterSaleOf,
   config,
@@ -12,6 +14,7 @@ import {
   paypalFor,
   portrait,
   type RawHtml,
+  ROOT_DIR,
   raw,
   returnsShort,
   SHOPS,
@@ -102,6 +105,23 @@ export function notFoundPage(): string {
   );
 }
 
+/* A shop with a photo in assets/banners shows it across its banner; the others keep their drawn shelf. */
+const BANNER_DIR = path.join(ROOT_DIR, "packages/shared/assets/banners");
+const BANNERS = new Set(
+  fs.existsSync(BANNER_DIR)
+    ? fs
+        .readdirSync(BANNER_DIR)
+        .filter((f) => f.endsWith(".jpg"))
+        .map((f) => f.slice(0, -4))
+    : [],
+);
+
+function banner(shop: Shop, items: Item[]): RawHtml {
+  if (BANNERS.has(shop.slug))
+    return html`<div class="sf-banner sf-photo" aria-hidden="true"><img src="/assets/banners/${shop.slug}.jpg" alt="" fetchpriority="high"></div>`;
+  return html`<div class="sf-banner" aria-hidden="true"><div class="sf-peek">${items.slice(0, 3).map((i) => html`<span class="sf-cv">${itemArt(i, shop.slug)}</span>`)}</div></div>`;
+}
+
 const labelFor = (category: string) => category[0]!.toUpperCase() + category.slice(1);
 
 /** A shop front in the shape people know from delivery apps: a banner, the shop's card, a menu, then the shelves. */
@@ -116,7 +136,7 @@ export function storefront(shop: Shop, items: Item[], category = ""): string {
     "shop",
     html`<main class="sf" style="--tile:${shop.tile}">
       <section class="sf-hero">
-        <div class="sf-banner" aria-hidden="true"><div class="sf-peek">${items.slice(0, 3).map((i) => html`<span class="sf-cv">${itemArt(i, shop.slug)}</span>`)}</div></div>
+        ${banner(shop, items)}
         <div class="sf-id">${shopLogo(shop, "lg")}
           <div><h1>${shop.name}</h1><p>${shop.sells}</p>${promiseLine(shop, items.length)}</div>
           <a class="sf-owner" href="/desk/sign-in?shop=${shop.slug}"><small>Are you the owner?</small><b>Open the shop desk <span aria-hidden="true">→</span></b></a>

@@ -9639,3 +9639,19 @@ html:has(body.app-page) {
     margin-top: 58px;
   }
 }
+/* A real photo across the banner, darkened a touch at the bottom so the logo sits on it cleanly. */
+.sf-banner.sf-photo {
+  background: var(--tile);
+}
+.sf-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.sf-photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 55%, rgba(0, 0, 0, 0.22));
+}
