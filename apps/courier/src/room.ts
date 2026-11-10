@@ -921,9 +921,9 @@ export async function endChat(human: Human, courier: Courier, chat: RoomChat): P
       if (m) m.leftAt = at;
       r.lines.push({ t: "left", by: human.id, at });
     });
-    if (after) relay(after, human.id, { relay: `${me.name} left the run.`, from: me.courierName, notice: true });
+    if (after) relay(after, human.id, { relay: `${me.name} left the group.`, from: me.courierName, notice: true });
   }
-  push(chat, { t: "ended", text: run ? "You left the run, and this errand is over." : "This errand is over." });
+  push(chat, { t: "ended", text: run ? "You left the group, and this errand is over." : "This errand is over." });
 }
 
 /** Holds an amount the courier worked out, for the person to say yes to. Their cap still applies. */

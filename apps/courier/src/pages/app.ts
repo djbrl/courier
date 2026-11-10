@@ -237,14 +237,14 @@ function courierControls(d: Desk, sel: Courier): RawHtml {
           ? html`<div class="li"><span class="dot no"></span><span class="li-t"><b>Revoked</b><small>It can't start errands. Revoked ${timeAgo(sel.revokedAt)}.</small></span>
             <form method="post" action="/app/couriers/${sel.id}/restore"><button class="btn ghost sm" type="submit">Restore</button></form></div>`
           : html`<div class="li"><span class="dot"></span><span class="li-t"><b>Revoke ${sel.name}</b><small>Ends its open errands now and stops new ones.</small></span>
-            <form method="post" action="/app/couriers/${sel.id}/revoke" data-sure="Revoke ${sel.name}?" data-sure-body="Its open errands end now." data-sure-yes="Revoke"><button class="btn danger sm" type="submit">Revoke</button></form></div>`
+            <form method="post" action="/app/couriers/${sel.id}/revoke" data-sure="Revoke ${sel.name}?" data-sure-body="Its open errands end now." data-sure-yes="Revoke"><button class="btn ghost sm" type="submit">Revoke</button></form></div>`
       }
       <div class="li"><span class="dot no"></span><span class="li-t"><b>Delete ${sel.name}</b><small>Removes it and its chats for good.</small></span>
         <form method="post" action="/app/couriers/${sel.id}/delete" data-sure="Delete ${sel.name}?" data-sure-body="${
           d.couriers.length > 1
             ? "Its open errands end and its chats are deleted. This can't be undone."
             : "Its open errands end and its chats are deleted. It's your only courier, so you'll make a new one next."
-        }" data-sure-yes="Delete"><button class="btn danger sm" type="submit">Delete</button></form></div>
+        }" data-sure-yes="Delete"><button class="btn ghost sm" type="submit">Delete</button></form></div>
     </div>`;
 }
 
@@ -721,8 +721,8 @@ export function settingsPage(d: Desk, savedEmail?: string | null | false): strin
       ${row("Connector address", "For Claude or any MCP agent.", html`<button type="button" class="btn ghost sm" data-copy="${COURIER_RESOURCE}">Copy</button>`)}
     </div>`,
     security: html`<form class="card list" method="post" action="/app/settings/cap">
-      <div class="li li-cap"><span class="li-t"><b>Spend without asking</b><small>Above this, Claude asks you first. 0 always asks. Errand budgets can't go over the per-errand amount.${d.human.cap ? "" : " Off until you save."}</small></span>
-        ${capFields(d.human)}<button class="btn sm" type="submit">Save</button></div>
+      <div class="li li-cap"><span class="li-t"><b>Spend without asking</b><small>${d.human.cap ? "Above this, Claude asks you first. Errand budgets can't go over the per-errand amount." : "Off: Claude asks before every purchase. Set amounts and save to turn it on."}</small></span>
+        ${capFields(d.human, { suggest: true })}<button class="btn sm" type="submit">Save</button></div>
     </form>`,
     account: html`<div class="card list">
       ${row(firstName(d.human) ?? "You", "Your name is never shared with shops.", html`<a class="btn ghost sm" ${signOut(d.human)}>Sign out</a>`)}

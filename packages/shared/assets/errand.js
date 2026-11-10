@@ -128,7 +128,7 @@
         ${lines(e.items)}
         <div class="tot"><span>${esc(e.shop_name)}</span><b>$${esc(e.total)}</b></div>
         <div class="slot">${slot}</div>
-        ${`<p class="fine pay-foot">${canCallBack ? `<button type="button" class="link fine" data-callback="${esc(e.order_id)}" data-until="${e.callBackUntil}">Call back · <span>${clock(e.callBackUntil)}</span></button><br>` : ""}${boot.paypal === "live" ? "Live PayPal: real money." : boot.paypal === "sandbox" ? "PayPal sandbox: log in with a sandbox buyer account." : "Simulated PayPal: no real money."}</p>`}
+        ${`<p class="fine pay-foot">${canCallBack ? `<button type="button" class="link fine" data-callback="${esc(e.order_id)}" data-until="${e.callBackUntil}">Cancel (<span>${clock(e.callBackUntil)}</span>)</button><br>` : ""}${boot.paypal === "live" ? "Live PayPal: real money." : boot.paypal === "sandbox" ? "PayPal sandbox: log in with a sandbox buyer account." : "Simulated PayPal: no real money."}</p>`}
       </div>`;
   }
 
@@ -200,13 +200,13 @@
     dim: (e) => `<div class="bub dim">${esc(e.text)}</div>`,
     new: (e) =>
       `<div class="tk-mark"><span class="tk-line"><b>New errand</b> ${esc(e.what)} · up to ${usd(e.limitCents)}</span></div>`,
-    items: (e) =>
-      `<div class="items">${e.results
+    items: (e, spent) =>
+      `<div class="items${spent ? " spent" : ""}">${e.results
         .map(
           (r) =>
             `<article class="item-c">${thumb(r)}<div><b>${esc(r.title)}</b><small>${esc(e.shop)}${r.artist && r.artist !== e.shop ? ` · ${esc(r.artist)}` : ""}</small></div>
             <span class="pr">$${esc(r.price)}</span>
-            <button type="button" class="btn sm" data-say="Get ${esc(r.title)} from ${esc(e.shop)}">Get this</button></article>`,
+            <button type="button" class="btn sm" data-say="Get ${esc(r.title)} from ${esc(e.shop)}" ${spent ? "disabled" : ""}>Get this</button></article>`,
         )
         .join("")}</div>`,
     pay: payCard,
@@ -254,7 +254,10 @@
       'class="said"',
       `class="said${grew && !chat.events.length ? " arrive" : ""}"`,
     );
-    log.innerHTML = hello + chat.events.map((e) => DRAW[e.t]?.(e) ?? "").join("") + (chat.working ? typing() : "");
+    // A list of things is spent once the person has said anything after it.
+    const lastSaid = chat.events.findLastIndex((e) => e.t === "me");
+    log.innerHTML =
+      hello + chat.events.map((e, i) => DRAW[e.t]?.(e, i < lastSaid) ?? "").join("") + (chat.working ? typing() : "");
     if (atEnd || grew) requestAnimationFrame(() => (log.scrollTop = log.scrollHeight));
     drawn = chat.id;
   }
@@ -272,7 +275,7 @@
     if (l.t === "order")
       return `<li class="sys">${esc(l.name)} ordered ${esc((l.items || []).join(", "))}, $${esc(l.total)}.</li>`;
     if (l.t === "paid") return `<li class="sys">${esc(l.name)} paid $${esc(l.total)}.</li>`;
-    if (l.t === "left") return `<li class="sys">${esc(l.you ? "You" : l.name)} left the run.</li>`;
+    if (l.t === "left") return `<li class="sys">${esc(l.you ? "You" : l.name)} left the group.</li>`;
     return "";
   }
 
@@ -281,7 +284,7 @@
     if (l.t === "say") return `${l.courier}: ${l.text}`;
     if (l.t === "joined") return `${l.name} joined the run.`;
     if (l.t === "paid") return `${l.name} paid $${l.total}.`;
-    if (l.t === "left") return `${l.name} left the run.`;
+    if (l.t === "left") return `${l.name} left the group.`;
     return "";
   }
 
@@ -374,7 +377,7 @@
     if (key === runDrawn) return;
     runDrawn = key;
     const alone = r.members.length < 2;
-    runBody.innerHTML = `<header><b>Run</b><span>${esc(r.what)}${r.shop && !r.what.includes(r.shop) ? ` · ${esc(r.shop)}` : ""}</span>
+    runBody.innerHTML = `<header><b>Group</b><span>${esc(r.what)}${r.shop && !r.what.includes(r.shop) ? ` · ${esc(r.shop)}` : ""}</span>
         ${r.open && !r.full && !chat.ended ? `<button type="button" class="link fine" data-copy="${esc(r.url)}">Copy invite link</button>` : ""}</header>
       <ul class="run-who">${r.members.map(who).join("")}${(r.invited || []).map((n) => `<li class="asked"><b>${esc(n)}</b><span class="st">Invited</span></li>`).join("")}</ul>
       <ol class="run-t" aria-live="polite">${
@@ -414,7 +417,7 @@
     const e = chat.errand;
     const end =
       chat.events.length && !chat.ended
-        ? `<button type="button" class="btn ghost sm rm-end-btn" data-end>${chat.run ? "Leave run" : "End errand"}</button>`
+        ? `<button type="button" class="btn ghost sm rm-end-btn" data-end>${chat.run ? "Leave group" : "End errand"}</button>`
         : chat.ended
           ? `<span class="over-tag">Ended</span>`
           : "";
@@ -648,11 +651,11 @@
   /** Ending is the person's own button. In a run, it's leaving: the others see they've gone. */
   async function end() {
     const yes = await window.courierConfirm({
-      title: chat.run ? "Leave the run?" : "End this errand?",
+      title: chat.run ? "Leave the group?" : "End this errand?",
       body: chat.run
         ? "The others see that you left. Anything you haven’t paid is called back, and this chat stays here to read."
         : "Anything unpaid is called back, and this chat stays here to read. Anything else is a new errand.",
-      yes: chat.run ? "Leave run" : "End errand",
+      yes: chat.run ? "Leave group" : "End errand",
     });
     if (!yes) return;
     try {

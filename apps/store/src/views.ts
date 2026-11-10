@@ -170,7 +170,9 @@ export function paymentResult(order: Order | undefined, ok: boolean, message: st
     : "";
   return courierLayout({
     title: `${ok ? "Paid" : "Not paid"} · ${(findShop(order?.shop) ?? JUNIPER).name}`,
-    bodyClass: "store-pay",
+    // The store's own header and background, so the page reads as the shop's and fills the window.
+    nav: storeNav("shop", findShop(order?.shop)),
+    bodyClass: "jr-page jr-shop store-pay",
     body: html`<main class="solo"><div class="solo-card">
       <div class="big-ic" aria-hidden="true" style="background:${ok ? "#e3f6ec" : "var(--paper)"}">${ok ? "✓" : "↩"}</div>
       <h1 class="big">${ok ? "Paid." : "Not paid."}</h1>

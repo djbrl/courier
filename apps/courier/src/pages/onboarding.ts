@@ -59,7 +59,7 @@ export function welcomePage(): string {
   return stagePage("Welcome", {
     left: html`<div class="ob2-body">
         <h1 class="ob2-h">Welcome to Courier.</h1>
-        <p class="ob2-lead">Give your AI agent a face and let it shop for you. You set the budget, and it can’t go over.</p>
+        <p class="ob2-lead">Give your agent an ID, verified by PayPal. You set the budget, and it can’t go over.</p>
         <p class="ob2-q">How do you want to try it?</p>
         <div class="ob2-pick">
           <form method="post" action="/auth/demo"><input type="hidden" name="next" value="/start/courier"><button class="ob2-opt" type="submit"><b>I’m shopping</b><small>Make your courier and send it on an errand.</small>${ARROW}</button></form>

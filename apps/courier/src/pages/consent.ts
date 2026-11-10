@@ -71,11 +71,17 @@ export function connectConsentPage(request: AuthRequest, human: Human): string {
 }
 
 /** Fields for the most Claude may start on its own. Empty or zero means it always asks. */
-export function capFields(human: Human) {
-  const dollars = (cents: number | undefined, fallback: number) => (cents === undefined ? fallback : cents / 100);
+/** The two spend amounts. With `suggest`, an unset limit shows the usual amounts as hints, not values, so it reads as off. */
+export function capFields(human: Human, opts: { suggest?: boolean } = {}) {
+  const field = (cents: number | undefined, usual: number) =>
+    cents !== undefined
+      ? raw(`value="${cents / 100}"`)
+      : opts.suggest
+        ? raw(`placeholder="${usual}"`)
+        : raw(`value="${usual}"`);
   return html`<div class="wiz-fields capf">
-    <label class="fld"><span>Per errand</span><span class="capi"><i>$</i><input class="inp" type="number" name="cap_errand" min="0" max="500" step="1" value="${dollars(human.cap?.perErrandCents, 50)}" aria-label="Most per errand, in dollars"></span></label>
-    <label class="fld"><span>Per day</span><span class="capi"><i>$</i><input class="inp" type="number" name="cap_day" min="0" max="2000" step="1" value="${dollars(human.cap?.perDayCents, 100)}" aria-label="Most per day, in dollars"></span></label>
+    <label class="fld"><span>Per errand</span><span class="capi"><i>$</i><input class="inp" type="number" name="cap_errand" min="0" max="500" step="1" ${field(human.cap?.perErrandCents, 50)} aria-label="Most per errand, in dollars"></span></label>
+    <label class="fld"><span>Per day</span><span class="capi"><i>$</i><input class="inp" type="number" name="cap_day" min="0" max="2000" step="1" ${field(human.cap?.perDayCents, 100)} aria-label="Most per day, in dollars"></span></label>
   </div>`;
 }
 

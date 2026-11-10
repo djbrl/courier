@@ -10709,3 +10709,9 @@ html.courier-swap .rm-h {
     display: block;
   }
 }
+
+/* A list of things the person has already answered: its buttons rest. */
+.items.spent .btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

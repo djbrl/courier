@@ -45,7 +45,7 @@ export function errandRoom(d: Desk, courier: Courier, chat: unknown, list: unkno
       <nav class="rm-tabs" aria-label="Errand room">
         <button type="button" data-view="list">Errands<i class="dot" hidden></i></button>
         <button type="button" data-view="chat" aria-current="true">${look.name}<i class="dot" hidden></i></button>
-        <button type="button" data-view="run" hidden>Run<i class="dot" hidden></i></button>
+        <button type="button" data-view="run" hidden>Group<i class="dot" hidden></i></button>
       </nav>
       <div class="rm-toast" id="toast" role="status" hidden></div>
       <aside class="rm-side">

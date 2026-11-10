@@ -1004,10 +1004,13 @@ body.dk-in-page {
 }
 .dk-in-card h1 {
   margin: 0;
-  font-family: var(--display, "Archivo", system-ui, sans-serif);
-  font-size: 30px;
-  font-weight: 800;
-  line-height: 1.1;
+  font-family: "Archivo", sans-serif;
+  font-size: 32px;
+  font-style: italic;
+  font-weight: 900;
+  font-stretch: 125%;
+  letter-spacing: -0.04em;
+  line-height: 1;
 }
 .dk-in-card p {
   margin: 0;
