@@ -1913,7 +1913,7 @@ footer .ppl {
 .ps {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 104px var(--gut) 40px;
+  padding: 0 var(--gut) 40px;
 }
 /* A hero like the landing page's: the invitation, its two ways in, then every shop. */
 .ps-h {
@@ -2025,9 +2025,6 @@ footer .ppl {
   font-size: 14px;
 }
 @media (max-width: 860px) {
-  .ps {
-    padding-top: 88px;
-  }
   .ps-grid {
     grid-template-columns: minmax(0, 1fr);
     gap: 12px;

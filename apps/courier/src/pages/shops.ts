@@ -4,7 +4,7 @@ import path from "node:path";
 import { config, courierLayout, html, PP, ROOT_DIR, raw, SHOPS, shopLogo } from "@courier/shared";
 import type { Human } from "../db.ts";
 import { assetUrl } from "./landing.ts";
-import { navLinks } from "./shared.ts";
+import { cnav } from "./shared.ts";
 
 /* Shops with a photo in assets/banners show it; the rest keep their colour. */
 const BANNER_DIR = path.join(ROOT_DIR, "packages/shared/assets/banners");
@@ -30,7 +30,6 @@ export function partnerShopsPage(human: Human | null): string {
     </a>`;
 
   const body = html`${MARK}
-<header class="s-nav" id="nav"><a href="/" class="logo" aria-label="Courier"><svg><use href="#mk"/></svg>Courier</a><nav class="s-links" aria-label="Site">${navLinks(human, "/shops")}</nav></header>
 <main class="ps">
   <header class="ps-h">
     <h1 class="s-h">Join our growing list of&nbsp;partners.</h1>
@@ -50,8 +49,9 @@ export function partnerShopsPage(human: Human | null): string {
   return courierLayout({
     title: "Shops · Courier",
     head: raw('<meta name="description" content="The partner shops that welcome Courier agents.">'),
+    // The same header as MCP and Developers, so the logo and links sit in the same place on every page.
+    nav: cnav(human, "/shops"),
     body,
     styles: [assetUrl("landing.css")],
-    scripts: [assetUrl("page.js")],
   });
 }
