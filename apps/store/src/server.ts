@@ -18,7 +18,7 @@ import { cancelOrder, createMcpServer, settleOrder } from "./mcp.ts";
 import { DEFAULT_OWNER_SHOP, ownerApi, ownerPage, ownerShop, signInOwner, signOutOwner } from "./owner.ts";
 import { isSample, isSampleVisa, refreshSample } from "./sample.ts";
 import { startDeliveries } from "./shipping.ts";
-import { merchantDashboard, notFoundPage, paymentResult, receiptPage, storefront } from "./views.ts";
+import { errorPage, merchantDashboard, notFoundPage, paymentResult, receiptPage, storefront } from "./views.ts";
 
 const app = express();
 app.set("trust proxy", "loopback");
@@ -509,6 +509,13 @@ app.get("/:slug", (req, res, next) => {
 // A page a person can read for any address nothing above answered; machines still get a 404 status.
 app.get("/{*rest}", (_req, res) => {
   res.status(404).send(notFoundPage());
+});
+
+// Anything that throws gets a page in the store's own look; the details stay in the log.
+app.use((error: unknown, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error(error);
+  if (res.headersSent) return next(error);
+  res.status(500).send(errorPage());
 });
 
 app.listen(config.store.port, config.bindHost, () => {

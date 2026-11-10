@@ -94,6 +94,19 @@ export function notFoundPage(): string {
   );
 }
 
+/** What a person sees when something breaks on the store's side, instead of a bare "Internal Server Error". */
+export function errorPage(): string {
+  return storePage(
+    "Something went wrong",
+    "shop",
+    html`<main class="solo"><div class="solo-card">
+      <h1 class="big">Something went wrong.</h1>
+      <p class="lead">That page didn’t load on our side. Try again in a moment.</p>
+      <div class="acts-row"><a class="btn" href="/">See all shops</a></div>
+    </div></main>`,
+  );
+}
+
 /* A shop with a photo in assets/banners shows it across its banner; the others keep their drawn shelf. */
 const BANNER_DIR = path.join(ROOT_DIR, "packages/shared/assets/banners");
 const BANNERS = new Set(

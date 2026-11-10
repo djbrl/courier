@@ -866,6 +866,17 @@ app.use("/bots", botsRouter);
 migrateSavedPayPal();
 setInterval(() => void sweepExpiredVisas(), 60_000).unref();
 
+// Anything that throws gets a page in Courier's own look; the details stay in the log.
+app.use((error: unknown, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error(error);
+  if (res.headersSent) return next(error);
+  res
+    .status(500)
+    .send(
+      errorPage(currentHuman(req), "Something went wrong", "That page didn’t load on our side. Try again in a moment."),
+    );
+});
+
 app.listen(config.courier.port, config.bindHost, () => {
   console.log(
     `Courier  → ${config.courier.url}  (PayPal: ${paypal.mode}, intent: ${config.intent.model}, agent: ${config.agent.model})`,

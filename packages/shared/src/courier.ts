@@ -10,7 +10,14 @@ import { escapeHtml, html, type RawHtml, raw } from "./html.ts";
 
 /** An address that changes with the file, so a deploy never meets a browser's cached copy. */
 function versioned(file: string): string {
-  const content = fs.readFileSync(path.join(ROOT_DIR, "packages/shared/assets", file));
+  let content: Buffer;
+  try {
+    content = fs.readFileSync(path.join(ROOT_DIR, "packages/shared/assets", file));
+  } catch {
+    // A missing built file (the desk bundle before its build) costs that script, not the whole page.
+    console.error(`[assets] ${file} is missing; serving it unversioned`);
+    return `/assets/${file}`;
+  }
   return `/assets/${file}?v=${createHash("sha256").update(content).digest("hex").slice(0, 8)}`;
 }
 const CSS_URL = versioned("courier.css");
