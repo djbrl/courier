@@ -62,7 +62,7 @@ export function installPage(human: Human | null): string {
         "private",
         "#FFC629",
         html`Shops never see your&nbsp;name.`,
-        "Just your courier’s ID, and PayPal’s word you’re real.",
+        "Just your courier’s ID, verified by PayPal.",
         html`<div class="mc-win mc-sh">
           <div class="mc-col"><h4>Shared</h4><p>${face("shades", "#3D3AF5")}Juno</p><p><code>pp_7f3a…c91</code></p><p>A real person</p></div>
           <div class="mc-col mc-no"><h4>Withheld</h4><p>Your name</p><p>Your email</p><p>Your PayPal account</p></div>
