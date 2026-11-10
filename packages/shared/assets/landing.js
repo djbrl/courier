@@ -363,8 +363,11 @@
     angle = 0,
     speed = 0;
 
+  /* Each screen plays once it has mostly arrived, on its own clock, so scrolling never has to wait on it. */
   const tracks = $$("[data-track]").map((el) => ({
     el,
+    dur: +(el.dataset.dur || 3000),
+    start: 0,
     ats: $$("[data-at]", el).map((n) => [n, +n.dataset.at]),
     untils: $$("[data-until]", el).map((n) => [n, +n.dataset.until]),
     types: $$("[data-type]", el),
@@ -391,8 +394,8 @@
     }
     for (const t of tracks) {
       const r = t.el.getBoundingClientRect();
-      const span = r.height - innerHeight;
-      const p = reduce ? 1 : Math.max(0, Math.min(1, -r.top / span));
+      if (!t.start && r.top < innerHeight * 0.35 && r.bottom > innerHeight * 0.5) t.start = performance.now();
+      const p = reduce ? 1 : t.start ? Math.min(1, (performance.now() - t.start) / t.dur) : 0;
       for (const [n, at] of t.ats) n.classList.toggle("is", p >= at);
       for (const [n, u] of t.untils) n.classList.toggle("gone", p >= u);
       for (const n of t.types) {
