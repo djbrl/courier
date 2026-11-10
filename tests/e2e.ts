@@ -1333,13 +1333,20 @@ await step(
     assert.deepEqual(shown.sort(), shops.map((s: any) => s.shop).sort(), "the same shops the app has");
     assert.match(landing, /<h3>Shared<\/h3>/);
     assert.match(landing, /<h3>Withheld<\/h3><p>Your personal data<\/p>/, "the back says personal data stays back");
-    for (const href of ["/docs", "/install", "/start", "/start?as=shop"])
+    for (const href of ["/shops", "/docs", "/install", "/start", "/start?as=shop"])
       assert.ok(landing.includes(`href="${href}"`), href);
     assert.match(landing, /id="for-shops"/, "the shop side is part of the landing page");
 
     const forShops = await fetch(`${flow.courier}/for-shops`, { redirect: "manual" });
     assert.equal(forShops.status, 301);
     assert.equal(forShops.headers.get("location"), "/#for-shops");
+    const partners = await fetch(`${flow.courier}/shops`);
+    assert.equal(partners.status, 200);
+    const partnersPage = await partners.text();
+    for (const s of shops) assert.ok(partnersPage.includes(`/${s.shop}"`), `the shops page lists ${s.shop}`);
+    const storeHome = await fetch(`${STORE}/`, { redirect: "manual" });
+    assert.equal(storeHome.status, 302);
+    assert.equal(storeHome.headers.get("location"), `${flow.courier}/shops`, "the list of shops lives on Courier");
     const asShop = await (await fetch(`${flow.courier}/start?as=shop`)).text();
     assert.match(asShop, /class="ob2-opt on" href="[^"]*\/desk\/sign-in"/, "the chooser picks out the shop side");
     const install = await fetch(`${flow.courier}/install`);

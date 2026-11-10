@@ -51,6 +51,7 @@ import {
   errorPage,
   installPage,
   landingPage,
+  partnerShopsPage,
   refusalPage,
   signInPage,
   ticketDeclinedPage,
@@ -155,6 +156,9 @@ app.get("/", (req, res) => {
 // For shops is now a part of the landing page's story.
 app.get("/for-shops", (_req, res) => {
   res.redirect(301, "/#for-shops");
+});
+app.get("/shops", (req, res) => {
+  res.send(partnerShopsPage(currentHuman(req)));
 });
 app.get("/install", (req, res) => {
   res.send(installPage(currentHuman(req)));

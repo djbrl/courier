@@ -2,7 +2,6 @@ import {
   avatar,
   avatarFor,
   type CourierLook,
-  config,
   courierLayout,
   html,
   isAvatar,
@@ -114,7 +113,7 @@ export function navLinks(human: Human | null, here = ""): RawHtml {
   const name = firstName(human);
   const link = (href: string, label: string) =>
     html`<a class="hide-sm" href="${href}" ${href === here ? raw('aria-current="page"') : ""}>${label}</a>`;
-  return html`${link(config.store.url, "Shops")}${link("/docs", "Developers")}${link("/install", "MCP")}
+  return html`${link("/shops", "Shops")}${link("/docs", "Developers")}${link("/install", "MCP")}
       ${
         human
           ? html`<a class="who" href="/app">${avatar()}${name ?? "My Courier"}</a>`

@@ -18,7 +18,7 @@ import { cancelOrder, createMcpServer, settleOrder } from "./mcp.ts";
 import { DEFAULT_OWNER_SHOP, ownerApi, ownerPage, ownerShop, signInOwner, signOutOwner } from "./owner.ts";
 import { isSample, isSampleVisa, refreshSample } from "./sample.ts";
 import { startDeliveries } from "./shipping.ts";
-import { merchantDashboard, notFoundPage, paymentResult, receiptPage, shopGrid, storefront } from "./views.ts";
+import { merchantDashboard, notFoundPage, paymentResult, receiptPage, storefront } from "./views.ts";
 
 const app = express();
 app.set("trust proxy", "loopback");
@@ -156,8 +156,9 @@ for (const shop of SHOPS) {
 
 /* ---------------- human-facing shop ---------------- */
 
+// The list of shops lives on Courier, next to everything else about it.
 app.get("/", (_req, res) => {
-  res.send(shopGrid());
+  res.redirect(302, `${config.courier.url}/shops`);
 });
 
 /** The public shelf, as humans see it (the Courier errand room renders its shop front from this). */

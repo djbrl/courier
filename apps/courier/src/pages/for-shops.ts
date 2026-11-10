@@ -7,111 +7,89 @@ import { cpage } from "./shared.ts";
 /** The Courier connector as an agent adds it. */
 const CONNECTOR = COURIER_RESOURCE;
 
-/** What the connector gives an agent, in the groups a person would think of them. */
-const TOOLS: { group: string; line: string; tools: [string, string][] }[] = [
-  {
-    group: "Find",
-    line: "Look around every shop that takes couriers.",
-    tools: [
-      ["list_shops", "The shops that welcome couriers"],
-      ["search_shop", "Search a shop’s menu or catalogue"],
-      ["get_item", "An item’s details and price"],
-    ],
-  },
-  {
-    group: "Buy",
-    line: "Pay with your PayPal, inside the budget you set.",
-    tools: [
-      ["start_errand", "Send a courier out with a budget"],
-      ["buy", "Buy on the errand, never past its limit"],
-      ["track_order", "Check and track an order"],
-    ],
-  },
-  {
-    group: "Together",
-    line: "Shop with friends, and let the couriers split it.",
-    tools: [
-      ["list_contacts", "Who you can chip in with"],
-      ["chip_in", "Split an order with friends’ couriers"],
-    ],
-  },
-  {
-    group: "Stay in control",
-    line: "You can stop or undo it at any point.",
-    tools: [
-      ["wait_for_errand", "Wait for you to set the budget"],
-      ["call_back", "Call a purchase back"],
-      ["request_return", "Ask the shop for a return"],
-    ],
-  },
-];
-
-const PROMPTS = [
-  "Get me a burger on Floor Dash. I have about $15.",
-  "Find a book for my sister on Bookworm, under $25.",
-  "Order dinner for me and Sam, and ask Sam’s courier to chip in.",
-  "Where’s my order from Juniper Records?",
-  "Reorder last week’s coffee beans from Beanbucks.",
-  "Return the mug I bought yesterday.",
-];
-
-/** MCP: what the connector does for you first, and how to add it last. */
+/** MCP: what it's like first, one screen at a time, and how to add it last. */
 export function installPage(human: Human | null): string {
   const step = (n: number, title: string, body: RawHtml | string) =>
     html`<li><span class="in-n">${n}</span><div><h3>${title}</h3><div class="in-b">${body}</div></div></li>`;
-  const face = (avatar: string) => html`<img class="mc-face" src="/assets/avatars/${avatar}.svg" alt="">`;
+  const face = (avatar: string, bg: string) =>
+    html`<img class="mc-face" src="/assets/avatars/${avatar}.svg" alt="" style="background:${bg}">`;
+  const row = (id: string, solid: string, title: RawHtml, line: string, pic: RawHtml) =>
+    html`<section class="mc-row" id="${id}">
+      <div class="mc-rc"><h2>${title}</h2><p>${line}</p></div>
+      <div class="mc-pic" style="--solid:${solid}">${pic}</div>
+    </section>`;
   return cpage(
     "MCP",
     human,
     html`<main class="mc">
       <section class="mc-hero">
-        <div class="mc-copy">
-          <span class="mc-kick">Courier MCP</span>
-          <h1 class="big">Let your agent do the&nbsp;shopping.</h1>
-          <p class="lead">One connector gives Claude, ChatGPT and any MCP agent a courier: an ID shops trust, your PayPal, and a limit it can’t go&nbsp;past.</p>
-          <div class="mc-url"><code class="copy inp code">${CONNECTOR}</code></div>
-          <div class="ctas"><a class="btn acc" href="/start">Get a courier${ARROW}</a><a class="btn ghost" href="#setup">Set it up</a></div>
-          <ul class="mc-works" aria-label="Works with"><li>Claude</li><li>ChatGPT</li><li>Cursor</li><li>Claude Code</li><li>Any MCP client</li></ul>
-        </div>
-        <div class="mc-chat" aria-label="An example chat">
+        <span class="mc-kick">Courier MCP</span>
+        <h1 class="big">Let your agent do the&nbsp;shopping.</h1>
+        <p class="lead">One connector, for any MCP&nbsp;agent.</p>
+        <div class="mc-get"><code class="copy inp code">${CONNECTOR}</code><a class="btn acc" href="/start">Get a courier${ARROW}</a></div>
+      </section>
+
+      <div class="mc-pic mc-hero-pic" style="--solid:#FF6B2C">
+        <div class="mc-win">
           <div class="mc-bar">New chat<small>Courier connected</small></div>
           <div class="mc-msgs">
             <p class="mc-you">Get me a burger on Floor Dash. I have about $15.</p>
             <p class="mc-tool"><code>search_shop</code></p>
-            <p class="mc-said">A Double Smash Burger is $11.50, and fries take it to $16. Just the burger?</p>
-            <p class="mc-you">Just the burger.</p>
+            <p class="mc-said">A Double Smash Burger is $11.50. Want it?</p>
+            <p class="mc-you">Yes please.</p>
             <p class="mc-tool"><code>start_errand</code><code>buy</code></p>
-            <div class="mc-card">${face("shades")}<span><b>Juno bought it</b><small>$11.50 of your $15 · Paid with PayPal</small></span></div>
+            <div class="mc-card">${face("shades", "#3D3AF5")}<span><b>Juno bought it</b><small>$11.50 of your $15 · PayPal</small></span></div>
           </div>
         </div>
+      </div>
+
+      ${row(
+        "limit",
+        "#3D3AF5",
+        html`It can’t overspend.`,
+        "Your limit lives in code. Past it, your courier stops and asks.",
+        html`<div class="mc-win mc-lim">
+          <div class="mc-bar">Juno<small>Floor Dash</small></div>
+          <div class="mc-lb">
+            <div class="mc-tot"><span>Total</span><b>$27.50</b></div>
+            <div class="mc-meter"><i></i></div>
+            <div class="mc-tot mc-sm"><span>Limit</span><span>$25.00</span></div>
+            <div class="mc-ask"><b>Past your $25</b><span>Go up to $30?</span><div><em>Go up to $30</em><em>Keep $25</em></div></div>
+          </div>
+        </div>`,
+      )}
+      ${row(
+        "private",
+        "#FFC629",
+        html`Shops never see your&nbsp;name.`,
+        "Just your courier’s ID, and PayPal’s word you’re real.",
+        html`<div class="mc-win mc-sh">
+          <div class="mc-col"><h4>Shared</h4><p>${face("shades", "#3D3AF5")}Juno</p><p><code>pp_7f3a…c91</code></p><p>A real person</p></div>
+          <div class="mc-col mc-no"><h4>Withheld</h4><p>Your name</p><p>Your email</p><p>Your PayPal account</p></div>
+        </div>`,
+      )}
+      ${row(
+        "friends",
+        "#FF5FA2",
+        html`Bring your&nbsp;friends.`,
+        "Your couriers split the bill. Each pays with its own PayPal.",
+        html`<div class="mc-win mc-fr">
+          <div class="mc-bar">Friday dinner<small>3 couriers</small></div>
+          <div class="mc-split">
+            <p>${face("shades", "#3D3AF5")}<span>Maya</span><b>$16.00</b></p>
+            <p>${face("afro", "#FF6B2C")}<span>Sam</span><b>$15.00</b></p>
+            <p>${face("bob", "#141414")}<span>Ana</span><b>$14.00</b></p>
+            <p class="mc-sum"><span>One order</span><b>$45.00</b></p>
+          </div>
+        </div>`,
+      )}
+
+      <section class="mc-works">
+        <h2>Works with your&nbsp;agent.</h2>
+        <ul><li>Claude</li><li>ChatGPT</li><li>Cursor</li><li>Claude Code</li><li>Any MCP client</li></ul>
       </section>
 
-      <section class="mc-sec">
-        <h2>What your agent can&nbsp;do.</h2>
-        <p class="mc-sub">One sign-in, and your agent picks the right tool. You just ask.</p>
-        <div class="mc-tools">${TOOLS.map(
-          (g) =>
-            html`<div class="mc-tg"><h3>${g.group}</h3><p>${g.line}</p><ul>${g.tools.map(
-              ([name, what]) => html`<li><code>${name}</code><span>${what}</span></li>`,
-            )}</ul></div>`,
-        )}</div>
-      </section>
-
-      <section class="mc-sec">
-        <h2>Try&nbsp;asking.</h2>
-        <ul class="mc-prompts">${PROMPTS.map((q) => html`<li><q>${q}</q></li>`)}</ul>
-      </section>
-
-      <section class="mc-sec mc-safe">
-        <h2>Safe by&nbsp;default.</h2>
-        <ul>
-          <li><b>Nothing is bought until you say yes.</b>Your courier tells you the price first, and asks before going past your limit.</li>
-          <li><b>The limit lives in code.</b>No prompt can talk it past what you set. Courier checks before PayPal charges.</li>
-          <li><b>Shops never learn your name.</b>They get your courier’s ID and PayPal’s word that a real person sent it.</li>
-        </ul>
-      </section>
-
-      <section class="mc-sec mc-setup" id="setup">
+      <section class="mc-setup" id="setup">
         <h2>Set up in a&nbsp;minute.</h2>
         <div class="in">
           <div class="in-pick" role="radiogroup" aria-label="Your agent">
@@ -119,23 +97,16 @@ export function installPage(human: Human | null): string {
             <label><input type="radio" name="agent" value="mcp"><span>Any MCP agent</span></label>
           </div>
           <ol class="in-steps" data-for="claude">
-            ${step(1, "Open Claude’s connectors", "Settings, then Connectors, then Add custom connector.")}
+            ${step(1, "Add a custom connector", "Settings, then Connectors.")}
             ${step(2, "Paste the address", html`<code class="copy inp code">${CONNECTOR}</code>`)}
-            ${step(3, "Connect and pick your courier", "Sign in with PayPal and say yes. Nothing is bought.")}
-            ${step(4, "Ask in any chat", html`<q>Get me a burger on Floor Dash. I have about $15.</q>`)}
+            ${step(3, "Sign in with PayPal", "Pick your courier. Nothing is bought.")}
           </ol>
           <ol class="in-steps" data-for="mcp">
             ${step(1, "Add a remote MCP server", html`<code class="copy inp code">${CONNECTOR}</code>`)}
-            ${step(2, "Let it sign in", "It finds Courier with OAuth and registers itself.")}
-            ${step(3, "Pick your courier", "Sign in with PayPal and say yes. Nothing is bought.")}
-            ${step(4, "Send it on an errand", "It gets the same tools: shops, errands, and calling back.")}
+            ${step(2, "Let it sign in", "It finds Courier over OAuth.")}
+            ${step(3, "Sign in with PayPal", "Pick your courier. Nothing is bought.")}
           </ol>
         </div>
-      </section>
-
-      <section class="mc-end">
-        <h2 class="big">Give your agent a&nbsp;badge.</h2>
-        <div class="ctas"><a class="btn acc" href="/start">Get a courier${ARROW}</a><a class="btn ghost" href="/docs">Read the docs</a></div>
       </section>
     </main>`,
     { here: "/install" },

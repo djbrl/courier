@@ -997,8 +997,9 @@ body {
   color: #fff;
 }
 .s-btns b.s-yes {
-  background: var(--hivis);
-  border-color: var(--hivis);
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
 }
 .s-side {
   display: flex;
@@ -1878,7 +1879,8 @@ footer .ppl {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: var(--hivis);
+  background: var(--ink);
+  color: #fff;
   font-size: 14px;
   font-weight: 800;
 }
@@ -1907,7 +1909,7 @@ footer .ppl {
   height: 64px;
   padding: 6px;
   border-radius: 18px;
-  background: var(--hivis);
+  background: #fff;
   box-shadow: 0 10px 24px rgba(20, 20, 20, 0.25);
   transform: rotate(6deg);
 }
@@ -1969,9 +1971,9 @@ footer .ppl {
 }
 .s-apim {
   padding: 20px 18px;
-  border-color: var(--hivis);
-  background: rgba(214, 255, 61, 0.08);
-  box-shadow: 0 0 0 6px rgba(214, 255, 61, 0.07);
+  border-color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.05);
 }
 .s-apim b {
   font-family: "Archivo", sans-serif;
@@ -1979,7 +1981,7 @@ footer .ppl {
   font-style: italic;
   font-weight: 900;
   letter-spacing: -0.02em;
-  color: var(--hivis);
+  color: #fff;
 }
 .s-pkgs {
   display: grid;
@@ -1992,7 +1994,7 @@ footer .ppl {
 }
 .s-wire path {
   fill: none;
-  stroke: var(--hivis);
+  stroke: rgba(255, 255, 255, 0.55);
   stroke-width: 2;
   stroke-dasharray: 5 6;
   vector-effect: non-scaling-stroke;
@@ -2038,7 +2040,7 @@ footer .ppl {
   color: #fff;
 }
 .s-codet input:focus-visible + span {
-  outline: 2px solid var(--hivis);
+  outline: 2px solid #fff;
 }
 .s-codew:has(input[value="py"]:checked) .s-ts,
 .s-codew:has(input[value="ts"]:checked) .s-py {
@@ -2133,7 +2135,7 @@ footer .ppl {
     left: 50%;
     top: 100%;
     height: 16px;
-    border-left: 2px dashed var(--hivis);
+    border-left: 2px dashed rgba(255, 255, 255, 0.45);
   }
   .s-node {
     padding: 10px 14px;
@@ -2178,6 +2180,192 @@ footer .ppl {
     height: 32px;
   }
   #close .ppl {
+    display: none;
+  }
+}
+
+/* ---------- partner shops: the landing's look, as a list ---------- */
+.ps {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 140px var(--gut) 40px;
+}
+.ps-h {
+  max-width: 820px;
+}
+.ps-h h1 {
+  font-size: clamp(36px, 5.6vw, 84px);
+}
+.ps-h p {
+  margin-top: 18px;
+  font-size: clamp(17px, 1.4vw, 21px);
+  font-weight: 500;
+}
+.ps-feat {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 18px;
+  margin-top: clamp(36px, 6vh, 64px);
+}
+.ps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 18px;
+  margin-top: 18px;
+}
+.ps-t {
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  border-radius: 22px;
+  background: #fff;
+  color: inherit;
+  box-shadow:
+    0 0 0 1px var(--line),
+    0 14px 30px -18px rgba(20, 20, 20, 0.3);
+  transition:
+    transform 0.25s var(--ease),
+    box-shadow 0.25s var(--ease);
+}
+.ps-t:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 0 0 1px var(--ink),
+    0 24px 44px -20px rgba(20, 20, 20, 0.4);
+}
+.ps-ph {
+  display: block;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--tile), color-mix(in srgb, var(--tile), #000 20%));
+}
+.ps-ph img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s var(--ease);
+}
+.ps-t:hover .ps-ph img {
+  transform: scale(1.04);
+}
+.ps-id {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px 16px;
+}
+.ps-id .slogo {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  margin-top: -32px;
+  border: 3px solid #fff;
+  border-radius: 13px;
+  box-sizing: content-box;
+}
+.ps-id > span {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.ps-id b {
+  font-size: 16.5px;
+}
+.ps-id small {
+  overflow: hidden;
+  color: var(--mute);
+  font-size: 14px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ps-go {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: 0.2s var(--ease);
+}
+.ps-t:hover .ps-go {
+  opacity: 1;
+  transform: none;
+}
+/* The big three: the words sit on the photo. */
+.ps-t.big .ps-ph {
+  aspect-ratio: auto;
+  height: clamp(260px, 34vw, 400px);
+}
+.ps-t.big .ps-id {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 60px 20px 20px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.72));
+  color: #fff;
+}
+.ps-t.big .ps-id .slogo {
+  margin: 0;
+  border-color: rgba(255, 255, 255, 0.9);
+}
+.ps-t.big b {
+  font-family: "Archivo", sans-serif;
+  font-size: clamp(20px, 1.9vw, 28px);
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+.ps-t.big small {
+  color: rgba(255, 255, 255, 0.85);
+}
+.ps-join {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: clamp(56px, 9vh, 96px);
+  padding: clamp(28px, 4vw, 48px);
+  border-radius: 28px;
+  background: var(--paper);
+}
+.ps-join h2 {
+  font-size: clamp(28px, 3.2vw, 46px);
+}
+.ps-join p {
+  margin-top: 10px;
+  font-size: 17px;
+}
+.ps-fine {
+  margin-top: 24px;
+  color: var(--mute);
+  font-size: 14px;
+}
+@media (max-width: 860px) {
+  .ps {
+    padding-top: 96px;
+  }
+  .ps-feat {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ps-t.big .ps-ph {
+    height: 220px;
+  }
+  .ps-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .ps-grid .ps-t {
+    grid-template-columns: 120px minmax(0, 1fr);
+  }
+  .ps-grid .ps-ph {
+    aspect-ratio: auto;
+    height: 100%;
+    min-height: 84px;
+  }
+  .ps-grid .ps-id .slogo {
+    display: none;
+  }
+  .ps-go {
     display: none;
   }
 }

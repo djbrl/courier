@@ -17,7 +17,6 @@ import {
   ROOT_DIR,
   raw,
   returnsShort,
-  SHOPS,
   type Shop,
   shopLogo,
   timeAgo,
@@ -37,7 +36,7 @@ function storeNav(view: "shop" | "merchant", shop?: Shop): RawHtml {
     ${
       shop
         ? html`<a class="jr" href="/${shop.slug}">${shopLogo(shop, "sm")}<div><b>${shop.name}</b><small>${shop.sells}</small></div></a>`
-        : html`<span class="jr jr-home"><a href="${config.courier.url}" aria-label="Courier home">${LOGO}</a><a class="jr-tag" href="/">Shops</a></span>`
+        : html`<span class="jr jr-home"><a href="${config.courier.url}" aria-label="Courier home">${LOGO}</a><a class="jr-tag" href="${config.courier.url}/shops">Shops</a></span>`
     }
     <nav>
       ${
@@ -70,30 +69,9 @@ function storePage(
 }
 
 /** Every shop as a logo: the front door people recognise. */
-export function shopGrid(): string {
-  return storePage(
-    "All shops",
-    "shop",
-    html`<main class="sx">
-      <header class="sx-h">
-        <h1>Shops that welcome couriers</h1>
-        <p>${SHOPS.length} shops. Ask Claude for something and your courier shops here with a verified ID and your budget.</p>
-      </header>
-      <ul class="sx-grid" aria-label="Shops">${SHOPS.map(
-        (s) =>
-          html`<li><a class="sx-c" href="/${s.slug}" style="--tile:${s.tile}">
-            <span class="sx-ph">${BANNERS.has(s.slug) ? html`<img src="/assets/banners/${s.slug}.jpg" alt="" loading="lazy">` : ""}</span>
-            <span class="sx-id">${shopLogo(s, "sm")}<span><b>${s.name}</b><small>${s.sells}</small></span></span>
-          </a></li>`,
-      )}</ul>
-      ${ownerLine("/desk/sign-in", "Run one of these shops? Open its desk")}
-      <p class="fine">${NOT_REAL}</p>
-    </main>`,
-  );
-}
 
 /** The way into a shop's back office, kept out of the shopper's nav: it's for whoever runs the shop. */
-const ownerLine = (href: string, label: string) =>
+const _ownerLine = (href: string, label: string) =>
   html`<p class="sf-own"><a class="link" href="${href}">${label} →</a></p>`;
 
 /** What a courier can count on here, folded into the shop's one line of details. */
@@ -181,7 +159,7 @@ export function paymentResult(order: Order | undefined, ok: boolean, message: st
     title: `${ok ? "Paid" : "Not paid"} · ${(findShop(order?.shop) ?? JUNIPER).name}`,
     bodyClass: "store-pay",
     body: html`<main class="solo"><div class="solo-card">
-      <div class="big-ic" aria-hidden="true" style="background:${ok ? "var(--hivis)" : "var(--paper)"}">${ok ? "✓" : "↩"}</div>
+      <div class="big-ic" aria-hidden="true" style="background:${ok ? "#e3f6ec" : "var(--paper)"}">${ok ? "✓" : "↩"}</div>
       <h1 class="big">${ok ? "Paid." : "Not paid."}</h1>
       <p class="lead">${message}</p>
       ${

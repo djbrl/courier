@@ -86,7 +86,7 @@
   height: 8px;
   margin-right: 8px;
   border-radius: 50%;
-  background: var(--hivis);
+  background: #2fbf71;
   box-shadow: 0 0 0 2px var(--ink);
   vertical-align: 1px;
 }

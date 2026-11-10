@@ -7,3 +7,4 @@ export * from "./landing.ts";
 export * from "./onboarding.ts";
 export * from "./run.ts";
 export * from "./shared.ts";
+export * from "./shops.ts";

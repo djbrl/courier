@@ -22,7 +22,7 @@
     b.addEventListener("click", async () => {
       const pre = [...b.closest(".dx-code").querySelectorAll("pre")].find((p) => !p.hidden);
       try {
-        await navigator.clipboard.writeText(pre.innerText);
+        await navigator.clipboard.writeText(pre.textContent);
         b.textContent = "Copied";
       } catch {
         b.textContent = "Select and copy";

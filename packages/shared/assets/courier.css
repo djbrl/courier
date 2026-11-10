@@ -16,7 +16,6 @@
   --acc-fg: #fff;
   --acc-go: var(--hivis);
   --acc-go-fg: var(--ink);
-  --acc-num: var(--hivis);
   --acc-sm: rgba(255, 255, 255, 0.6);
   /* card colour carrier defaults */
   --ac: var(--courier);
@@ -1415,7 +1414,7 @@ a {
   font-size: 15px;
 }
 .feed .k.buy {
-  background: var(--hivis);
+  background: #e3f6ec;
 }
 .feed .k.ask {
   background: #ffe2d2;
@@ -2218,7 +2217,7 @@ a {
   height: 40px;
   border-radius: 13px;
   background: var(--ink);
-  color: var(--hivis);
+  color: #fff;
   font:
     900 italic 20px / 1 "Archivo",
     sans-serif;
@@ -2302,7 +2301,7 @@ a {
   right: 18px;
   padding: 4px 10px;
   border-radius: 999px;
-  background: var(--hivis);
+  background: var(--paper);
   color: var(--ink);
   font-size: 12px;
   font-weight: 700;
@@ -3428,7 +3427,7 @@ html:has(body.app-page) {
   background: #ffe4e1;
 }
 .md-stats li.money {
-  background: var(--hivis);
+  background: #dedeff;
 }
 .md-g {
   display: grid;
@@ -5013,7 +5012,7 @@ html:has(body.app-page) {
   color: var(--ink);
 }
 .rail nav .n {
-  background: var(--hivis);
+  background: #fff;
   color: var(--ink);
 }
 /* A white card, because the PayPal lockup's own blues don't read on cobalt. */
@@ -6548,7 +6547,7 @@ html:has(body.app-page) {
     width: 9px;
     height: 9px;
     border-radius: 50%;
-    background: var(--hivis);
+    background: #fff;
     box-shadow: 0 0 0 2px var(--cobalt);
   }
   .rail-drawer {
@@ -6835,7 +6834,7 @@ a.li:hover {
   box-shadow: inset 0 0 0 2.5px var(--mute);
 }
 .tl li.buy::before {
-  background: var(--hivis);
+  background: var(--green);
   box-shadow: inset 0 0 0 2.5px var(--ink);
 }
 .tl li.no::before {
@@ -8178,7 +8177,7 @@ html:has(body.ob2-page) {
 /* Picked out when someone came for the shop side. */
 .ob2-opt.on {
   border-color: var(--ink);
-  box-shadow: 0 0 0 3px var(--hivis);
+  box-shadow: 0 0 0 1px var(--ink);
 }
 .ob2-opt b {
   font-size: 17px;
@@ -10218,22 +10217,36 @@ html:has(body.app-page) {
   }
 }
 
-/* ---------- MCP: what the connector does for you, then how to add it ---------- */
+/* ---------- MCP: one idea per screen, each with its picture on a colour tile, like the landing page ---------- */
 .mc {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 24px var(--gut) 80px;
+  padding: 0 var(--gut) 120px;
+}
+.mc h2 {
+  font-family: "Archivo", sans-serif;
+  font-size: clamp(30px, 3.4vw, 52px);
+  font-style: italic;
+  font-weight: 900;
+  font-stretch: 125%;
+  line-height: 0.98;
+  letter-spacing: -0.04em;
 }
 .mc-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-  gap: clamp(28px, 5vw, 72px);
-  align-items: center;
-  padding: clamp(24px, 6vh, 64px) 0 clamp(40px, 8vh, 80px);
+  justify-items: center;
+  padding: clamp(56px, 12vh, 120px) 0 clamp(40px, 7vh, 64px);
+  text-align: center;
+}
+.mc-hero .big {
+  max-width: 11em;
+  font-size: clamp(40px, 5.6vw, 84px);
+}
+.mc-hero .lead {
+  margin-top: 16px;
 }
 .mc-kick {
-  display: inline-block;
-  margin-bottom: 14px;
+  margin-bottom: 18px;
   padding: 5px 12px;
   border-radius: 99px;
   background: var(--ink);
@@ -10241,46 +10254,52 @@ html:has(body.app-page) {
   font-size: 13px;
   font-weight: 700;
 }
-.mc-copy .lead {
-  margin-top: 16px;
-  max-width: 32em;
+.mc-get {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 30px;
 }
-.mc-url {
-  margin: 24px 0 16px;
-  max-width: 34em;
-}
-.mc-url .code {
-  display: block;
+.mc-get .code {
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.mc-works {
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 22px;
+/* The picture sits on a tile of colour that peeks out behind it. */
+.mc-pic {
+  position: relative;
+  isolation: isolate;
 }
-.mc-works li {
-  padding: 6px 13px;
-  border: 1px solid var(--line);
-  border-radius: 99px;
-  font-size: 14px;
-  font-weight: 700;
+.mc-pic::before {
+  content: "";
+  position: absolute;
+  inset: -28px -28px -28px 18%;
+  z-index: -1;
+  border-radius: 34px;
+  background: var(--solid);
 }
-.mc-chat {
+.mc-hero-pic {
+  max-width: 720px;
+  margin: 30px auto 0;
+}
+.mc-hero-pic::before {
+  inset: 60px -60px -40px -60px;
+}
+.mc-win {
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 24px;
-  background: #f6f4ef;
-  box-shadow: 0 30px 70px -24px rgba(20, 20, 20, 0.3);
+  background: #fff;
+  box-shadow: 0 24px 60px rgba(20, 20, 20, 0.16);
 }
 .mc-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 52px;
+  height: 54px;
   padding: 0 20px;
   border-bottom: 1px solid var(--line);
   font-weight: 700;
@@ -10292,14 +10311,15 @@ html:has(body.app-page) {
 }
 .mc-msgs {
   display: grid;
-  gap: 12px;
-  padding: 20px;
-  font-size: 15.5px;
+  gap: 14px;
+  padding: 24px;
+  background: #f6f4ef;
+  font-size: 16px;
   line-height: 1.4;
 }
 .mc-you {
   justify-self: end;
-  max-width: 82%;
+  max-width: 80%;
   padding: 10px 16px;
   border-radius: 16px;
   background: #e9e5dc;
@@ -10324,7 +10344,7 @@ html:has(body.app-page) {
   border-radius: 16px;
   background: #fff;
 }
-.mc-card span {
+.mc-card > span {
   display: grid;
 }
 .mc-card small {
@@ -10332,129 +10352,192 @@ html:has(body.app-page) {
   font-size: 13px;
 }
 .mc-face {
+  flex: none;
   width: 40px;
   height: 40px;
   border-radius: 11px;
-  background: #3d3af5;
 }
-.mc-sec {
-  padding: clamp(40px, 7vh, 72px) 0 0;
-}
-.mc-sec h2 {
-  font-family: "Archivo", sans-serif;
-  font-size: clamp(28px, 3.2vw, 44px);
-  font-style: italic;
-  font-weight: 900;
-  font-stretch: 120%;
-  letter-spacing: -0.035em;
-}
-.mc-sub {
-  margin-top: 8px;
-  color: var(--soft);
-  font-size: 17px;
-}
-.mc-tools {
+.mc-row {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 26px;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: clamp(40px, 8vw, 120px);
+  align-items: center;
+  padding: clamp(90px, 16vh, 170px) 0 0;
 }
-.mc-tg {
-  padding: 18px;
-  border: 1px solid var(--line);
-  border-radius: 18px;
+.mc-row:nth-of-type(odd) .mc-rc {
+  order: 2;
 }
-.mc-tg h3 {
-  font-size: 18px;
+.mc-row:nth-of-type(odd) .mc-pic::before {
+  inset: -28px 18% -28px -28px;
 }
-.mc-tg > p {
-  margin: 4px 0 14px;
-  color: var(--soft);
-  font-size: 14.5px;
+.mc-rc p {
+  margin-top: 18px;
+  max-width: 24em;
+  font-size: clamp(17px, 1.45vw, 21px);
+  font-weight: 500;
+  line-height: 1.4;
 }
-.mc-tg ul {
-  list-style: none;
+.mc-lb {
   display: grid;
-  gap: 10px;
+  gap: 12px;
+  padding: 22px 24px 24px;
 }
-.mc-tg li {
+.mc-tot {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-weight: 700;
+}
+.mc-tot b {
+  font-size: 30px;
+  letter-spacing: -0.02em;
+}
+.mc-sm {
+  color: var(--mute);
+  font-size: 14px;
+}
+.mc-meter {
+  height: 10px;
+  border-radius: 99px;
+  background: var(--paper);
+  overflow: hidden;
+}
+.mc-meter i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--ink) 91%, var(--red) 91%);
+}
+.mc-ask {
   display: grid;
   gap: 2px;
-  font-size: 13.5px;
-  color: var(--soft);
+  margin-top: 6px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #fff4dc;
 }
-.mc-tg code {
-  justify-self: start;
-  padding: 2px 8px;
-  border-radius: 6px;
-  background: var(--paper);
-  color: var(--ink);
-  font-size: 12.5px;
+.mc-ask div {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
 }
-.mc-prompts {
-  list-style: none;
+.mc-ask em {
+  padding: 8px 14px;
+  border: 2px solid var(--ink);
+  border-radius: 99px;
+  font-style: normal;
+  font-size: 14px;
+  font-weight: 700;
+}
+.mc-ask em:first-child {
+  background: var(--ink);
+  color: #fff;
+}
+.mc-sh {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1fr 1fr;
+}
+.mc-col {
+  display: grid;
+  align-content: start;
   gap: 12px;
-  margin-top: 24px;
+  padding: 24px;
 }
-.mc-prompts li {
-  padding: 18px 20px;
-  border-radius: 18px;
-  background: #f6f4ef;
-  font-size: 16.5px;
+.mc-col h4 {
+  font-family: "Archivo", sans-serif;
+  font-size: 22px;
+  font-style: italic;
+  font-weight: 900;
+}
+.mc-col p {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
   font-weight: 600;
-  line-height: 1.35;
 }
-.mc-safe ul {
-  list-style: none;
+.mc-no {
+  background: var(--cobalt);
+  color: #fff;
+}
+.mc-no p {
+  text-decoration: line-through;
+  text-decoration-color: rgba(255, 255, 255, 0.5);
+}
+.mc-split {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(18px, 3vw, 36px);
-  margin-top: 24px;
+  padding: 10px 24px 18px;
 }
-.mc-safe li {
-  display: grid;
-  gap: 6px;
-  padding-top: 14px;
-  border-top: 2px solid var(--ink);
-  color: var(--soft);
-  font-size: 15.5px;
-  line-height: 1.45;
+.mc-split p {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  font-weight: 600;
 }
-.mc-safe b {
-  color: var(--ink);
-  font-size: 17.5px;
+.mc-split p span {
+  flex: 1;
 }
-.mc-setup .in {
-  max-width: 760px;
-  margin: 20px 0 0;
-  padding: 0;
+.mc-split .mc-sum {
+  border: 0;
+  font-weight: 800;
 }
-.mc-end {
+.mc-works {
   display: grid;
   justify-items: center;
-  gap: 24px;
-  margin-top: clamp(56px, 10vh, 100px);
-  padding: clamp(40px, 7vh, 72px) 24px;
-  border-radius: 28px;
-  background: var(--hivis);
+  gap: 26px;
+  padding: clamp(110px, 18vh, 190px) 0 0;
   text-align: center;
 }
-@media (max-width: 860px) {
-  .mc-hero,
-  .mc-safe ul {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .mc-tools {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .mc-prompts {
-    grid-template-columns: minmax(0, 1fr);
-  }
+.mc-works ul {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
 }
-@media (max-width: 520px) {
-  .mc-tools {
+.mc-works li {
+  padding: 12px 22px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  font-size: 18px;
+  font-weight: 700;
+}
+.mc-setup {
+  display: grid;
+  justify-items: center;
+  padding: clamp(110px, 18vh, 190px) 0 0;
+  text-align: center;
+}
+.mc-setup .in {
+  width: 100%;
+  max-width: 640px;
+  margin: 26px 0 0;
+  padding: 0;
+  text-align: left;
+}
+@media (max-width: 860px) {
+  .mc-row {
     grid-template-columns: minmax(0, 1fr);
+    gap: 36px;
+  }
+  .mc-row:nth-of-type(odd) .mc-rc {
+    order: 0;
+  }
+  .mc-pic::before,
+  .mc-row:nth-of-type(odd) .mc-pic::before {
+    inset: -14px -10px -14px 18px;
+    border-radius: 26px;
+  }
+  .mc-hero-pic::before {
+    inset: 40px -16px -16px -16px;
+  }
+  .mc-msgs {
+    padding: 16px;
+    font-size: 15px;
+  }
+  .mc-col {
+    padding: 16px;
   }
 }
