@@ -1460,30 +1460,34 @@ footer .ppl {
 }
 
 /* Partner shops: one quiet line of them under the hero, and the way to the whole list. */
+/* The partner strip stays quiet: a small grey line, one row of grey marks, room around it and a hairline under it. */
 .s-strip {
   display: grid;
   justify-items: center;
-  gap: 22px;
-  padding: clamp(48px, 9vh, 96px) 0 clamp(56px, 10vh, 110px);
+  gap: 26px;
+  width: min(1040px, 100% - 2 * var(--gut));
+  margin: 0 auto;
+  padding: clamp(56px, 10vh, 104px) 0 clamp(48px, 8vh, 80px);
+  border-bottom: 1px solid var(--line, #ececec);
   overflow: hidden;
 }
 .s-strip > p {
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 500;
-  color: var(--mute);
+  color: #8a8b90;
 }
 .s-marq {
   display: flex;
   width: 100%;
   overflow: hidden;
-  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
 }
 .s-mq {
   flex: none;
   display: flex;
-  gap: 44px;
-  padding-right: 44px;
-  animation: s-marq 70s linear infinite;
+  gap: 56px;
+  padding-right: 56px;
+  animation: s-marq 90s linear infinite;
 }
 .s-marq:hover .s-mq {
   animation-play-state: paused;
@@ -1502,19 +1506,19 @@ footer .ppl {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #8a8b90;
+  color: #a3a4a8;
   font-family: "Archivo", sans-serif;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 800;
   letter-spacing: -0.02em;
   white-space: nowrap;
   transition: color 0.2s;
 }
 .s-sh .slogo {
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  filter: grayscale(1) contrast(0.9) opacity(0.55);
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  filter: grayscale(1) contrast(0.9) opacity(0.45);
   transition: filter 0.2s;
 }
 .s-sh:hover {
@@ -1526,15 +1530,18 @@ footer .ppl {
 .s-more {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding-bottom: 2px;
-  border-bottom: 2px solid currentColor;
-  font-size: 16px;
-  font-weight: 700;
+  gap: 6px;
+  color: #8a8b90;
+  font-size: 14px;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+.s-more:hover {
+  color: var(--ink);
 }
 .s-more svg {
-  width: 15px;
-  height: 15px;
+  width: 13px;
+  height: 13px;
   transition: transform 0.2s var(--ease);
 }
 .s-more:hover svg {
@@ -1833,15 +1840,15 @@ footer .ppl {
 
 @media (max-width: 860px) {
   .s-sh {
-    font-size: 18px;
+    font-size: 16px;
   }
   .s-sh .slogo {
-    width: 28px;
-    height: 28px;
+    width: 22px;
+    height: 22px;
   }
   .s-mq {
-    gap: 30px;
-    padding-right: 30px;
+    gap: 34px;
+    padding-right: 34px;
   }
   .s-works {
     gap: 6px;
