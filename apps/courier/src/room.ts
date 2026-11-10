@@ -308,7 +308,8 @@ function chatTab(chat: RoomChat) {
   const errand = errandView(chat);
   return {
     id: chat.id,
-    title: chat.title,
+    // The same words as the chat's header: the errand once there is one, the first message until then.
+    title: errand?.what ?? chat.title,
     working: isWorking(chat),
     toPay: chat.events.some((e) => e.t === "pay" && e.status === "open"),
     together: Boolean(chat.runId),

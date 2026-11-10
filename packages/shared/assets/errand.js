@@ -155,7 +155,7 @@
       .map((l, i) => `<li class="${i <= e.stage ? "on" : ""} ${i === e.stage ? "now" : ""}">${esc(l)}</li>`)
       .join("");
     return `<div class="shipc ${done ? "done" : ""}" role="group" aria-label="${esc(e.shop)} parcel: ${esc(e.labels[e.stage])}">
-        <div class="shipc-h"><b>${done ? "Delivered" : "Shipped"} · ${esc(e.shop)}</b><span>${esc(e.carrier)} <code>${esc(e.tracking)}</code></span></div>
+        <div class="shipc-h"><b>${esc(e.labels[e.stage])} · ${esc(e.shop)}</b><span>${esc(e.carrier)} <code>${esc(e.tracking)}</code></span></div>
         <ol class="shipc-steps" style="--at:${e.stage / last}">${steps}</ol>
         <small>${done ? "Arrived." : `Expected by ${esc(hhmm(e.expected_at))}.`}${e.paypal ? ` Tracking is on the ${esc(e.paypal.toLowerCase())} PayPal payment.` : ""}</small>
       </div>`;
@@ -510,10 +510,16 @@
   /* ---------------- keeping up ---------------- */
 
   let quiet = 0;
+  let cardsAt = 0;
   async function tick() {
     try {
       take(await api(`chats/${encodeURIComponent(chat.id)}`));
     } catch {}
+    // A card paid in another tab or window never tells this one, so open cards are asked about every few seconds.
+    if (Date.now() - cardsAt > 4000) {
+      cardsAt = Date.now();
+      checkCards();
+    }
     // In a run, other people's couriers can speak at any moment, so the window keeps listening closely.
     const busy = chat.working || list.some((t) => t.working) || (chat.run?.open && chat.run.members.length > 1);
     quiet = busy ? 0 : quiet + 1;
@@ -542,6 +548,7 @@
   function checkCards() {
     for (const e of chat.events) if (e.t === "pay" && e.status === "open") check(e.order_id, chat.id);
   }
+  addEventListener("visibilitychange", () => document.visibilityState === "visible" && checkCards());
 
   // The time left to call back counts down on its own, and the option goes away with it.
   setInterval(() => {
