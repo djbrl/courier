@@ -118,7 +118,9 @@ export function navLinks(human: Human | null, here = ""): RawHtml {
         human
           ? html`<a class="who" href="/app">${avatar()}${name ?? "My Courier"}</a>`
           : html`<a class="try" href="/start">Try the demo</a>`
-      }`;
+      }
+      <details class="nav-more"><summary aria-label="Menu"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5.5h14M3 10h14M3 14.5h14"/></svg></summary>
+        <div>${link("/shops", "Shops")}${link("/docs", "Developers")}${link("/install", "MCP")}</div></details>`;
 }
 
 /** A sign-out link's attributes: it asks first, since a demo person can't be signed back into. */

@@ -45,8 +45,8 @@ export function assetUrl(file: string): string {
 const JUNO: CourierLook = { name: "Juno", color: "cobalt", avatar: "shades", model: "Claude", idNo: "CR-7Q3F-JR" };
 /** The hero's passes carry made-up senders' names; the next screen shows a shop gets none of it. */
 const CREW: { look: CourierLook; sentBy: string; white?: boolean }[] = [
-  { look: JUNO, sentBy: "Djibril Sy" },
-  { look: { name: "Otto", color: "tang", avatar: "afro", model: "ChatGPT", idNo: "CR-8KD2-OT" }, sentBy: "Luna Ren" },
+  { look: JUNO, sentBy: "Luna Ren" },
+  { look: { name: "Otto", color: "tang", avatar: "afro", model: "ChatGPT", idNo: "CR-8KD2-OT" }, sentBy: "Djibril Sy" },
   // White isn't a colour a person can pick, so landing.css repaints this one.
   {
     look: { name: "Mika", color: "ink", model: "Llama", idNo: "CR-4HT9-MK" },
@@ -64,12 +64,12 @@ const MARK = raw(
 
 /** The back of the pass, in as few words as it takes: what a shop gets, what it never does, and who vouches. */
 function passBack(c: CourierLook): RawHtml {
-  return html`<div class="idc s-rev cc" style="${courierVars(c.color)}" role="img" aria-label="Shared with a shop: agent ${c.name}, a shopper ID, a real client. Withheld: your personal data. Verified by PayPal.">
+  return html`<div class="idc s-rev cc" style="${courierVars(c.color)}" role="img" aria-label="Shared with a shop: agent ${c.name}, a shopper ID, a real client. Withheld: name, email and PayPal account. Verified by PayPal.">
     <div class="idf">
       <div class="tab"><div class="tr">${LOGO}<span class="idn">${c.idNo}</span></div></div>
       <i class="pf"></i><i class="slot"></i>
       <div class="s-revt"><h3>Shared</h3><ul class="s-fld"><li class="s-an">${c.name}</li><li><span>Shopper ID</span><code>pp_7f3a…c91</code></li><li>${CK}A real client</li></ul></div>
-      <div class="s-revb">${MARK}<h3>Withheld</h3><p>Your personal data</p>${VERIFIED}</div>
+      <div class="s-revb">${MARK}<h3>Withheld</h3><p>Name, email, PayPal account</p>${VERIFIED}</div>
     </div>
   </div>`;
 }
@@ -98,7 +98,7 @@ export function landingPage(human: Human | null): string {
       );
       return `<script type="application/json" id="faces-data">${JSON.stringify(faces).replace(/</g, "\\u003c")}</script>`;
     })
-    .replaceAll("{{pass}}", () => String(html`<div>${idCard(JUNO, "Djibril Sy")}</div><div>${passBack(JUNO)}</div>`))
+    .replaceAll("{{pass}}", () => String(html`<div>${idCard(JUNO, "Luna Ren")}</div><div>${passBack(JUNO)}</div>`))
     .replaceAll("{{sides}}", () =>
       String(
         html`${CREW.filter((m) => m.look !== JUNO).map(

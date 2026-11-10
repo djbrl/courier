@@ -1344,7 +1344,11 @@ await step(
     const shown = [...strip[1]!.matchAll(/href="[^"]*\/([a-z0-9-]+)"/g)].map((m) => m[1]);
     assert.deepEqual(shown.sort(), shops.map((s: any) => s.shop).sort(), "the same shops the app has");
     assert.match(landing, /<h3>Shared<\/h3>/);
-    assert.match(landing, /<h3>Withheld<\/h3><p>Your personal data<\/p>/, "the back says personal data stays back");
+    assert.match(
+      landing,
+      /<h3>Withheld<\/h3><p>Name, email, PayPal account<\/p>/,
+      "the back says personal data stays back",
+    );
     for (const href of ["/shops", "/docs", "/install", "/start", "/start?as=shop"])
       assert.ok(landing.includes(`href="${href}"`), href);
     assert.match(landing, /id="for-shops"/, "the shop side is part of the landing page");
