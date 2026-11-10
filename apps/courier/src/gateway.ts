@@ -511,7 +511,7 @@ function createGateway(connection: Connection, human: Human): McpServer {
           .array(z.string().max(40))
           .min(1)
           .max(5)
-          .describe("Who to chip in with: names from list_contacts, or how they're related, e.g. 'my brother'."),
+          .describe("Who to chip in with: names from list_contacts, or how they're related, e.g. 'my colleague'."),
         courier: z.string().max(40).optional().describe("The courier the user named. Omit for their first courier."),
         confirm: z.string().max(40).optional().describe("The confirm code, only after the user said yes to the split."),
       },

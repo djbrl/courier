@@ -38,7 +38,6 @@ import {
   DEMO_CLIENT_PREFIX,
   type Desk,
   deleteAccountPage,
-  demoPayPalPage,
   errandRoom,
   errandsPage,
   errorPage,
@@ -50,7 +49,6 @@ import {
   shopMissingPage,
   shopPage,
   shopsPage,
-  signInStepPage,
   welcomePage,
 } from "../pages/index.ts";
 import { contactCourier, contactsOf, ideaFor } from "../people.ts";
@@ -129,22 +127,9 @@ appRouter.get("/start", (req, res) => {
   res.redirect(302, findCourier(human.id) ? "/app" : "/start/courier");
 });
 
-appRouter.get("/start/sign-in", (req, res) => {
-  const human = currentHuman(req);
-  if (!human) {
-    res.send(signInStepPage());
-    return;
-  }
-  res.redirect(302, findCourier(human.id) ? "/app" : "/start/courier");
-});
-
-appRouter.get("/start/paypal", (req, res) => {
-  const human = currentHuman(req);
-  if (!human) {
-    res.send(demoPayPalPage());
-    return;
-  }
-  res.redirect(302, findCourier(human.id) ? "/app" : "/start/courier");
+// The old sign-in steps: the chooser now starts the courier straight away.
+appRouter.get(["/start/sign-in", "/start/paypal"], (_req, res) => {
+  res.redirect(302, "/start");
 });
 
 appRouter.get("/start/how", (_req, res) => {

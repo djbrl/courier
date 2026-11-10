@@ -24,15 +24,6 @@ import { courierLook, cpage, dots, firstName, hasClaude, OK, progress } from "./
 
 /* ---------------- onboarding ---------------- */
 
-function blankCard(): RawHtml {
-  return raw(
-    idCard({ ...courierLook(null), name: "Name", idNo: "CR-····-··" }, null).value.replace(
-      'class="idc cc"',
-      'class="idc cc blank"',
-    ),
-  );
-}
-
 /**
  * Every onboarding step is the whole window: the words on the left, the courier's card standing still on a quiet stage
  * on the right. The progress lines say which step this is, so nothing else does.
@@ -71,70 +62,17 @@ export function welcomePage(asShop = false): string {
         <p class="ob2-lead">Give your AI agent a face and let it shop for you. You set the budget, and it can’t go over.</p>
         <p class="ob2-q">How do you want to try it?</p>
         <div class="ob2-pick">
-          <a class="ob2-opt" href="/start/sign-in"><b>I’m shopping</b><small>Get a courier and send it on an errand.</small>${ARROW}</a>
+          <form method="post" action="/auth/demo"><input type="hidden" name="next" value="/start/courier"><button class="ob2-opt${asShop ? "" : " on"}" type="submit"><b>I’m shopping</b><small>Make your courier and send it on an errand.</small>${ARROW}</button></form>
           <a class="ob2-opt${asShop ? " on" : ""}" href="${config.store.url}/desk/sign-in"><b>I run a shop</b><small>See the couriers that buy from you, on the shop desk.</small>${ARROW}</a>
         </div>
+        ${
+          // With sandbox keys, a PayPal sandbox account can sign in instead of the made-up demo person.
+          paypal.mode === "sandbox"
+            ? html`<p class="ob2-alt"><a class="link" href="/auth/paypal/start?next=%2Fstart%2Fcourier">Shop with a PayPal sandbox account instead</a></p>`
+            : ""
+        }
       </div>`,
     card: idCard({ ...courierLook(null), idNo: "CR-0000-JU" }, null),
-  });
-}
-
-/**
- * Three ways in. A real PayPal account can't sign in to a demo, so that button is there but off; a PayPal sandbox
- * account goes through PayPal's own sign-in when the server has sandbox keys; and the made-up people need nothing.
- */
-export function signInStepPage(): string {
-  const sandbox = paypal.mode === "sandbox";
-  return stagePage("Get started", {
-    step: 1,
-    left: html`<div class="ob2-body">
-        <h1 class="ob2-h">Let’s get your courier.</h1>
-        <p class="ob2-lead">PayPal checks there’s a real person behind it. Shops never learn who you are.</p>
-        <div class="ob2-ways">
-          <span class="btn-pp ob2-off" aria-disabled="true">Continue with ${PP}</span>
-          <small class="ob2-why">This is a demo, so a real PayPal account can’t sign in.</small>
-          ${
-            sandbox
-              ? html`<a class="btn ghost ob2-way" href="/auth/paypal/start?next=%2Fstart%2Fcourier">Use a PayPal sandbox account</a>`
-              : html`<span class="btn ghost ob2-way ob2-off" aria-disabled="true">Use a PayPal sandbox account</span>
-                <small class="ob2-why">Sandbox sign-in isn’t set up on this server.</small>`
-          }
-          <a class="btn ob2-way" href="/start/paypal">Use a demo account${ARROW}</a>
-        </div>
-      </div>`,
-    card: blankCard(),
-  });
-}
-
-/** Made-up people to sign in as. Each press still makes a new, private demo person; only the name comes from here. */
-export const DEMO_PEOPLE = [
-  { key: "maya", name: "Maya Chen", place: "Vancouver, Canada", tint: "#FFC629" },
-  { key: "amara", name: "Amara Okafor", place: "Lagos, Nigeria", tint: "#D6FF2E" },
-  { key: "lucas", name: "Lucas Moreau", place: "Lyon, France", tint: "#B7A3FF" },
-] as const;
-
-export function demoPayPalPage(): string {
-  const initials = (n: string) =>
-    n
-      .split(" ")
-      .map((w) => w[0])
-      .join("");
-  return stagePage("Sign in", {
-    step: 1,
-    left: html`<form class="ob2-body" method="post" action="/auth/demo">
-        <input type="hidden" name="next" value="/start/courier">
-        <h1 class="ob2-h">Pick who you are.</h1>
-        <p class="ob2-lead">It’s a demo, so sign in as one of these made-up people. PayPal is simulated and no money moves.</p>
-        <div class="ob2-people">${DEMO_PEOPLE.map(
-          (p) =>
-            html`<button class="ob2-who" name="persona" value="${p.key}" type="submit">
-              <span class="ob2-mono" style="--t:${p.tint}" aria-hidden="true">${initials(p.name)}</span>
-              <span class="ob2-wt"><b>${p.name}</b><small>${p.place}</small></span>${ARROW}</button>`,
-        )}</div>
-      </form>
-      <div class="ob2-foot"><a class="btn ghost" href="/start/sign-in">Back</a></div>`,
-    card: blankCard(),
-    scripts: ["/assets/onboard.js"],
   });
 }
 

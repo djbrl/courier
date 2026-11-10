@@ -10541,3 +10541,16 @@ html:has(body.app-page) {
     padding: 16px;
   }
 }
+
+/* "I'm shopping" is a form button, so it starts the demo in one press; it looks like the link beside it. */
+button.ob2-opt {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.ob2-alt {
+  margin-top: 14px;
+  font-size: 14px;
+  color: var(--soft);
+}

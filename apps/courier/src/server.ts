@@ -45,7 +45,6 @@ import {
   courierChoice,
   courierForClient,
   DEMO_CLIENT_PREFIX,
-  DEMO_PEOPLE,
   docSlugs,
   docsPage,
   errorPage,
@@ -326,7 +325,6 @@ app.post("/auth/demo", (req, res) => {
     }
     const id = newId("hum");
     const now = new Date().toISOString();
-    const persona = DEMO_PEOPLE.find((p) => p.key === req.body.persona);
     db.put<Human>("humans", id, {
       id,
       payerId: `demo-${id}`,
@@ -335,7 +333,8 @@ app.post("/auth/demo", (req, res) => {
       simulated: true,
       ageRange: null,
       accountType: null,
-      displayName: persona?.name ?? null,
+      // They name themselves on the courier screen.
+      displayName: null,
       createdAt: now,
       lastLoginAt: now,
     });

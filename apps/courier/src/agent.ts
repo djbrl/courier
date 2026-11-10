@@ -214,8 +214,8 @@ const TOOLS: Anthropic.Tool[] = [
       properties: {
         shop: { type: "string" },
         item_id: { type: "string", description: "The id search_shop gave you." },
-        with: { type: "array", items: { type: "string" }, description: "Their contacts' names, e.g. ['Moussa']." },
-        what: { type: "string", description: "A few words, e.g. 'Jazz box set for Dad, with Moussa'." },
+        with: { type: "array", items: { type: "string" }, description: "Their contacts' names, e.g. ['Djibril']." },
+        what: { type: "string", description: "A few words, e.g. 'Jazz box set for the office, with Djibril'." },
       },
       required: ["shop", "item_id", "with"],
     },
@@ -392,7 +392,7 @@ export async function runScriptedAgent(
     }
   }
 
-  // "Chip in with Moussa on the jazz box set", and a yes to the split it offers.
+  // "Chip in with Djibril on the jazz box set", and a yes to the split it offers.
   const chip = /\bchip in with (.+?) on (.+)$/i.exec(message.trim());
   const agreed = /^(go ahead|yes|ok)\b/.test(lower) && s.offered?.startsWith("chip|");
   if (chip || agreed) {

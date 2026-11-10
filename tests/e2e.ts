@@ -289,15 +289,14 @@ await step("Try with simulated PayPal: a new demo person, marked so in what shop
 
   const elsewhere = await browser.req(`${flow.courier}/auth/demo`, { form: { next: "//evil.example" } });
   assert.equal(elsewhere.headers.get("location"), "/app");
-  // A made-up person from the demo sign-in gives their name, and nothing else: each press is still a new person.
-  const picker = await (await new Browser().req(`${flow.courier}/start/paypal`)).text();
-  assert.equal((picker.match(/name="persona"/g) ?? []).length, 3, "three demo people to pick from");
-  const amara = new Browser();
-  await amara.req(`${flow.courier}/auth/demo`, { form: { next: "/start/courier", persona: "amara" } });
-  assert.match(await (await amara.req(`${flow.courier}/start/courier`)).text(), /name="human" value="Amara"/);
-  const odd = new Browser();
-  await odd.req(`${flow.courier}/auth/demo`, { form: { next: "/start/courier", persona: "<script>" } });
-  assert.match(await (await odd.req(`${flow.courier}/start/courier`)).text(), /name="human" value=""/);
+  // The chooser starts the courier in one press: no sign-in step and no made-up person to pick.
+  const chooser = await (await new Browser().req(`${flow.courier}/start`)).text();
+  assert.match(chooser, /action="\/auth\/demo"><input type="hidden" name="next" value="\/start\/courier">/);
+  const old = await new Browser().req(`${flow.courier}/start/paypal`);
+  assert.equal(old.status, 302);
+  assert.equal(old.headers.get("location"), "/start");
+  // They name themselves on the courier screen, which starts blank.
+  assert.match(await (await browser.req(`${flow.courier}/start/courier`)).text(), /name="human" value=""/);
 });
 
 await step("The errand room: chats side by side, at any shop, and only the person sets a budget", async () => {
@@ -506,14 +505,15 @@ await step("Chipping in: each person pays their own share, and their limits stay
   const courierId = new URL(made.headers.get("location")!, flow.courier).searchParams.get("c")!;
 
   const people = await (await person.req(`${flow.courier}/app/people`)).text();
-  for (const name of ["Moussa Ndiaye", "Camille Laurent", "Wei Zhang"])
-    assert.match(people, new RegExp(`<b>${name}</b>`));
+  for (const name of ["Djibril Sy", "Camille Laurent", "Wei Zhang"]) assert.match(people, new RegExp(`<b>${name}</b>`));
   assert.doesNotMatch(people, /\$50|\$40|\$25/, "what each can put in is their courier's to know");
   const invited = await (
-    await person.req(`${flow.courier}/errand?c=${courierId}&say=${encodeURIComponent("Chip in with Moussa on a gift")}`)
+    await person.req(
+      `${flow.courier}/errand?c=${courierId}&say=${encodeURIComponent("Chip in with Djibril on a gift")}`,
+    )
   ).text();
   assert.match(invited, /invite people to an errand/);
-  assert.match(invited, /"draft":"Chip in with Moussa on a gift"/);
+  assert.match(invited, /"draft":"Chip in with Djibril on a gift"/);
 
   const url = (path: string) => `${flow.courier}/errand/api/${path}${path.includes("?") ? "&" : "?"}c=${courierId}`;
   const api = async (path: string, body: unknown) => (await person.req(url(path), { json: body })).json() as any;
@@ -543,11 +543,11 @@ await step("Chipping in: each person pays their own share, and their limits stay
   const stranger = await say(chat, "Chip in with Bob on the Late Night Jazz box set");
   assert.match(
     stranger.fresh.find((e: any) => e.t === "say").text,
-    /Bob isn't one of their contacts.*Moussa Ndiaye \(brother/,
+    /Bob isn't one of their contacts.*Djibril Sy \(colleague/,
   );
 
-  // Moussa can only put in $50 of an even $60, so Maya would cover $10. She's asked before anything starts.
-  const offer = await say(chat, "Chip in with Moussa on the Late Night Jazz box set");
+  // Djibril can only put in $50 of an even $60, so Maya would cover $10. She's asked before anything starts.
+  const offer = await say(chat, "Chip in with Djibril on the Late Night Jazz box set");
   assert.equal(offer.chat.confirm, true, JSON.stringify(offer.fresh));
   assert.equal(offer.chat.errand, null);
   const yes = await say(chat, "Go ahead");
@@ -561,31 +561,31 @@ await step("Chipping in: each person pays their own share, and their limits stay
     ticket.payers.map((p: any) => [p.name, p.cents, p.paid]),
     [
       ["You", 7000, true],
-      ["Moussa Ndiaye", 5000, true],
+      ["Djibril Sy", 5000, true],
     ],
   );
   assert.match((await view(chat)).chat.events.filter((e: any) => e.t !== "ship").at(-1).text, /Everyone’s paid/);
-  // Moussa has nobody at the keyboard, so Otto's side of the thread is scripted: in, short of an even split, then paid.
+  // Djibril has nobody at the keyboard, so Zed's side of the thread is scripted: in, short of an even split, then paid.
   const thread = await until(chat, (o) =>
-    o.chat.run?.lines.some((l: any) => l.courier === "Otto" && /All square/.test(l.text ?? "")),
+    o.chat.run?.lines.some((l: any) => l.courier === "Zed" && /All square/.test(l.text ?? "")),
   );
   const said = thread.chat.run.lines.map((l: any) => `${l.t}:${l.courier}:${l.text ?? l.total ?? ""}`);
   assert.ok(
-    said.some((l: string) => /^joined:Otto/.test(l)),
+    said.some((l: string) => /^joined:Zed/.test(l)),
     said.join("\n"),
   );
   assert.ok(
-    said.some((l: string) => /^say:Otto:.*can put in \$50/.test(l)),
+    said.some((l: string) => /^say:Zed:.*can put in \$50/.test(l)),
     said.join("\n"),
   );
   assert.ok(
-    said.some((l: string) => /^paid:Otto:50/.test(l)),
+    said.some((l: string) => /^paid:Zed:50/.test(l)),
     said.join("\n"),
   );
 
   // An even split that fits everyone, on an item they named, goes straight to paying.
   const three = (await api("chats", {})).chat.id;
-  const even = await say(three, "Chip in with Moussa and Camille on the Late Night Jazz box set");
+  const even = await say(three, "Chip in with Djibril and Camille on the Late Night Jazz box set");
   const share = even.fresh.find((e: any) => e.t === "pay");
   assert.equal(share?.total, "40.00", JSON.stringify(even.fresh));
   const split = await payUp(three, share);
@@ -1602,13 +1602,13 @@ await step(
     const listed = await tool("list_contacts");
     const { contacts } = structured(listed);
     assert.deepEqual(
-      contacts.find((c: any) => c.name === "Moussa Ndiaye"),
-      { name: "Moussa Ndiaye", relation: "brother", courier: "Otto" },
+      contacts.find((c: any) => c.name === "Djibril Sy"),
+      { name: "Djibril Sy", relation: "colleague", courier: "Zed" },
     );
-    assert.deepEqual(contacts.map((c: any) => c.name).sort(), ["Camille Laurent", "Moussa Ndiaye", "Wei Zhang"]);
+    assert.deepEqual(contacts.map((c: any) => c.name).sort(), ["Camille Laurent", "Djibril Sy", "Wei Zhang"]);
     assert.doesNotMatch(JSON.stringify(listed), /\d|limit/i, "what each can put in is their courier's to know");
     const stranger = await tool("chip_in", { shop: "Mike", item_id: "mk-006", with: ["Bob"] });
-    assert.match(stranger.content[0].text, /Bob isn't one of their contacts.*Moussa Ndiaye \(brother/);
+    assert.match(stranger.content[0].text, /Bob isn't one of their contacts.*Djibril Sy \(colleague/);
 
     // The day's cap is spent, so the person's share couldn't be paid now, and nobody is asked.
     const capped = await tool("chip_in", { shop: "Mike", item_id: "mk-006", with: ["Wei"] });
@@ -1625,7 +1625,7 @@ await step(
     assert.deepEqual(terms.shares, [{ name: "Wei Zhang", amount: "25.00" }]);
     const code = offer.content[0].text.match(/confirm="([^"]+)"/)[1];
     assert.equal(structured(await tool("chip_in", { ...ask, confirm: "made-up" })).needs_ok, true);
-    const other = await tool("chip_in", { ...ask, with: ["Wei", "Moussa"] });
+    const other = await tool("chip_in", { ...ask, with: ["Wei", "Djibril"] });
     const otherCode = other.content[0].text.match(/confirm="([^"]+)"/)[1];
     assert.equal(
       structured(await tool("chip_in", { ...ask, confirm: otherCode })).needs_ok,
@@ -1648,9 +1648,9 @@ await step(
     assert.ok((await fetch(sc.receipt_url)).ok);
     assert.equal(structured(await tool("chip_in", { ...ask, confirm: code })).needs_ok, true, "a code works once");
     const merchant = await (await fetch(`${STORE}/merchant/ledger`)).text();
-    assert.doesNotMatch(merchant, /Malik|Wei Zhang|Moussa|Maya|Camille/, "shops never learn who chipped in");
+    assert.doesNotMatch(merchant, /Malik|Wei Zhang|Djibril|Maya|Camille/, "shops never learn who chipped in");
     const desk = await (await fetch(`${STORE}/merchant/api/desk`)).text();
-    assert.doesNotMatch(desk, /Malik|Wei Zhang|Moussa|Maya|Camille/, "nor does the shop desk");
+    assert.doesNotMatch(desk, /Malik|Wei Zhang|Djibril|Maya|Camille/, "nor does the shop desk");
   },
 );
 

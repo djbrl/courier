@@ -12,7 +12,7 @@ import { courierLook, firstName } from "./shared.ts";
 export const ERRAND_IDEAS = [
   "A burger and fries",
   "Flowers for my mum, under $30",
-  "Chip in with Moussa on a gift for Dad",
+  "Chip in with Djibril on something for the office party",
 ];
 /** One errand can cover several things: the courier sends a helper for each. */
 const SEVERAL = { label: "Several things at once", say: "A burger, flowers and a good novel, you choose, budget $60" };
@@ -27,7 +27,7 @@ export function errandRoom(d: Desk, courier: Courier, chat: unknown, list: unkno
   const boot = {
     courier: { ...look, id: courier.id, vars: courierVars(look.color) },
     human,
-    welcome: `Hey ${human}, welcome to the Courier demo! I’m ${look.name}. The real Courier experience is [connecting Courier’s MCP server](${config.courier.url}${connect}) to your Claude or any agent you use. This window is the demo, with ${FREE_MESSAGES} free messages. Use them on whatever you like.\n\nBy the way, you can invite people to an errand and chip in together, each paying their own share. ${people} are here to try it with: say “chip in with Moussa on a gift for Dad”, or find them on the [Friends](${config.courier.url}/app/people) page. Their couriers talk it over with me in a thread you can watch.`,
+    welcome: `Hey ${human}, welcome to the Courier demo! I’m ${look.name}. The real Courier experience is [connecting Courier’s MCP server](${config.courier.url}${connect}) to your Claude or any agent you use. This window is the demo, with ${FREE_MESSAGES} free messages. Use them on whatever you like.\n\nBy the way, you can invite people to an errand and chip in together, each paying their own share. ${people} are here to try it with: say “chip in with Djibril on something for the office party”, or find them on the [Friends](${config.courier.url}/app/people) page. Their couriers talk it over with me in a thread you can watch.`,
     free: FREE_MESSAGES,
     left: messagesLeft(d.human),
     origins: [new URL(config.courier.url).origin, new URL(config.store.url).origin],

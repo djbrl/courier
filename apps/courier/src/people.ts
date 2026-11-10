@@ -1,4 +1,4 @@
-import { type CourierColor, newId } from "@courier/shared";
+import { type Avatar, type CourierColor, newId } from "@courier/shared";
 import { courierIdNo, db, findCourier, type Human, type SavedPayPalRecord, saveCourier } from "./db.ts";
 
 /**
@@ -23,18 +23,31 @@ export interface Contact {
   createdAt: string;
 }
 
-const SEEDS: Pick<Contact, "name" | "relation" | "courierName" | "color" | "limitCents">[] = [
-  { name: "Moussa Ndiaye", relation: "brother", courierName: "Otto", color: "tang", limitCents: 5000 },
+type Seed = Pick<Contact, "name" | "relation" | "courierName" | "color" | "limitCents"> & { avatar?: Avatar };
+const SEEDS: Seed[] = [
+  {
+    name: "Djibril Sy",
+    relation: "colleague",
+    courierName: "Zed",
+    color: "cobalt",
+    avatar: "shades",
+    limitCents: 5000,
+  },
   { name: "Camille Laurent", relation: "friend", courierName: "Mika", color: "ink", limitCents: 4000 },
   { name: "Wei Zhang", relation: "flatmate", courierName: "Rémy", color: "hivis", limitCents: 2500 },
 ];
 
 /** Contacts seeded before the demo three had full names keep their courier and history, under the new name. */
-const RENAMED: Record<string, string> = { Leo: "Moussa Ndiaye", Priya: "Camille Laurent", Noor: "Wei Zhang" };
+const RENAMED: Record<string, string> = {
+  Leo: "Djibril Sy",
+  "Moussa Ndiaye": "Djibril Sy",
+  Priya: "Camille Laurent",
+  Noor: "Wei Zhang",
+};
 
 /** Something to split with each of them, to start from. */
 const IDEAS: Record<string, string> = {
-  "Moussa Ndiaye": "the Late Night Jazz box set for Dad",
+  "Djibril Sy": "the Late Night Jazz box set for the office party",
   "Camille Laurent": "flowers for Wei’s birthday",
   "Wei Zhang": "dinner for the flat tonight",
 };
@@ -44,7 +57,7 @@ export const ideaFor = (contact: Contact) => IDEAS[contact.name] ?? "something t
 export const firstNameOf = (contact: Pick<Contact, "name">) => contact.name.split(" ")[0]!;
 
 /** A simulated person with a courier and a saved PayPal at the simulator, ready to pay their share. */
-function seed(owner: Human, s: (typeof SEEDS)[number]): Contact {
+function seed(owner: Human, { avatar, ...s }: Seed): Contact {
   const now = new Date().toISOString();
   const humanId = newId("hum");
   db.put<Human>("humans", humanId, {
@@ -63,6 +76,7 @@ function seed(owner: Human, s: (typeof SEEDS)[number]): Contact {
     humanId,
     name: s.courierName,
     color: s.color,
+    ...(avatar ? { avatar } : {}),
     model: "Claude",
     idNo: courierIdNo(humanId, s.courierName),
     mode: "demo",
@@ -82,10 +96,14 @@ export function contactsOf(owner: Human): Contact[] {
   for (const c of found) {
     const name = RENAMED[c.name];
     if (!name) continue;
-    db.put<Contact>("contacts", c.id, { ...c, name });
+    // A renamed seed takes the new seed's whole look, so older demo data matches what new people get.
+    const { avatar, ...look } = SEEDS.find((x) => x.name === name) ?? { name };
+    Object.assign(c, look);
+    db.put<Contact>("contacts", c.id, c);
     const them = db.get<Human>("humans", c.humanId);
     if (them) db.put<Human>("humans", them.id, { ...them, displayName: name });
-    c.name = name;
+    const theirs = findCourier(c.humanId);
+    if (theirs) saveCourier({ ...theirs, name: c.courierName, color: c.color, ...(avatar ? { avatar } : {}) });
   }
   const have = found.length ? found : SEEDS.map((s) => seed(owner, s));
   return have.sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.name.localeCompare(b.name));
