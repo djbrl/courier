@@ -43,11 +43,13 @@ export function assetUrl(file: string): string {
 
 /** Juno hangs in the hero and turns over to show what a shop gets; the closing screen shows three couriers side by side. */
 const JUNO: CourierLook = { name: "Juno", color: "cobalt", avatar: "shades", model: "Claude", idNo: "CR-7Q3F-JR" };
-const CREW: { look: CourierLook; sentBy: string; white?: boolean }[] = [
-  { look: JUNO, sentBy: "Maya Chen" },
-  { look: { name: "Otto", color: "tang", avatar: "afro", model: "ChatGPT", idNo: "CR-8KD2-OT" }, sentBy: "Sam Reed" },
+/** A shop never learns who sent a courier, so the passes the public sees don't name anyone either. */
+const SENDER = "a real person";
+const CREW: { look: CourierLook; white?: boolean }[] = [
+  { look: JUNO },
+  { look: { name: "Otto", color: "tang", avatar: "afro", model: "ChatGPT", idNo: "CR-8KD2-OT" } },
   // White isn't a colour a person can pick, so landing.css repaints this one.
-  { look: { name: "Mika", color: "ink", model: "Llama", idNo: "CR-4HT9-MK" }, sentBy: "Ana Chen", white: true },
+  { look: { name: "Mika", color: "ink", model: "Llama", idNo: "CR-4HT9-MK" }, white: true },
 ];
 
 /** Every courier name the page shows, including the globe's (landing.js), so each gets the same face as on its pass. */
@@ -93,11 +95,11 @@ export function landingPage(human: Human | null): string {
       );
       return `<script type="application/json" id="faces-data">${JSON.stringify(faces).replace(/</g, "\\u003c")}</script>`;
     })
-    .replaceAll("{{pass}}", () => String(html`<div>${idCard(JUNO, "Maya Chen")}</div><div>${passBack(JUNO)}</div>`))
+    .replaceAll("{{pass}}", () => String(html`<div>${idCard(JUNO, SENDER)}</div><div>${passBack(JUNO)}</div>`))
     .replaceAll("{{sides}}", () =>
       String(
         html`${CREW.filter((m) => m.look !== JUNO).map(
-          (m) => html`<div class="s-flank${m.white ? " s-white" : ""}">${idCard(m.look, m.sentBy)}</div>`,
+          (m) => html`<div class="s-flank${m.white ? " s-white" : ""}">${idCard(m.look, SENDER)}</div>`,
         )}`,
       ),
     );
