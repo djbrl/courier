@@ -124,10 +124,9 @@ export function courierSetupPage(
         ${opts.reqId ? html`<input type="hidden" name="req" value="${opts.reqId}">` : ""}
         ${courier ? html`<input type="hidden" name="c" value="${courier.id}">` : opts.adding ? html`<input type="hidden" name="new" value="1">` : ""}
         <div class="ob2-fields">
-          <label class="fld"><span>Your first name</span><input class="inp" name="human" value="${you ?? ""}" maxlength="24" required autocomplete="given-name" data-live="human" ${you ? "" : raw("autofocus")}></label>
-          <label class="fld"><span>Courier name</span><input class="inp" name="name" value="${look.name}" placeholder="e.g. Otto" minlength="2" maxlength="${COURIER_NAME_MAX}" pattern="${COURIER_NAME_PATTERN}" title="${COURIER_NAME_HINT}" required autocomplete="off" autocapitalize="words" spellcheck="false" data-live="name"></label>
+          <label class="fld"><span>Your first name</span><input class="inp" name="human" value="${you ?? ""}" maxlength="24" required autocomplete="given-name" data-live="human" ${you ? "" : raw("autofocus")}><small class="hint">Only your friends will see this name.</small></label>
+          <label class="fld"><span>Courier name</span><input class="inp" name="name" value="${look.name}" placeholder="e.g. Otto" minlength="2" maxlength="${COURIER_NAME_MAX}" pattern="${COURIER_NAME_PATTERN}" title="${COURIER_NAME_HINT}" required autocomplete="off" autocapitalize="words" spellcheck="false" data-live="name"><small class="hint" id="name-hint">${COURIER_NAME_HINT}</small></label>
         </div>
-        <small class="hint" id="name-hint">${COURIER_NAME_HINT}</small>
         ${avatarPicker(look.avatar ?? avatarFor(look.name || "Juno"))}
         <div class="fld wiz-sw"><span>Colour</span><div class="sw">${swatch("cobalt", "Cobalt")}${swatch("tang", "Orange")}${swatch("ink", "Ink")}${swatch("hivis", "Hi-vis")}</div></div>
       </div>
