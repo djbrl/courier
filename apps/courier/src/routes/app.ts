@@ -116,7 +116,7 @@ appRouter.get("/start", (req, res) => {
   const human = currentHuman(req);
   const asShop = req.query.as === "shop";
   if (!human) {
-    res.send(welcomePage(asShop));
+    res.send(welcomePage());
     return;
   }
   // Someone with a courier already has nothing to pick on the shopper's side, so the shop side goes straight to the desk.

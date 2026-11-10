@@ -1360,7 +1360,7 @@ await step(
     assert.equal(storeHome.status, 302);
     assert.equal(storeHome.headers.get("location"), `${flow.courier}/shops`, "the list of shops lives on Courier");
     const asShop = await (await fetch(`${flow.courier}/start?as=shop`)).text();
-    assert.match(asShop, /class="ob2-opt on" href="[^"]*\/desk\/sign-in"/, "the chooser picks out the shop side");
+    assert.match(asShop, /class="ob2-opt" href="[^"]*\/desk\/sign-in"/, "the chooser offers the shop side");
     const install = await fetch(`${flow.courier}/install`);
     assert.equal(install.status, 200);
     const mcp = await install.text();

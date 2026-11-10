@@ -8174,11 +8174,6 @@ html:has(body.ob2-page) {
 .ob2-opt:hover {
   border-color: var(--ink);
 }
-/* Picked out when someone came for the shop side. */
-.ob2-opt.on {
-  border-color: var(--ink);
-  box-shadow: 0 0 0 1px var(--ink);
-}
 .ob2-opt b {
   font-size: 17px;
 }
