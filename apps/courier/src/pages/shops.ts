@@ -40,8 +40,8 @@ export function partnerShopsPage(human: Human | null): string {
 <header class="s-nav" id="nav"><a href="/" class="logo" aria-label="Courier"><svg><use href="#mk"/></svg>Courier</a><nav class="s-links" aria-label="Site">${navLinks(human, "/shops")}</nav></header>
 <main class="ps">
   <header class="ps-h">
-    <h1 class="s-h">Shops that welcome couriers.</h1>
-    <p>${SHOPS.length} partner shops. Send your courier to any of&nbsp;them.</p>
+    <h1 class="s-h">${SHOPS.length} shops. One&nbsp;courier.</h1>
+    <p>Every one of them knows yours on&nbsp;sight.</p>
   </header>
   <div class="ps-feat">${featured.map((s) => tile(s, true))}</div>
   <div class="ps-grid">${rest.map((s) => tile(s, false))}</div>
