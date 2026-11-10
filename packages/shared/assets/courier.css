@@ -10630,3 +10630,31 @@ html.splash-leave .splash {
     animation: none;
   }
 }
+
+/* Switching couriers: the page holds still and the new courier's card is dealt in. */
+html.courier-swap .hm4-stage .wiz-id {
+  animation: courier-deal 0.55s var(--ease) both;
+}
+html.courier-swap .hm4-ed .cedit-f,
+html.courier-swap .rm-h {
+  animation: courier-fade 0.4s 0.08s var(--ease) both;
+}
+@keyframes courier-deal {
+  from {
+    opacity: 0;
+    transform: translateX(48px) rotate(5deg) scale(0.96);
+  }
+}
+@keyframes courier-fade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html.courier-swap .hm4-stage .wiz-id,
+  html.courier-swap .hm4-ed .cedit-f,
+  html.courier-swap .rm-h {
+    animation: none;
+  }
+}

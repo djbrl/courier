@@ -198,8 +198,9 @@ export interface CourierLayoutOptions {
 /**
  * Crossing between the public pages and the signed-in app (signing in, finishing onboarding, signing out) opens on a
  * short splash. It runs before the first paint, so the page never flashes first. Reloads and back/forward skip it.
+ * Switching to another courier on the same page marks it too, so only the courier moves in.
  */
-const SPLASH_JS = `<script>(function(){try{var n=performance.getEntriesByType("navigation")[0];if(!n||n.type!=="navigate"||!document.referrer)return;var r=new URL(document.referrer);if(r.origin!==location.origin)return;var app=function(p){return /^\\/(app|errand)(\\/|$)/.test(p)};if(app(r.pathname)!==app(location.pathname))document.documentElement.classList.add("splash-arrive")}catch(e){}})()</script>`;
+const SPLASH_JS = `<script>(function(){try{var n=performance.getEntriesByType("navigation")[0];if(!n||n.type!=="navigate"||!document.referrer)return;var r=new URL(document.referrer);if(r.origin!==location.origin)return;var app=function(p){return /^\\/(app|errand)(\\/|$)/.test(p)};if(app(r.pathname)!==app(location.pathname))document.documentElement.classList.add("splash-arrive");else if(r.pathname===location.pathname&&new URLSearchParams(r.search).get("c")!==new URLSearchParams(location.search).get("c"))document.documentElement.classList.add("courier-swap")}catch(e){}})()</script>`;
 
 export function courierLayout(opts: CourierLayoutOptions): string {
   return `<!doctype html>

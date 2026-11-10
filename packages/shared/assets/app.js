@@ -111,7 +111,7 @@ document.addEventListener("click", async (e) => {
   location.href = link.href;
 });
 
-// Switching couriers swaps the page in place, with no page transition.
+// Switching couriers keeps the page still; the new courier moves in on its own (courier-swap in the CSS).
 addEventListener("pageswap", (e) => {
   const to = e.activation?.entry?.url;
   if (!e.viewTransition || !to) return;
