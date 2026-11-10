@@ -164,6 +164,14 @@ export async function revokeCourier(courier: Courier): Promise<void> {
   saveCourier({ ...courier, revokedAt: new Date().toISOString() });
 }
 
+/** Removes a courier for good, even a person's last: its open errands end first, and its chats go with it. */
+export async function deleteCourier(courier: Courier): Promise<void> {
+  if (!courier.revokedAt) await revokeCourier(courier);
+  db.deleteWhere<{ courierId: string }>("room_chats", (c) => c.courierId === courier.id);
+  db.delete("clients", demoClientId(courier.id));
+  db.delete("couriers", courier.id);
+}
+
 /** Removes a Claude from Courier: its tokens stop working, its errands end and its courier is free again. */
 export async function disconnect(connection: Connection): Promise<void> {
   db.put<Connection>("connections", connection.id, {

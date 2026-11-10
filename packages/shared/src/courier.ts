@@ -195,6 +195,12 @@ export interface CourierLayoutOptions {
   scripts?: string[];
 }
 
+/**
+ * Crossing between the public pages and the signed-in app (signing in, finishing onboarding, signing out) opens on a
+ * short splash. It runs before the first paint, so the page never flashes first. Reloads and back/forward skip it.
+ */
+const SPLASH_JS = `<script>(function(){try{var n=performance.getEntriesByType("navigation")[0];if(!n||n.type!=="navigate"||!document.referrer)return;var r=new URL(document.referrer);if(r.origin!==location.origin)return;var app=function(p){return /^\\/(app|errand)(\\/|$)/.test(p)};if(app(r.pathname)!==app(location.pathname))document.documentElement.classList.add("splash-arrive")}catch(e){}})()</script>`;
+
 export function courierLayout(opts: CourierLayoutOptions): string {
   return `<!doctype html>
 <html lang="en">
@@ -215,9 +221,11 @@ ${(opts.styles ?? []).map((s) => `<link rel="stylesheet" href="${escapeHtml(atVe
 <meta property="og:image" content="${config.courier.url}/icon-512.png">
 <meta name="twitter:card" content="summary">
 ${opts.head ? opts.head.value : ""}
+${SPLASH_JS}
 </head>
 <body class="${escapeHtml(opts.bodyClass ?? "")}">
 ${SPRITE}
+<div class="splash" aria-hidden="true"><span class="logo"><svg><use href="#mk"/></svg>Courier</span></div>
 ${config.paypal.mode === "live" ? `<div class="live-money" role="status">Live PayPal: real money moves here. A local copy, for one recording.</div>` : ""}
 ${opts.nav ? opts.nav.value : ""}
 ${opts.body.value}

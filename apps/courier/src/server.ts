@@ -63,6 +63,7 @@ import {
   addStamp,
   decideApproval,
   deleteAccount,
+  deleteCourier,
   disconnect,
   endEarlierErrands,
   internalRouter,
@@ -750,12 +751,18 @@ app.post("/app/visas/:id/revoke", async (req, res) => {
   res.redirect(303, next);
 });
 
-for (const action of ["revoke", "restore"]) {
+for (const action of ["revoke", "restore", "delete"]) {
   app.post(`/app/couriers/:id/${action}`, async (req, res) => {
     const human = currentHuman(req);
     const courier = human && findCourier(human.id, req.params.id);
     if (!courier) {
       res.status(404).send(errorPage(human, "Not found", "That courier doesn't exist."));
+      return;
+    }
+    if (action === "delete") {
+      await deleteCourier(courier);
+      // With none left, the app sends them to make a new one.
+      res.redirect(303, "/app");
       return;
     }
     if (action === "revoke") await revokeCourier(courier);

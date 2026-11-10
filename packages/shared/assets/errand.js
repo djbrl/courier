@@ -247,9 +247,13 @@
   }
 
   function drawLog() {
-    const hello = said(rich(boot.welcome));
     const atEnd = log.scrollHeight - log.scrollTop - log.clientHeight < 120;
     const grew = drawn !== chat.id;
+    // The greeting slides in once, when a new chat opens empty. Later redraws leave it where it is.
+    const hello = said(rich(boot.welcome)).replace(
+      'class="said"',
+      `class="said${grew && !chat.events.length ? " arrive" : ""}"`,
+    );
     log.innerHTML = hello + chat.events.map((e) => DRAW[e.t]?.(e) ?? "").join("") + (chat.working ? typing() : "");
     if (atEnd || grew) requestAnimationFrame(() => (log.scrollTop = log.scrollHeight));
     drawn = chat.id;

@@ -297,6 +297,18 @@ await step("Try with simulated PayPal: a new demo person, marked so in what shop
   assert.equal(old.headers.get("location"), "/start");
   // They name themselves on the courier screen, which starts blank.
   assert.match(await (await browser.req(`${flow.courier}/start/courier`)).text(), /name="human" value=""/);
+
+  // A person can delete their courier, even their only one, and then makes a new one. The app's logo goes home.
+  const made = await browser.req(`${flow.courier}/start/courier`, {
+    form: { name: "Gone", human: "Ana", color: "tang" },
+  });
+  const goneId = new URL(made.headers.get("location")!, flow.courier).searchParams.get("c")!;
+  const home = await (await browser.req(`${flow.courier}/app`)).text();
+  assert.match(home, /class="rail-logo" href="\/app"/);
+  assert.match(home, new RegExp(`action="/app/couriers/${goneId}/delete"`));
+  const gone = await browser.req(`${flow.courier}/app/couriers/${goneId}/delete`, { form: {} });
+  assert.equal(gone.headers.get("location"), "/app");
+  assert.equal((await browser.req(`${flow.courier}/app`)).headers.get("location"), "/start/courier");
 });
 
 await step("The errand room: chats side by side, at any shop, and only the person sets a budget", async () => {
@@ -479,8 +491,8 @@ await step("The errand room: chats side by side, at any shop, and only the perso
 
   // The room is a demo with free messages. They're counted per person, so a new or deleted chat doesn't give any back.
   const welcomed = await (await person.req(`${flow.courier}/errand?c=${courierId}`)).text();
-  assert.match(welcomed, /welcome to the Courier demo/);
-  assert.match(welcomed, /connecting Courier’s MCP server/);
+  assert.match(welcomed, /This is the demo, with \d+ free messages/);
+  assert.match(welcomed, /connect me to your agent/);
   const spending = await newChat();
   let left = (await view(spending)).left as number;
   assert.ok(left > 0 && left < 50, "earlier messages counted");
@@ -512,7 +524,7 @@ await step("Chipping in: each person pays their own share, and their limits stay
       `${flow.courier}/errand?c=${courierId}&say=${encodeURIComponent("Chip in with Djibril on a gift")}`,
     )
   ).text();
-  assert.match(invited, /invite people to an errand/);
+  assert.match(invited, /To split a bill, try “chip in with Djibril/);
   assert.match(invited, /"draft":"Chip in with Djibril on a gift"/);
 
   const url = (path: string) => `${flow.courier}/errand/api/${path}${path.includes("?") ? "&" : "?"}c=${courierId}`;

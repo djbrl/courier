@@ -102,7 +102,23 @@ document.addEventListener("click", async (e) => {
   if (!link) return;
   e.preventDefault();
   const { sure: title, sureBody: body, sureYes: yes } = link.dataset;
-  if (await window.courierConfirm({ title, body, yes })) location.href = link.href;
+  if (!(await window.courierConfirm({ title, body, yes }))) return;
+  // Signing out covers the app with the splash first; the page it lands on lifts it.
+  if (new URL(link.href).pathname === "/logout") {
+    document.documentElement.classList.add("splash-leave");
+    await new Promise((r) => setTimeout(r, 380));
+  }
+  location.href = link.href;
+});
+
+// Switching couriers swaps the page in place, with no page transition.
+addEventListener("pageswap", (e) => {
+  const to = e.activation?.entry?.url;
+  if (!e.viewTransition || !to) return;
+  const from = new URL(location.href);
+  const next = new URL(to);
+  if (from.pathname === next.pathname && from.searchParams.get("c") !== next.searchParams.get("c"))
+    e.viewTransition.skipTransition();
 });
 
 // On a phone the sidebar folds into a menu under the top bar.

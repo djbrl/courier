@@ -113,7 +113,7 @@ export function shell(
     scripts: opts.scripts,
     body: html`<div class="app">
       <aside class="rail">
-        <a class="rail-logo" href="/" aria-label="Courier">${LOGO}</a>
+        <a class="rail-logo" href="/app" aria-label="Courier home">${LOGO}</a>
         <button type="button" class="rail-menu" aria-expanded="false" aria-controls="rail-drawer" aria-label="Menu: ${here}">
           <span>${here}</span>${d.approvals.length ? html`<i class="rail-dot" aria-hidden="true"></i>` : ""}<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5.5h14M3 10h14M3 14.5h14"/></svg>
         </button>
@@ -239,6 +239,12 @@ function courierControls(d: Desk, sel: Courier): RawHtml {
           : html`<div class="li"><span class="dot"></span><span class="li-t"><b>Revoke ${sel.name}</b><small>Ends its open errands now and stops new ones.</small></span>
             <form method="post" action="/app/couriers/${sel.id}/revoke" data-sure="Revoke ${sel.name}?" data-sure-body="Its open errands end now." data-sure-yes="Revoke"><button class="btn danger sm" type="submit">Revoke</button></form></div>`
       }
+      <div class="li"><span class="dot no"></span><span class="li-t"><b>Delete ${sel.name}</b><small>Removes it and its chats for good.</small></span>
+        <form method="post" action="/app/couriers/${sel.id}/delete" data-sure="Delete ${sel.name}?" data-sure-body="${
+          d.couriers.length > 1
+            ? "Its open errands end and its chats are deleted. This can't be undone."
+            : "Its open errands end and its chats are deleted. It's your only courier, so you'll make a new one next."
+        }" data-sure-yes="Delete"><button class="btn danger sm" type="submit">Delete</button></form></div>
     </div>`;
 }
 
