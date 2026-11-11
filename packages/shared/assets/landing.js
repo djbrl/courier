@@ -154,7 +154,13 @@
     function setKnown(on) {
       if (on === known) return;
       known = on;
-      for (const c of chips) c.el.classList.toggle("known", on);
+      /* Left to right, one at a time, so each chip reads as one card turning over rather than all of them blinking. */
+      [...chips]
+        .sort((a, b) => a.x - b.x)
+        .forEach((c, i) => {
+          c.el.style.setProperty("--d", `${(i * 0.35).toFixed(2)}s`);
+          c.el.classList.toggle("known", on);
+        });
       redraw();
     }
     let ni = 0,
@@ -196,10 +202,9 @@
         /* Both faces are there from the start, so a chip can turn into a courier and back. */
         el.innerHTML = mini({ n, L: n[0], c: ck, pc, lc, sh: SH[ni % SH.length] }).replace(
           '<span class="gci">',
-          '<span class="gci"><span class="s-anon"><i>?</i>Unknown agent</span>',
+          '<span class="gci"><span class="gc-anon"><i>?</i>Unknown agent</span>',
         );
         el.classList.toggle("known", known);
-        el.style.setProperty("--d", `${(chips.length * 0.12).toFixed(2)}s`);
         layer.appendChild(el);
         const c = { p, el, ck, born: now - age, life: 4200 };
         chips.push(c);
@@ -395,7 +400,9 @@
     for (const t of tracks) {
       const r = t.el.getBoundingClientRect();
       if (!t.start && r.top < innerHeight * 0.35 && r.bottom > innerHeight * 0.5) t.start = performance.now();
-      const p = reduce ? 1 : t.start ? Math.min(1, (performance.now() - t.start) / t.dur) : 0;
+      const clock = reduce ? 1 : t.start ? Math.min(1, (performance.now() - t.start) / t.dur) : 0;
+      /* The globe's screen moves on scroll instead, so nobody skims past the unknown agents before they get their IDs. */
+      const p = t.el === why && !reduce ? Math.max(0, Math.min(1, -r.top / (r.height - innerHeight))) : clock;
       for (const [n, at] of t.ats) n.classList.toggle("is", p >= at);
       for (const [n, u] of t.untils) n.classList.toggle("gone", p >= u);
       for (const n of t.types) {
@@ -409,11 +416,12 @@
       }
       for (const [n, stops] of t.meters) n.style.setProperty("--w", `${stops.find(([at]) => p >= at)[1]}%`);
       /* The number runs up as soon as the screen settles, easing into its last few. */
-      const run = Math.min(1, p / 0.09);
+      const run = Math.min(1, clock / 0.09);
       for (const n of t.counts) n.textContent = Math.round((1 - (1 - run) ** 3) * +n.dataset.count);
+      /* The swap comes a third of the way in, leaving the rest of the scroll to watch the IDs turn over and read. */
       if (t.el.id === "why") {
-        globe.setKnown(p >= 0.52);
-        t.el.classList.toggle("wait", p < 0.52);
+        globe.setKnown(p >= 0.35);
+        t.el.classList.toggle("wait", p < 0.35);
       }
     }
     const moved = Math.max(-90, Math.min(90, scrollY - lastY));

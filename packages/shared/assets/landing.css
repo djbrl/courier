@@ -397,7 +397,7 @@ body {
   font-stretch: 120%;
   letter-spacing: -0.035em;
 }
-/* A few plain lines: the agent's name big, then the shopper ID and the real person. */
+/* A few plain label-and-value lines: the agent, the shopper ID, then the real person. */
 .s-fld {
   margin: 0;
   padding: 0;
@@ -416,15 +416,9 @@ body {
 .s-fld li:last-child {
   justify-content: flex-start;
 }
-.s-fld .s-an {
-  min-height: 0;
-  padding-bottom: 0.25em;
-  border: 0;
-  font:
-    italic 900 2.6em / 1 "Archivo",
-    sans-serif;
-  font-stretch: 118%;
-  letter-spacing: -0.04em;
+/* The heading sits right above, so the first row needs no rule of its own. */
+.s-fld li:first-child {
+  border-top: 0;
 }
 .s-fld li > span {
   font-weight: 500;
@@ -541,26 +535,29 @@ body {
     opacity 0.5s,
     transform 0.6s var(--ease);
 }
-.s-anon {
+/* Its own class: the shop desk's "?" portrait is .s-anon and used to override this one, washing it out. */
+.gc-anon {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 7px 13px 7px 7px;
+  border: 1.5px dashed #9e9a8f;
   border-radius: 12px;
   background: #fff;
-  box-shadow: 0 6px 18px rgba(20, 20, 20, 0.18);
+  box-shadow: 0 6px 18px rgba(20, 20, 20, 0.14);
+  color: var(--ink);
   font-size: 13.5px;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
 }
-.s-anon i {
+.gc-anon i {
   display: grid;
   place-items: center;
   width: 26px;
   height: 26px;
   border-radius: 7px;
-  background: #e8e6e1;
-  color: var(--mute);
+  background: #d9d6cf;
+  color: #141414;
   font:
     italic 900 15px "Archivo",
     sans-serif;
@@ -607,18 +604,24 @@ body {
   justify-items: center;
   align-items: end;
 }
+/* A flip: the face going away turns edge-on, then the other turns in from its edge. */
 .gci > * {
   grid-area: 1 / 1;
   transition:
-    opacity 0.3s var(--ease) var(--d, 0s),
-    transform 0.55s var(--pop) var(--d, 0s);
+    transform 0.22s cubic-bezier(0.5, 0, 0.75, 0) var(--d, 0s),
+    opacity 0s calc(var(--d, 0s) + 0.22s);
 }
-.gc.known .s-anon,
+.gc.known .mini,
+.gc:not(.known) .gc-anon {
+  transition:
+    transform 0.34s var(--ease) calc(var(--d, 0s) + 0.22s),
+    opacity 0s calc(var(--d, 0s) + 0.22s);
+}
+.gc.known .gc-anon,
 .gc:not(.known) .mini {
   opacity: 0;
-  transform: scale(0.7);
+  transform: perspective(600px) rotateY(90deg);
 }
-
 /* the session: the look of a chat window, without naming one */
 .s-cl {
   background: #f5f4ee;
@@ -1457,95 +1460,6 @@ footer .ppl {
   }
 }
 
-/* Partner shops: one quiet line of them under the hero, and the way to the whole list. */
-/* The partner strip stays quiet: a small grey line, one row of grey marks, room around it and a hairline under it. */
-.s-strip {
-  display: grid;
-  justify-items: center;
-  gap: 26px;
-  width: min(1040px, 100% - 2 * var(--gut));
-  margin: 0 auto;
-  padding: clamp(56px, 10vh, 104px) 0 clamp(48px, 8vh, 80px);
-  border-bottom: 1px solid var(--line, #ececec);
-  overflow: hidden;
-}
-.s-strip > p {
-  font-size: 14px;
-  font-weight: 500;
-  color: #8a8b90;
-}
-.s-marq {
-  display: flex;
-  width: 100%;
-  overflow: hidden;
-  mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
-}
-.s-mq {
-  flex: none;
-  display: flex;
-  gap: 56px;
-  padding-right: 56px;
-  animation: s-marq 90s linear infinite;
-}
-.s-marq:hover .s-mq {
-  animation-play-state: paused;
-}
-@keyframes s-marq {
-  to {
-    transform: translateX(-100%);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .s-mq {
-    animation: none;
-  }
-}
-.s-sh {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #8a8b90;
-  font-family: "Archivo", sans-serif;
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  white-space: nowrap;
-  transition: color 0.2s;
-}
-.s-sh .slogo {
-  width: 26px;
-  height: 26px;
-  border-radius: 7px;
-  filter: grayscale(1) contrast(0.9) opacity(0.6);
-  transition: filter 0.2s;
-}
-.s-sh:hover {
-  color: var(--ink);
-}
-.s-sh:hover .slogo {
-  filter: none;
-}
-.s-more {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #8a8b90;
-  font-size: 14px;
-  font-weight: 600;
-  transition: color 0.2s;
-}
-.s-more:hover {
-  color: var(--ink);
-}
-.s-more svg {
-  width: 13px;
-  height: 13px;
-  transition: transform 0.2s var(--ease);
-}
-.s-more:hover svg {
-  transform: translateX(3px);
-}
-
 /* Agents it works with: names only, never their marks. */
 .s-works {
   list-style: none;
@@ -1837,17 +1751,6 @@ footer .ppl {
 }
 
 @media (max-width: 860px) {
-  .s-sh {
-    font-size: 16px;
-  }
-  .s-sh .slogo {
-    width: 22px;
-    height: 22px;
-  }
-  .s-mq {
-    gap: 34px;
-    padding-right: 34px;
-  }
   .s-works {
     gap: 6px;
     margin-top: 10px;

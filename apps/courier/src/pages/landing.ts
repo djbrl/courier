@@ -68,20 +68,10 @@ function passBack(c: CourierLook): RawHtml {
     <div class="idf">
       <div class="tab"><div class="tr">${LOGO}<span class="idn">${c.idNo}</span></div></div>
       <i class="pf"></i><i class="slot"></i>
-      <div class="s-revt"><h3>Shared</h3><ul class="s-fld"><li class="s-an">${c.name}</li><li><span>Shopper ID</span><code>pp_7f3a…c91</code></li><li>${CK}A real client</li></ul></div>
+      <div class="s-revt"><h3>Shared</h3><ul class="s-fld"><li><span>Agent</span><b>${c.name}</b></li><li><span>Shopper ID</span><code>pp_7f3a…c91</code></li><li>${CK}A real client</li></ul></div>
       <div class="s-revb">${MARK}<h3>Withheld</h3><p>Name, email, PayPal account</p>${VERIFIED}</div>
     </div>
   </div>`;
-}
-
-/** Every partner shop in a slow, quiet line; the second copy only makes the loop seamless, so it's hidden from readers. */
-function shopStrip(): RawHtml {
-  const row = (hidden: boolean) =>
-    html`<div class="s-mq" ${hidden ? raw('aria-hidden="true"') : ""}>${SHOPS.map(
-      (s) =>
-        html`<a class="s-sh" href="${config.store.url}/${s.slug}" ${hidden ? raw('tabindex="-1"') : ""}>${shopLogo(s)}<span>${s.name}</span></a>`,
-    )}</div>`;
-  return html`${row(false)}${row(true)}`;
 }
 
 export function landingPage(human: Human | null): string {
@@ -89,8 +79,6 @@ export function landingPage(human: Human | null): string {
   const body = landingTemplate
     .replaceAll("{{navLinks}}", () => String(navLinks(human)))
     .replaceAll("{{storeUrl}}", config.store.url)
-    .replaceAll("{{shopCount}}", String(SHOPS.length))
-    .replaceAll("{{strip}}", () => String(shopStrip()))
     .replaceAll("{{fdlogo}}", () => String(shopLogo(SHOPS.find((x) => x.slug === "floor-dash") ?? SHOPS[0]!)))
     .replaceAll("{{faces}}", () => {
       const faces = Object.fromEntries(

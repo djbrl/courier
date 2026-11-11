@@ -1335,14 +1335,10 @@ await step("Twenty shops through one connector, each browsable with no errand an
 });
 
 await step(
-  "The public pages: the landing shows the same shops, the badge back says what is shared and withheld, the shop side, and the MCP page",
+  "The public pages: the badge back says what is shared and withheld, the shop side, the partner shops page lists every shop, and the MCP page",
   async () => {
     const { shops } = structured(await tool("list_shops"));
     const landing = await (await fetch(`${flow.courier}/`)).text();
-    const strip = landing.match(/<div class="s-mq" >(.*?)<\/div>/s);
-    assert.ok(strip, "the landing shows the partner shops in a strip");
-    const shown = [...strip[1]!.matchAll(/href="[^"]*\/([a-z0-9-]+)"/g)].map((m) => m[1]);
-    assert.deepEqual(shown.sort(), shops.map((s: any) => s.shop).sort(), "the same shops the app has");
     assert.match(landing, /<h3>Shared<\/h3>/);
     assert.match(
       landing,
