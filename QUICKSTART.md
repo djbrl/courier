@@ -1,11 +1,24 @@
 # Quickstart
 
-Courier lets you ask Claude to buy something and have it just happen, inside limits you set. PayPal confirms you're a
-real person, and your AI gets its own ID and spending rules.
+Courier gives your AI agent an ID that shops can trust. PayPal confirms you're a real person, your agent gets its own
+name, face and spending limits, and shops see a verified client instead of an anonymous bot. No real money moves: it
+runs on the PayPal sandbox and a built-in PayPal simulator.
 
-This page covers what Courier does, what works today and what's next, as of November 1, 2026. It also covers
-[the ways to try it](#ways-to-try-it), [how to run it on your machine with PayPal's test
-environment](#run-it-locally-with-paypal-sandbox) and [what changed recently](#changelog).
+## Try it in two minutes
+
+Everything below is on the hosted site, <https://courier-hackathon.duckdns.org>.
+
+1. Open <https://courier-hackathon.duckdns.org/start>.
+2. Pick one:
+   - **I'm shopping:** a made-up person on simulated PayPal. No login needed.
+   - **Shop with a PayPal sandbox account instead:** the real PayPal sandbox. Judges' logins are in the Devpost
+     testing instructions.
+3. Name your courier, then ask it for something with a budget, for example "a burger on Floor Dash, under $15".
+4. To see the shop's side, pick **I run a shop** on the same page. That opens the shop desk.
+5. To use your own Claude, add `https://courier-hackathon.duckdns.org/mcp` as a custom connector.
+
+To run it on your machine instead, see [Try it](README.md#try-it) in the README: `npm install && npm run demo`, no keys
+needed.
 
 ## The story
 
@@ -17,7 +30,7 @@ Courier.
 2. **You name your courier.** A courier is your AI with its own ID card. Say you call yours Juno.
 3. **You add Courier to Claude.** You paste one address into Claude's settings and click Connect. This only happens once,
    and nothing is bought or charged.
-4. **You ask.** "Find me a jazz record at Juniper Records. I have about $40." Or "Send Steve for flowers on Floor Dash, $20."
+4. **You ask.** "Find me a jazz record at Juniper Records. I have about $40." Or "Send Juno for a burger on Floor Dash, $15."
 5. **The budget belongs to the errand.** Under the cap you set when connecting (say $50 an errand, $100 a day), the errand
    just starts. Above it you confirm the budget in a card under Claude's reply, or at a link. Several errands can run at
    once, with any courier, at any shop. Each ends when you call it back, when its budget is used up, or after 24 hours.
@@ -32,92 +45,48 @@ Courier.
 10. **You stay in charge.** Every step shows up in your Courier home, and you can call Juno back at any time. When the
     errand ends, the saved PayPal is removed, and Claude stays connected for next time.
 
-That's the whole idea: one ticket, then it just happens. To try it yourself, follow the steps under
-[Try it](README.md#try-it). You won't need any accounts or keys, because the demo uses a pretend PayPal.
+That's the whole idea: one ticket, then it just happens.
 
 ## What works today
 
-Everything in the story is built and passes our automated tests using a pretend PayPal. The real-PayPal status is at the
-end of this section.
+Everything below is built and covered by automated tests on the PayPal simulator.
 
 **For the person**
 
-| Feature             | What it does                                                                                                                          |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| PayPal sign-in      | Confirms you're real, and turns away unverified accounts and under-18s                                                                |
-| Couriers            | Your AI gets a name, a colour and an ID card, and you can have several                                                                |
-| Errand tickets      | Set one budget, in the chat or on a page. The courier works out the rest                                                              |
-| Works inside Claude | Add one Courier connector, with no ticket or payment, and reach every shop and courier                                                |
-| Spending cap        | Set once: under it Claude starts errands without asking, above it you confirm. Enforced in code                                       |
-| Errand room         | Send a courier shopping from the Courier website, with no Claude setup                                                                |
-| Asking first        | Built, but off by default: a courier can buy anything inside its budget at its shop. Set `INTENT_CHECK=on` to bring the question back |
-| Pay without asking  | Save PayPal once on your account, and purchases inside a budget just go through                                                       |
-| Pay by link         | Without a saved PayPal, the courier sends a link and you approve the payment                                                          |
-| Receipts            | Every purchase comes with a page showing what was bought, what it cost and who bought it                                              |
-| Refundable bond     | A $5 hold on your PayPal, returned unless the shop reports abuse. Built, but no longer offered on the ticket                          |
-| Call back           | Ends an errand within seconds                                                                                                         |
-| Errand history      | Shows every step a courier took and what it spent                                                                                     |
+| Feature              | What it does                                                                                 |
+| -------------------- | -------------------------------------------------------------------------------------------- |
+| PayPal sign-in       | Confirms you're real, and turns away unverified accounts and under-18s                       |
+| Couriers             | Your agent gets a name, a color and an ID card, and you can have several                     |
+| Works in any MCP app | Add one Courier connector to Claude or another MCP client, and reach all 20 shops            |
+| Errand room          | Send a courier shopping from Courier's own website, with no setup                            |
+| Budgets              | Set a budget per errand and a cap. Limits are checked in code before PayPal charges          |
+| Pay without asking   | Save PayPal once, and purchases inside a budget go through with no PayPal page               |
+| Group orders         | Friends' couriers build one order and split the bill, each paying its share inside its limit |
+| Receipts             | Every purchase has a page showing what was bought, what it cost and who bought it            |
+| Call back            | Ends an errand within seconds                                                                |
 
 **For the shop**
 
-| Feature            | What it does                                                                                                    |
-| ------------------ | --------------------------------------------------------------------------------------------------------------- |
-| Demo shops         | Amazoo, Floor Dash, Forknite, Mike and Juniper Records, pretend shops shown as a grid of logos                  |
-| What the shop sees | Who's shopping, their orders, signed proof of what each was allowed to do, and a button to report a bad courier |
-| Release the bots   | Eight attacks on the shop, like fake IDs and overspending, that you can watch get stopped live                  |
+| Feature          | What it does                                                                                                |
+| ---------------- | ----------------------------------------------------------------------------------------------------------- |
+| 20 demo shops    | Pretend shops such as Floor Dash, Amazoo, Beanbucks and Juniper Records, each with its own MCP server       |
+| Shop desk        | Today, orders, the access log, couriers and reports (AG Studio). Couriers appear by name and pseudonym only |
+| Clerk            | An assistant on PayPal's Agent Toolkit for refunds and tracking. The owner confirms every refund            |
+| Shops SDK        | TypeScript and Python SDKs generated with APIMatic, in [`sdk/`](sdk/README.md)                              |
+| Release the bots | Eight attacks on a shop, like forged IDs and overspending, that you can watch get stopped                   |
 
-**How much is proven on real PayPal**
+**On the real PayPal sandbox**
 
-Real Claude and the PayPal test environment have run sign-in, a ticket, a payment link and Pay without asking. The new
-connect-first flow, receipts and the bond have only run on the pretend PayPal so far. No real money is involved at any
-point.
+Real Claude and the PayPal sandbox have run sign-in, a ticket, a payment link and Pay without asking. The $5 refundable
+bond has only run on the simulator.
 
 ## What's next
 
-We're on a tight timeline, so the near-term list is short.
-
-**Next**
-
-- **Group buying (Courier Runs).** Several people's couriers chip in and buy one thing together, like a family splitting
-  a $120 gift. The landing page already advertises this, so we either build it or take that section down. The first
-  version is estimated at 3–4 days.
-- **Wait and ping.** Some chat apps can't show a yes-or-no question, so today the courier stops and sends a link.
-  Instead, it would wait and ping you, then carry on once you answer.
-
-**Final polish**
-
-- **Final copy.** Get rid of any wording that reads as low effort or AI-generated.
-- **Final branding.** Settle the look of the whole product.
-- **Optimized UX.** Smooth out the full flow, from end to end.
-- **Final positioning.** Settle how we describe Courier and who it's for.
-
-**Later**
-
-- **Real shops.** Courier knows five pretend shops today, listed in code. Real shops would need a way to sign up, and PayPal would
-  need to approve us to charge on their behalf.
-- **Getting ready for real use.** This includes a login on the shop's dashboard and a database built for more than one
-  server.
-- **Working with other agent standards.** These are newer protocols for AI agents to prove what they're allowed to do
-  and to hand tasks to each other.
-
-**Still to decide:** does group buying ship in the first release?
-
-## Ways to try it
-
-PayPal sandbox is PayPal's test environment. It works like the real thing, but no real money moves.
-
-| What you want to do                                                      | Where                                                            | Keys needed | Tunnel needed |
-| ------------------------------------------------------------------------ | ---------------------------------------------------------------- | ----------- | ------------- |
-| Try the full flow with your Claude and PayPal sandbox                    | [The hosted site](#use-the-hosted-site)                          | No          | No            |
-| Look around with a pretend PayPal                                        | Your machine, [`npm run demo`](README.md#try-it)                 | No          | No            |
-| Test code changes in Claude Code with a pretend PayPal                   | Your machine, `npm run demo`                                     | No          | No            |
-| Test code changes with PayPal sandbox, or in claude.ai or Claude Desktop | Your machine, [steps below](#run-it-locally-with-paypal-sandbox) | Yes         | Yes           |
-
-### Use the hosted site
-
-1. Get a **Personal** PayPal sandbox account ([step 1 of the PayPal setup](#3-set-up-paypal-sandbox)).
-2. Open <https://courier.167-99-248-134.sslip.io/start> and sign in with that account.
-3. To use your own Claude, add `https://courier.167-99-248-134.sslip.io/mcp` as a custom connector.
+- **Real shops.** A way for shops to sign up, with their own keys, instead of a fixed list in code.
+- **Payments to each shop.** PayPal partner onboarding, so each sale lands in the shop's own PayPal account.
+- **More agents.** Test and polish in ChatGPT, Cursor and other MCP clients.
+- **Webhooks.** Refunds, disputes and shipping updates flow back into the errand automatically.
+- **Agent standards.** Work with newer protocols such as AP2 and A2A.
 
 ## Run it locally with PayPal sandbox
 
@@ -181,17 +150,3 @@ npm run preflight -- --paypal
 
 When every line shows ✓, sign in with your **Personal** sandbox account. To connect Claude and check that the money
 reached your **Business** account, follow the [live test](docs/live-test.md).
-
-## Changelog
-
-### November 1, 2026
-
-- **Moved to DigitalOcean.** Courier and the demo shops now run at <https://courier.167-99-248-134.sslip.io> and
-  <https://shop.167-99-248-134.sslip.io>. You no longer need a tunnel to use them.
-- **One connector for every shop.** You add Courier to Claude once, and it reaches every shop and courier.
-- **Budgets in the chat.** You can set an errand's budget inside the chat.
-- **New landing page.** It now tells one story from start to finish, addressed to you, with a new header and cards that
-  arrive one at a time.
-- **App redesign.** The app now has one budget and fewer screens.
-- **Delete your account.** You can now delete your account and start again.
-- **Connecting and receipts.** You can connect Claude before writing a ticket, and every purchase comes with a receipt.

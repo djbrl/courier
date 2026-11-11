@@ -9,7 +9,7 @@ Two sandbox accounts are involved:
 
 These steps test code running on your machine, set up as in the
 [Quickstart](../QUICKSTART.md#run-it-locally-with-paypal-sandbox). To test the hosted site instead, skip steps 0.1 to
-0.3 and use `https://courier.167-99-248-134.sslip.io` as `COURIER_URL` and `https://shop.167-99-248-134.sslip.io` as
+0.3 and use `https://courier-hackathon.duckdns.org` as `COURIER_URL` and `https://courier-shop.duckdns.org` as
 `STORE_URL`. Its payments go to the Business account that owns the hosted site's PayPal app.
 
 ## 0. Before you start (5 minutes)
@@ -33,7 +33,7 @@ These steps test code running on your machine, set up as in the
      `permissions.allow` in `~/.claude/settings.json`, or pick "Yes, don't ask again" the first time it asks.
 5. Open these in tabs:
    - Courier: `COURIER_URL/app`
-   - What the shop sees: `STORE_URL/merchant`
+   - The shop desk: `STORE_URL/desk`
    - Business account: https://www.sandbox.paypal.com (sign in as the Business account) → Activity
 
 ## 1. An errand inside the ticket

@@ -35,7 +35,7 @@ flowchart LR
 | Path              | Role                                                                                             |
 | ----------------- | ------------------------------------------------------------------------------------------------ |
 | `apps/courier`    | Authorization server, the Courier connector, spend authority, the person's app, PayPal simulator |
-| `apps/store`      | Five demo shops in one process: an MCP server (resource server) each, logo grid, merchant view   |
+| `apps/store`      | 20 demo shops in one process: an MCP server (resource server) each, logo grid, the shop desk     |
 | `packages/shared` | Config, PayPal gateway, intent check, visa model, document store, design system                  |
 
 The two apps are separate processes that share no database. They talk over HTTP: the shop verifies tokens against
@@ -155,7 +155,7 @@ at that shop, only to that order's own capture, never above what was captured le
 checks the model's arguments before the toolkit sends them, and without a model key, written rules decide within the same
 checks. A refund is recorded on the errand (a step, and the money bar) but doesn't raise what it may still spend: the budget
 was what the person allowed, and money coming back to their PayPal doesn't change that. The owner has a clerk too
-(`POST /merchant/api/clerk`), which reads orders, parcels, returns and the toolkit's `list_transactions`, with payer details
+(`POST /desk/:slug/api/clerk`), which reads orders, parcels, returns and the toolkit's `list_transactions`, with payer details
 removed, and can only propose a refund the owner confirms. Live PayPal gets no clerk refunds.
 
 **The simulator has the same shape as PayPal.** `SandboxPayPal` and `SimulatedPayPal` implement one `PayPalGateway`. The
@@ -163,13 +163,13 @@ rest of the code can't tell which it's using, and the e2e runs without credentia
 URL and headers point at `/sim-paypal/rest`, which answers PayPal's refund, tracker and reporting paths. The "Try the demo instead" link makes a throwaway person (`simulated` on the person and on their tokens) whose payments only reach the simulator, even on a server with sandbox credentials; `paypalFor` picks the gateway, and shops are told the person is not verified.
 
 **The shop desk is the one page drawn in the browser.** Every other page is a server-rendered `html` template. The
-shop's dashboard at `/merchant` is AG Studio, a commercial React library, bundled by esbuild into
-`packages/shared/assets/desk/desk.js` (built by `scripts/dev.mjs`, not committed). It reads `/merchant/api/desk`, which
+shop's dashboard at `/desk/:slug` is AG Studio, a commercial React library, bundled by esbuild into
+`packages/shared/assets/desk/desk.js` (built by `scripts/dev.mjs`, not committed). It reads `/desk/:slug/api/desk`, which
 holds only what a shop already knows: a courier's name, its pairwise pseudonym and what it did. `AG_STUDIO_LICENSE_KEY`
 is optional and goes to the browser; without it AG Studio runs as a trial, with a watermark and a note in the console.
 
 **The clerk is Studio's agents on Claude, with the key kept on the server.** Studio runs its agents in the browser
-and calls a model adapter for each turn. The desk's adapter posts the turn to `/merchant/api/llm`, which calls Claude
+and calls a model adapter for each turn. The desk's adapter posts the turn to `/desk/:slug/api/llm`, which calls Claude
 with `AGENT_MODEL` and streams Studio's events back. The server fixes the model and the token cap, adds a preamble that
 treats courier names and item titles as untrusted text, accepts only same-origin calls and limits how often they come.
 The clerk can read the data and change the dashboard, nothing else. Without an Anthropic key, or with `DESK_AGENT=off`,

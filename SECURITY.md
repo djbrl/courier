@@ -28,7 +28,7 @@ wrong-audience tokens, overspending and prompt injection.
 - Set long random values for `COURIER_SECRET` and `INTERNAL_SECRET` in production. The server warns only if the built-in
   development defaults are still in use.
 - A PayPal payment shows the buyer to the shop's PayPal account, as any PayPal payment does.
-- `/merchant` and its Report button have no login, because they're a demo view. A real shop would put them behind one.
+- The shop desk has a demo sign-in that lets anyone pick a shop. A real shop would put it behind a real login.
 - The shop's `/internal/*` calls share one secret, with no per-shop scoping, and the shops are a fixed list in code.
 - A saved PayPal lasts until the person removes it, so a bug in the limits could reach it after an errand has ended. Only
   an active errand can charge it, and only within that errand's budget.

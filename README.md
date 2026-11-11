@@ -45,7 +45,7 @@ accounts are involved.
 | The shop desk    | <http://localhost:4100/desk> |
 
 To try the real flow with your own Claude and PayPal's test environment, use the
-[hosted site](QUICKSTART.md#use-the-hosted-site). To test your own code changes that way, follow
+[hosted site](QUICKSTART.md#try-it-in-two-minutes). To test your own code changes that way, follow
 [the local setup](QUICKSTART.md#run-it-locally-with-paypal-sandbox).
 
 ## What it does

@@ -158,27 +158,24 @@ policy (`AFTER_SALE` in `catalog.ts`) and calls the toolkit's `create_refund` or
 decides. Either way the call passes `refundRoom` and `checkRefundArgs` in `limits.ts` first. `toolkit.ts` builds the
 toolkit with only the actions the clerk needs; with the simulator, the same toolkit runs against `/sim-paypal/rest`.
 
-The owner's side is `POST /merchant/api/clerk` and `/merchant/api/clerk/confirm` in the store's `server.ts`.
+The owner's side is `POST /desk/:slug/api/clerk` in the store's `server.ts`.
 
 ## 12. See it attacked
 
 `apps/courier/src/routes/bots.ts` fires eight attacks at the real endpoint. Each one is short and exercises a defence
 you've just read about, so it's a good recap. Open <http://localhost:4000/bots> to run them.
 
-## 12. The shop desk
+## 13. The shop desk
 
-`/merchant` is what a shop sees: one AG Studio dashboard, the only page drawn in the browser. `deskSnapshot` in
-`apps/store/src/desk.ts` serves it as JSON at `/merchant/api/desk`, in three tables: orders, the door and couriers. A
-courier appears by name and pseudonym only. `doorLog` keeps the requests a shop cares about: every refusal with a
-reason a shopkeeper would use ("Over budget", "Forged ID"), and the tool calls that matter. It drops MCP housekeeping and
-folds repeated status checks into one row. Shipments and refunds join as tables of their own once the store keeps them.
+`/desk` is what a shop sees, after a demo sign-in that picks the shop. It has five pages: Today, Orders, Access log,
+Couriers and Reports. `deskSnapshot` in `apps/store/src/desk.ts` and `desk-ops.ts` gather the data, and
+`desk-views.ts` draws the pages. A courier appears by name and pseudonym only. The access log keeps the requests a shop cares
+about: every refusal with a reason a shopkeeper would use ("Over budget", "Forged ID"), and the tool calls that matter.
 
-`apps/store/desk/` is the React side. `report.ts` is the first report, which groups couriers into the top eight and
-"Everyone else" so one busy courier can't flatten a chart. `widgets.tsx` adds two widgets of its own: courier ID cards
-in each courier's colour, and the PayPal proof behind an order. With `ANTHROPIC_API_KEY` set, the desk has a clerk to
-ask: it runs Studio's agents, and `desk-agent.ts` runs each turn on Claude. `scripts/dev.mjs` builds the bundle before
-starting the servers. Open <http://localhost:4100/merchant>; the old list, with "Report this courier", is at
-`/merchant/ledger`.
+`apps/store/desk/` is the browser side: AG Grid for the orders, and the AG Studio report builder on Reports, which loads
+its large bundle only on that page. With `ANTHROPIC_API_KEY` set, every page has the clerk, which runs on Claude in
+`desk-agent.ts` and can only propose a refund for the owner to confirm. `scripts/dev.mjs` builds the bundle before
+starting the servers. Open <http://localhost:4100/desk>.
 
 ## Where to go next
 
