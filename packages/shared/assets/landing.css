@@ -496,6 +496,16 @@ body {
   position: relative;
   width: min(100%, 86cqh);
   aspect-ratio: 1;
+  transition: scale 0.9s var(--pop);
+}
+/* The globe swells a touch as the wave goes out. */
+#why:not(.wait) .globe {
+  scale: 1.06;
+}
+@media (prefers-reduced-motion: reduce) {
+  .globe {
+    transition: none;
+  }
 }
 .globe canvas {
   position: absolute;
@@ -623,14 +633,60 @@ body {
   transform: perspective(600px) rotateY(90deg);
 }
 /* the session: the look of a chat window, without naming one */
+/* The chips under "It works everywhere" repaint this window in each agent's own colours: names and colours only, never marks. */
 .s-cl {
-  background: #f5f4ee;
-  border-color: #e4e1d6;
-  color: #2b2a27;
+  --cl-bg: #f5f4ee;
+  --cl-line: #dcd8ca;
+  --cl-ink: #2b2a27;
+  --cl-mute: var(--soft);
+  --cl-you: #e9e6db;
+  --cl-panel: #fff;
+  --cl-send: #c96442;
+  --cl-send-ink: #fff;
+  background: var(--cl-bg);
+  border-color: var(--cl-line);
+  color: var(--cl-ink);
+  transition:
+    background-color 0.35s var(--ease),
+    color 0.35s var(--ease),
+    border-color 0.35s var(--ease);
+}
+.s-cl[data-h="chatgpt"] {
+  --cl-bg: #fff;
+  --cl-line: #e5e5e5;
+  --cl-ink: #0d0d0d;
+  --cl-you: #f1f1f1;
+  --cl-send: #0d0d0d;
+}
+.s-cl[data-h="cursor"] {
+  --cl-bg: #181818;
+  --cl-line: #313131;
+  --cl-ink: #e6e6e6;
+  --cl-mute: #9a9a9a;
+  --cl-you: #2a2a2a;
+  --cl-panel: #222;
+  --cl-send: #e6e6e6;
+  --cl-send-ink: #181818;
+}
+.s-cl[data-h="mcp"] {
+  --cl-bg: #f3f3ff;
+  --cl-line: #d9d8fb;
+  --cl-ink: #141414;
+  --cl-you: #e2e1ff;
+  --cl-send: #3d3af5;
 }
 .s-cl .s-bar {
-  background: #f5f4ee;
-  border-color: #e4e1d6;
+  background: var(--cl-bg);
+  border-color: var(--cl-line);
+  transition: inherit;
+}
+.s-cl .s-bar small {
+  color: var(--cl-mute);
+}
+.s-cl :is(.s-you, .s-tool, .s-card, .s-comp) {
+  transition:
+    background-color 0.35s var(--ease),
+    border-color 0.35s var(--ease);
 }
 .s-cl .s-body {
   display: flex;
@@ -645,7 +701,7 @@ body {
   max-width: 82%;
   padding: 12px 18px;
   border-radius: 18px;
-  background: #e9e6db;
+  background: var(--cl-you, #e9e6db);
   font-size: 17px;
   font-weight: 500;
   line-height: 1.3;
@@ -661,9 +717,9 @@ body {
   gap: 10px;
   width: fit-content;
   padding: 9px 14px;
-  border: 1px solid #dcd8ca;
+  border: 1px solid var(--cl-line, #dcd8ca);
   border-radius: 12px;
-  background: #fff;
+  background: var(--cl-panel, #fff);
   font-size: 14px;
   font-weight: 600;
 }
@@ -671,7 +727,10 @@ body {
   font:
     600 13px "JetBrains Mono",
     monospace;
-  color: var(--soft);
+  color: var(--cl-mute, var(--soft));
+}
+.s-cl[data-h="cursor"] .s-tool .logo {
+  --slash: var(--cl-ink);
 }
 .s-tool .logo {
   font-size: 14px;
@@ -683,8 +742,8 @@ body {
   padding: 12px 16px 14px;
   width: fit-content;
   border-radius: 16px;
-  background: #fff;
-  border: 1px solid #dcd8ca;
+  background: var(--cl-panel, #fff);
+  border: 1px solid var(--cl-line, #dcd8ca);
   font-size: 14px;
   font-weight: 500;
   line-height: 1.3;
@@ -705,9 +764,9 @@ body {
   margin: 0 clamp(14px, 2.4cqw, 36px) 20px;
   min-height: 58px;
   padding: 10px 12px 10px 20px;
-  border: 1px solid #dcd8ca;
+  border: 1px solid var(--cl-line);
   border-radius: 18px;
-  background: #fff;
+  background: var(--cl-panel);
   font-size: 16px;
   font-weight: 500;
 }
@@ -718,8 +777,8 @@ body {
   width: 36px;
   height: 36px;
   border-radius: 11px;
-  background: #c96442;
-  color: #fff;
+  background: var(--cl-send, #c96442);
+  color: var(--cl-send-ink, #fff);
   font-style: normal;
 }
 .s-typed:empty::before {
@@ -1422,41 +1481,110 @@ footer .ppl {
   }
 }
 
-/* Under the hood: who does what. Bigger than the other windows' rows, since this list is the whole point of the screen. */
-.s-who-does {
-  display: grid;
-  padding: 8px 26px 18px;
+/* The relay: you, PayPal, Courier and the shop, each handing on to the next. Courier is the widest, loudest step. */
+.s-relayg {
+  grid-template-columns: minmax(0, 1fr);
+  align-content: center;
+  justify-content: center;
+  gap: clamp(28px, 6cqh, 64px);
 }
-.s-who-does .s-row {
-  align-items: center;
-  padding: 15px 0;
-  border-bottom: 1px solid var(--line);
-  font-size: 18px;
+#trust .s-copy {
+  text-align: center;
 }
-.s-who-does .s-row:last-child {
-  border-bottom: 0;
+#trust .s-copy p {
+  margin-inline: auto;
 }
-.s-who-does .s-row small {
-  margin-top: 3px;
-  font-size: 14.5px;
-}
-.s-who-does .s-row > span:last-child {
+#trust .s-mock {
   flex: none;
-  font-weight: 700;
+  height: auto;
 }
-.s-who-does .pp {
-  font-size: 19px;
+.s-relay {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.45fr 1fr;
+  gap: clamp(28px, 3cqw, 48px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* All four stay in place and light up in turn, so the row never reflows as they arrive. */
+.s-relay > li[data-at] {
+  position: relative;
+  display: flex !important;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 150px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #fff;
+  transition:
+    opacity 0.45s var(--ease),
+    transform 0.6s var(--pop);
+}
+.s-relay > li[data-at]:not(.is) {
+  opacity: 0.22;
+  transform: translateY(10px);
+}
+.s-relay > li + li::before {
+  content: "→";
+  position: absolute;
+  left: calc(-0.5 * clamp(28px, 3cqw, 48px));
+  top: 50%;
+  translate: -50% -50%;
+  color: #b4b0a6;
+  font-size: 22px;
+}
+.s-relay b {
+  font-size: 20px;
+}
+.s-relay .pp {
+  font-size: 21px;
+}
+.s-relay span {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--mute);
+}
+/* Courier's step is the logo on white, set apart by a heavier ink edge and a little more height. */
+.s-relay > li.s-cr {
+  min-height: 180px;
+  margin-block: -15px;
+  border: 2px solid var(--ink);
+}
+.s-relay .s-cr .logo {
+  font-size: 24px;
 }
 @media (max-width: 760px) {
-  .s-who-does {
-    padding: 4px 14px 8px;
+  .s-relay {
+    grid-template-columns: 1fr;
+    gap: 22px;
   }
-  .s-who-does .s-row {
-    padding: 9px 0;
-    font-size: 15px;
+  .s-relay > li[data-at] {
+    min-height: 0;
+    padding: 14px 16px;
+    gap: 4px;
   }
-  .s-who-does .s-row small {
-    font-size: 12.5px;
+  .s-relay > li.s-cr {
+    min-height: 0;
+    margin-block: 0;
+  }
+  .s-relay > li + li::before {
+    content: "↓";
+    left: 50%;
+    top: -11px;
+    font-size: 16px;
+  }
+  .s-relay b {
+    font-size: 17px;
+  }
+  .s-relay span {
+    font-size: 14px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .s-relay > li[data-at] {
+    transition: none;
   }
 }
 
@@ -1468,12 +1596,28 @@ footer .ppl {
   gap: 8px;
   margin-top: 22px;
 }
-.s-works li {
+.s-works button {
   padding: 7px 14px;
   border: 1px solid var(--line);
   border-radius: 99px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
   font-size: 14.5px;
   font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    border-color 0.2s;
+}
+.s-works button:hover {
+  border-color: var(--ink);
+}
+.s-works button[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
 }
 
 /* For shops: the one screen that leaves the grid. The words sit over the desk itself, which tips up into view. */
@@ -1755,7 +1899,7 @@ footer .ppl {
     gap: 6px;
     margin-top: 10px;
   }
-  .s-works li {
+  .s-works button {
     padding: 4px 10px;
     font-size: 13px;
   }
@@ -1951,12 +2095,4 @@ footer .ppl {
   .ps-go {
     display: none;
   }
-}
-
-/* The trust table is as tall as its rows, not the whole frame. */
-#trust .s-mock {
-  align-self: center;
-}
-#trust .s-win {
-  height: auto;
 }

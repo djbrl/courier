@@ -150,17 +150,17 @@
       '<path d="M90 10 90 56 48 10z" fill="#fff" opacity=".45"/>',
       '<rect x="48" y="12" width="40" height="20" rx="10" fill="#141414" opacity=".5"/>',
     ];
-    let known = false;
-    function setKnown(on) {
-      if (on === known) return;
+    /*
+     * When the IDs go out, a wave spreads from the middle of the globe, lights up the land, and turns each chip over as it
+     * passes. The scroll drives it, so it runs at the reader's pace and plays back in reverse on the way up.
+     */
+    const REACH = 1.6;
+    let known = false,
+      reach = 0;
+    function setWave(on, t) {
+      if (on === known && t === reach) return;
       known = on;
-      /* Left to right, one at a time, so each chip reads as one card turning over rather than all of them blinking. */
-      [...chips]
-        .sort((a, b) => a.x - b.x)
-        .forEach((c, i) => {
-          c.el.style.setProperty("--d", `${(i * 0.35).toFixed(2)}s`);
-          c.el.classList.toggle("known", on);
-        });
+      reach = t;
       redraw();
     }
     let ni = 0,
@@ -204,7 +204,6 @@
           '<span class="gci">',
           '<span class="gci"><span class="gc-anon"><i>?</i>Unknown agent</span>',
         );
-        el.classList.toggle("known", known);
         layer.appendChild(el);
         const c = { p, el, ck, born: now - age, life: 4200 };
         chips.push(c);
@@ -224,6 +223,7 @@
     }
     function draw(now) {
       ctx.clearRect(0, 0, W, W);
+      const wave = known ? reach * R * REACH : -1;
       // faint disc
       ctx.fillStyle = "rgba(20,20,20,.025)";
       ctx.beginPath();
@@ -233,18 +233,37 @@
         const [x, y, z] = proj(p);
         if (z < 0) continue;
         if (p.l) {
-          ctx.fillStyle = `rgba(20,20,20,${(0.12 + 0.42 * z).toFixed(3)})`;
           const s = ((0.85 + 0.95 * z) * W) / 640;
-          ctx.beginPath();
-          ctx.arc(x, y, s, 0, 7);
+          const d = Math.hypot(x - C, y - C);
+          if (d < wave) {
+            /* Lit land is cobalt; the dots right behind the wave's edge swell, so the edge reads as a bright ring. */
+            const edge = clamp(1 - (wave - d) / (R * 0.18), 0, 1);
+            ctx.fillStyle = `rgba(61,58,245,${(0.2 + 0.6 * z + 0.2 * edge).toFixed(3)})`;
+            ctx.beginPath();
+            ctx.arc(x, y, s * (1 + 1.4 * edge), 0, 7);
+          } else {
+            ctx.fillStyle = `rgba(20,20,20,${(0.12 + 0.42 * z).toFixed(3)})`;
+            ctx.beginPath();
+            ctx.arc(x, y, s, 0, 7);
+          }
           ctx.fill();
         } else {
           ctx.fillStyle = `rgba(20,20,20,${(0.06 + 0.07 * z).toFixed(3)})`;
           ctx.fillRect(x - 0.65, y - 0.65, 1.3, 1.3);
         }
       }
+      if (wave > 0 && wave < R * REACH) {
+        ctx.globalAlpha = 0.55 * (1 - wave / (R * REACH));
+        ctx.strokeStyle = "#3D3AF5";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(C, C, wave, 0, 7);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
       for (const c of chips) {
         place(c);
+        c.el.classList.toggle("known", known && Math.hypot(c.x - C, c.y - C) < wave);
         const k = clamp((now - c.born) / 900, 0, 1);
         const col = known ? pingCol(c.ck) : "#a8a59c";
         ctx.fillStyle = col;
@@ -273,9 +292,10 @@
         }
         return true;
       });
+      /* Once couriers carry IDs, more of them turn up, and faster: the globe fills in. */
       if (
         chips.filter((c) => !c.el.classList.contains("off")).length < 2 ||
-        (now - lastSpawn > 1050 && chips.length < 4)
+        (now - lastSpawn > (known ? 450 : 1050) && chips.length < (known ? 7 : 4))
       ) {
         spawn(now);
         lastSpawn = now;
@@ -327,7 +347,7 @@
     function redraw() {
       if (W && !running) draw(performance.now());
     }
-    return { start, stop, still, redraw, setKnown };
+    return { start, stop, still, redraw, setWave };
   })();
 
   window.courierGlobe = { globe, halftone, mini, img };
@@ -388,6 +408,16 @@
   flip.addEventListener("click", () => matchMedia("(hover: none)").matches && hang.classList.toggle("turned"));
   let globeOn = false;
 
+  /* "It works everywhere": each chip repaints the chat window in that agent's colours and puts its name in the title bar. */
+  const harness = document.getElementById("harness");
+  const chips = $$(".s-works button");
+  for (const b of chips)
+    b.addEventListener("click", () => {
+      harness.dataset.h = b.dataset.h;
+      harness.querySelector(".s-hn").textContent = b.textContent;
+      for (const o of chips) o.setAttribute("aria-pressed", String(o === b));
+    });
+
   function frame() {
     /* Screens hand over to each other: the next one rises into place as it arrives, the last one fades as it goes. */
     for (const el of screens) {
@@ -418,9 +448,9 @@
       /* The number runs up as soon as the screen settles, easing into its last few. */
       const run = Math.min(1, clock / 0.09);
       for (const n of t.counts) n.textContent = Math.round((1 - (1 - run) ** 3) * +n.dataset.count);
-      /* The swap comes a third of the way in, leaving the rest of the scroll to watch the IDs turn over and read. */
+      /* The words swap a third of the way in; the wave then runs to three quarters, and the rest of the scroll holds the result. */
       if (t.el.id === "why") {
-        globe.setKnown(p >= 0.35);
+        globe.setWave(p >= 0.35, reduce ? 1 : Math.max(0, Math.min(1, (p - 0.35) / 0.4)));
         t.el.classList.toggle("wait", p < 0.35);
       }
     }

@@ -18,7 +18,7 @@
   </div>
   <div class="s-sees">
     <h2 class="s-h">This is&nbsp;Juno.</h2>
-    <p>Your agent’s pass to seamless&nbsp;shopping.</p>
+    <p>Your path to seamless AI&nbsp;shopping.</p>
   </div>
 </div></section>
 
@@ -32,7 +32,7 @@
     </div>
     <div class="s-swapb" data-at=".35">
       <h2 class="s-h">Courier gives your agent an&nbsp;ID.</h2>
-      <p>Connect it to Claude or ChatGPT, set what it can spend, and send it shopping. Shops see who it is, verified by PayPal. Never&nbsp;you.</p>
+      <p>Give it a cool name, your favorite color, and start shopping. Shops see a client verified by PayPal, not an anonymous&nbsp;bot.</p>
     </div>
   </div>
   <div class="s-mock s-gl"><div class="globe" id="globe" role="img" aria-label="A rotating dotted globe; unknown agents appear on it, then turn into couriers with IDs"><canvas aria-hidden="true"></canvas><div class="gchips"></div></div></div>
@@ -40,12 +40,12 @@
 
 <section class="s-sec" id="session" data-track data-dur="5200" data-solid style="--h:100vh;--solid:#FF6B2C"><div class="s-stick"><div class="s-grid">
   <div class="s-copy">
-    <h2 class="s-h">Works with all your&nbsp;agents.</h2>
-    <p>Plug Courier into Claude, ChatGPT or any harness. Ask for what you want, where you&nbsp;want.</p>
-    <ul class="s-works" aria-label="Works with"><li>Claude</li><li>ChatGPT</li><li>Cursor</li><li>Any MCP client</li></ul>
+    <h2 class="s-h">It works everywhere.</h2>
+    <p>Use our MCP to connect Courier to Claude, ChatGPT or any harness. Ask for what you want, where you&nbsp;want.</p>
+    <ul class="s-works" aria-label="See it in"><li><button type="button" data-h="claude" aria-pressed="true">Claude</button></li><li><button type="button" data-h="chatgpt" aria-pressed="false">ChatGPT</button></li><li><button type="button" data-h="cursor" aria-pressed="false">Cursor</button></li><li><button type="button" data-h="mcp" aria-pressed="false">Any MCP client</button></li></ul>
   </div>
-  <div class="s-mock"><div class="s-win s-cl">
-    <div class="s-bar">New session<small>Courier connected</small></div>
+  <div class="s-mock"><div class="s-win s-cl" id="harness" data-h="claude">
+    <div class="s-bar"><span class="s-hn">Claude</span><small>Courier connected</small></div>
     <div class="s-body">
       <div class="s-said s-hi">Courier is connected. What can I get you?</div>
       <div class="s-you" data-at=".2">I’m feeling like a burger today. Can you grab me one on Floor Dash?</div>
@@ -142,28 +142,24 @@
   </ul>
 </section>
 
-<section class="s-sec" id="trust" data-track data-dur="2600" style="--h:100vh"><div class="s-stick"><div class="s-grid">
+<section class="s-sec" id="trust" data-track data-dur="2600" style="--h:100vh"><div class="s-stick"><div class="s-grid s-relayg">
   <div class="s-copy">
     <h2 class="s-h">Built on the PayPal you already&nbsp;trust.</h2>
-    <p>Your agent talks. PayPal vouches and pays. Courier holds the&nbsp;limit.</p>
+    <p>Each one does one job, then hands it&nbsp;on.</p>
   </div>
-  <div class="s-mock"><div class="s-win">
-    <div class="s-bar">Under the hood<small>Who does what</small></div>
-    <div class="s-lines s-who-does">
-      <div class="s-row" data-at=".1"><span>A real person sent it<small>Log in with PayPal</small></span><span class="pp"><span class="a">Pay</span><span class="b">Pal</span></span></div>
-      <div class="s-row" data-at=".22"><span>It pays without your card<small>Saved PayPal, paid inside the limit</small></span><span class="pp"><span class="a">Pay</span><span class="b">Pal</span></span></div>
-      <div class="s-row" data-at=".34"><span>It can’t spend past the limit<small>Checked in code before PayPal charges</small></span><span>Courier</span></div>
-      <div class="s-row" data-at=".46"><span>It finds things, asks you, and talks to other couriers<small>Claude, or any agent over MCP</small></span><span>The agent</span></div>
-      <div class="s-row" data-at=".58"><span>Returns and tracking<small>The shop’s clerk agent, on PayPal’s Agent Toolkit</small></span><span class="pp"><span class="a">Pay</span><span class="b">Pal</span></span></div>
-    </div>
-  </div></div>
+  <div class="s-mock"><ol class="s-relay">
+    <li data-at=".1"><b>You</b><span>Look for dinner. Set a $25&nbsp;limit.</span></li>
+    <li data-at=".3"><b class="pp"><span class="a">Pay</span><span class="b">Pal</span></b><span>Vouches you’re real, and&nbsp;pays.</span></li>
+    <li data-at=".5" class="s-cr"><b class="logo"><svg aria-hidden="true"><use href="#mk"/></svg>Courier</b><span>Gives Juno a pass, enforces your limit and coordinates group payments. Gives shops the tools to sell to&nbsp;agents.</span></li>
+    <li data-at=".7"><b>Floor Dash</b><span>Sees Juno. Lets it&nbsp;in.</span></li>
+  </ol></div>
 </div></div></section>
 
 <section id="close"><div class="s-stick">
   <div class="s-tex" data-tex></div>
   <div class="s-duo">
     <div class="s-closetx">
-      <h2 class="s-h">Now give your agent an&nbsp;ID.</h2>
+      <h2 class="s-h">Now get yourself a&nbsp;Courier.</h2>
       <div class="ctas"><a href="/start" class="btn acc">Get a courier<span class="go"><svg><use href="#arr"/></svg></span></a><a href="/start?as=shop" class="btn ghost">Try the shop desk</a></div>
     </div>
   </div>

@@ -45,12 +45,15 @@ export function assetUrl(file: string): string {
 const JUNO: CourierLook = { name: "Juno", color: "cobalt", avatar: "shades", model: "Claude", idNo: "CR-7Q3F-JR" };
 /** The hero's passes carry made-up senders' names; the next screen shows a shop gets none of it. */
 const CREW: { look: CourierLook; sentBy: string; white?: boolean }[] = [
-  { look: JUNO, sentBy: "Luna Ren" },
-  { look: { name: "Otto", color: "tang", avatar: "afro", model: "ChatGPT", idNo: "CR-8KD2-OT" }, sentBy: "Djibril Sy" },
+  { look: JUNO, sentBy: "Djibril Sy" },
+  {
+    look: { name: "Otto", color: "tang", avatar: "afro", model: "ChatGPT", idNo: "CR-8KD2-OT" },
+    sentBy: "Camille Laurent",
+  },
   // White isn't a colour a person can pick, so landing.css repaints this one.
   {
     look: { name: "Mika", color: "ink", model: "Llama", idNo: "CR-4HT9-MK" },
-    sentBy: "Camille Laurent",
+    sentBy: "Luna Ren",
     white: true,
   },
 ];
@@ -86,7 +89,7 @@ export function landingPage(human: Human | null): string {
       );
       return `<script type="application/json" id="faces-data">${JSON.stringify(faces).replace(/</g, "\\u003c")}</script>`;
     })
-    .replaceAll("{{pass}}", () => String(html`<div>${idCard(JUNO, "Luna Ren")}</div><div>${passBack(JUNO)}</div>`))
+    .replaceAll("{{pass}}", () => String(html`<div>${idCard(JUNO, "Djibril Sy")}</div><div>${passBack(JUNO)}</div>`))
     .replaceAll("{{sides}}", () =>
       String(
         html`${CREW.filter((m) => m.look !== JUNO).map(
